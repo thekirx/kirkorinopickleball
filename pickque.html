@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fair Match Lineup Generator</title>
+
+  <style>
+    /* =========================================================
+       DESIGN TOKENS
+       Change these values first when restyling the application.
+       ========================================================= */
+    :root {
+      --page-bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-muted: #f8fafc;
+      --text: #17202a;
+      --text-muted: #667085;
+      --border: #d8dee6;
+      --primary: #155eef;
+      --primary-hover: #004eeb;
+      --success: #067647;
+      --success-bg: #ecfdf3;
+      --danger: #b42318;
+      --warning-bg: #fffaeb;
+      --warning-border: #fedf89;
+      --radius: 10px;
+      --shadow: 0 3px 12px rgba(16, 24, 40, 0.07);
+      --gap: 16px;
+      --tap-size: 44px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
+    .app-header {
+      padding: 22px clamp(16px, 4vw, 48px);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.15rem);
+    }
+
+    .app-header p {
+      margin: 4px 0 0;
+      color: var(--text-muted);
+    }
+
+    .app-layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+      gap: var(--gap);
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: var(--gap);
+    }
+
+    .sidebar,
+    .main-content {
+      min-width: 0;
+    }
+
+    .sidebar,
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .panel-header h2,
+    .panel-header h3 {
+      margin: 0;
+    }
+
+    .section-note {
+      margin: 2px 0 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label,
+    legend {
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    input,
+    select,
+    .button,
+    .mini-button,
+    .winner-button {
+      min-height: var(--tap-size);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input:focus,
+    select:focus,
+    button:focus-visible {
+      outline: 3px solid rgba(21, 94, 239, 0.2);
+      outline-offset: 2px;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .radio-option {
+      display: inline-flex;
+      min-height: var(--tap-size);
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface-muted);
+      font-weight: 400;
+      cursor: pointer;
+    }
+
+    .radio-option input {
+      width: 20px;
+      min-height: 20px;
+      margin: 0;
+    }
+
+    .button {
+      padding: 9px 14px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      font-weight: 700;
+    }
+
+    .button-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .button-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .button-secondary {
+      background: var(--surface-muted);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .generate-button {
+      width: 100%;
+      min-height: 56px;
+      font-size: 1.05rem;
+    }
+
+    .status-message {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-size: 0.92rem;
+    }
+
+    .status-message.show {
+      display: block;
+    }
+
+    .status-message.info {
+      background: #eff8ff;
+      border: 1px solid #b2ddff;
+      color: #175cd3;
+    }
+
+    .status-message.warning {
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      color: #93370d;
+    }
+
+    .status-message.error {
+      background: #fef3f2;
+      border: 1px solid #fecdca;
+      color: var(--danger);
+    }
+
+    .roster-list,
+    .queue-list,
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .roster-list {
+      max-height: 64vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .roster-player {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface-muted);
+    }
+
+    .player-topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .player-name {
+      margin: 0;
+      font-size: 1rem;
+      overflow-wrap: anywhere;
+    }
+
+    .skill-badge,
+    .court-status {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .skill-badge {
+      margin-top: 3px;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-muted);
+    }
+
+    .player-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stat-box {
+      padding: 7px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+
+    .stat-box strong {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .record-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .mini-button {
+      padding: 7px 9px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      font-size: 0.84rem;
+    }
+
+    .mini-button:hover:not(:disabled) {
+      background: #f1f5f9;
+    }
+
+    .mini-button.remove {
+      grid-column: 1 / -1;
+      border-color: #fda29b;
+      color: var(--danger);
+    }
+
+    .summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .courts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 14px;
+    }
+
+    .court-card {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface-muted);
+    }
+
+    .court-card.finished {
+      border-color: #75e0a7;
+      background: var(--success-bg);
+    }
+
+    .court-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 13px;
+      background: #eef4ff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .court-card.finished .court-heading {
+      background: var(--success-bg);
+    }
+
+    .court-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .court-status {
+      padding: 4px 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .court-status.finished {
+      border-color: #75e0a7;
+      color: var(--success);
+    }
+
+    .match-display {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: stretch;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .side-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 155px;
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #fff;
+      text-align: center;
+    }
+
+    .side-card.winner {
+      border-color: #47cd89;
+      box-shadow: inset 0 0 0 1px #47cd89;
+    }
+
+    .side-label {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .team-players {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .assigned-player {
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .winner-button {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--primary);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .winner-button:hover:not(:disabled) {
+      background: #eff4ff;
+    }
+
+    .winner-button.confirmed {
+      border-color: #47cd89;
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .versus {
+      align-self: center;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+
+    .queue-item,
+    .leaderboard-row {
+      display: flex;
+      min-height: var(--tap-size);
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface-muted);
+    }
+
+    .queue-position,
+    .rank-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .queue-player-info,
+    .rank-player-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .queue-player-info strong,
+    .rank-player-info strong {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .queue-player-info span,
+    .queue-wait,
+    .rank-player-info span {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+    }
+
+    .queue-wait {
+      flex: 0 0 auto;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .leaderboard-header,
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 50px minmax(130px, 1fr) 72px 72px 90px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .leaderboard-header {
+      padding: 0 12px 8px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .leaderboard-row {
+      min-height: 54px;
+    }
+
+    .leaderboard-number {
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .leaderboard-name {
+      min-width: 0;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .leaderboard-stat {
+      text-align: center;
+    }
+
+    .empty-state {
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: var(--surface-muted);
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Stack the primary columns on tablets and phones. */
+    @media (max-width: 950px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .roster-list {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .app-layout {
+        padding: 10px;
+      }
+
+      .panel {
+        padding: 14px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full-width {
+        grid-column: auto;
+      }
+
+      .radio-group,
+      .radio-option {
+        width: 100%;
+      }
+
+      .match-display {
+        grid-template-columns: 1fr;
+      }
+
+      .versus {
+        justify-self: center;
+      }
+
+      .side-card {
+        min-height: 140px;
+      }
+
+      .leaderboard-header {
+        display: none;
+      }
+
+      .leaderboard-row {
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .leaderboard-row .leaderboard-stat {
+        grid-column: 2;
+        text-align: left;
+      }
+
+      .leaderboard-row .leaderboard-stat::before {
+        content: attr(data-label) ": ";
+        color: var(--text-muted);
+        font-weight: 700;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .player-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .record-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-button.remove {
+        grid-column: auto;
+      }
+
+      .queue-item {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .queue-wait {
+        width: 100%;
+        padding-left: 48px;
+        text-align: left;
+      }
+
+      .courts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Fair Match Lineup Generator</h1>
+    <p>Prioritize waiting players, randomize matchups, record results, and track rankings.</p>
+  </header>
+
+  <div class="app-layout">
+    <!-- =======================================================
+         LEFT COLUMN: PLAYER REGISTRATION AND ROSTER
+         ======================================================= -->
+    <aside class="sidebar" aria-label="Player management">
+      <section class="panel" aria-labelledby="registration-title">
+        <div class="panel-header">
+          <h2 id="registration-title">Add Player</h2>
+        </div>
+
+        <form id="player-form">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="player-name">Player Name</label>
+              <input
+                id="player-name"
+                name="playerName"
+                type="text"
+                maxlength="40"
+                placeholder="Enter a player name"
+                autocomplete="off"
+                required
+              />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="player-skill">Skill Level</label>
+              <select id="player-skill" name="playerSkill">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate" selected>Intermediate</option>
+                <option value="pro">Pro</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <button class="button button-primary" type="submit">Add to Roster</button>
+            </div>
+          </div>
+        </form>
+
+        <div id="player-form-message" class="status-message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="roster-title">
+        <div class="panel-header">
+          <div>
+            <h2 id="roster-title">Active Player Roster</h2>
+            <p id="roster-count" class="section-note">0 players</p>
+          </div>
+        </div>
+
+        <ul id="roster-list" class="roster-list"></ul>
+      </section>
+    </aside>
+
+    <!-- =======================================================
+         RIGHT COLUMN: CONFIGURATION, COURTS, QUEUE, LEADERBOARD
+         ======================================================= -->
+    <main class="main-content">
+      <section class="panel" aria-labelledby="configuration-title">
+        <div class="panel-header">
+          <div>
+            <h2 id="configuration-title">Session Configuration</h2>
+            <p class="section-note">The highest-priority waiting players are selected before teams are randomized.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <fieldset class="form-group full-width" style="border: 0; padding: 0; margin: 0;">
+            <legend>Match Type</legend>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="match-type" value="singles" />
+                Singles (2 per court)
+              </label>
+
+              <label class="radio-option">
+                <input type="radio" name="match-type" value="doubles" checked />
+                Doubles (4 per court)
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="form-group">
+            <label for="court-count">Number of Available Courts</label>
+            <input id="court-count" type="number" min="1" max="20" value="2" inputmode="numeric" />
+          </div>
+
+          <div class="form-group">
+            <label for="teammate-limit">Same Teammate Limit</label>
+            <select id="teammate-limit">
+              <option value="unlimited">No limit</option>
+              <option value="1">Maximum once</option>
+              <option value="2" selected>Maximum twice</option>
+              <option value="3">Maximum thrice</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <button id="generate-round" class="button button-primary generate-button" type="button">
+              Generate Next Round
+            </button>
+          </div>
+        </div>
+
+        <div id="generation-message" class="status-message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="courts-title">
+        <div class="panel-header">
+          <div>
+            <h2 id="courts-title">Live Courts</h2>
+            <p id="round-label" class="section-note">No round generated yet.</p>
+          </div>
+        </div>
+
+        <div id="courts-summary" class="summary-bar"></div>
+        <div id="courts-grid" class="courts-grid"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="queue-title">
+        <div class="panel-header">
+          <div>
+            <h2 id="queue-title">Next Up / Waiting Queue</h2>
+            <p class="section-note">Ordered by rounds waited, with ties randomized on each round.</p>
+          </div>
+        </div>
+
+        <ol id="queue-list" class="queue-list"></ol>
+      </section>
+
+      <section class="panel" aria-labelledby="leaderboard-title">
+        <div class="panel-header">
+          <div>
+            <h2 id="leaderboard-title">Leaderboard</h2>
+            <p class="section-note">Ranked by wins, then win rate, then fewer losses.</p>
+          </div>
+        </div>
+
+        <div class="leaderboard-header" aria-hidden="true">
+          <span>Rank</span>
+          <span>Player</span>
+          <span>Wins</span>
+          <span>Losses</span>
+          <span>Win Rate</span>
+        </div>
+        <ol id="leaderboard-list" class="leaderboard-list"></ol>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    /* =========================================================
+       APPLICATION STATE
+       ========================================================= */
+    const state = {
+      players: [],
+      currentRound: 0,
+      activeMatches: [],
+
+      // Key format: "lowerPlayerId|higherPlayerId"
+      // Value: number of generated doubles rounds as teammates.
+      teammateHistory: new Map()
+    };
+
+    const SKILL_VALUES = {
+      beginner: 1,
+      intermediate: 2,
+      pro: 3
+    };
+
+    const SKILL_LABELS = {
+      beginner: "Beginner",
+      intermediate: "Intermediate",
+      pro: "Pro"
+    };
+
+    /* =========================================================
+       DOM REFERENCES
+       ========================================================= */
+    const elements = {
+      playerForm: document.querySelector("#player-form"),
+      playerName: document.querySelector("#player-name"),
+      playerSkill: document.querySelector("#player-skill"),
+      playerFormMessage: document.querySelector("#player-form-message"),
+      rosterList: document.querySelector("#roster-list"),
+      rosterCount: document.querySelector("#roster-count"),
+
+      courtCount: document.querySelector("#court-count"),
+      teammateLimit: document.querySelector("#teammate-limit"),
+      generateRound: document.querySelector("#generate-round"),
+      generationMessage: document.querySelector("#generation-message"),
+
+      roundLabel: document.querySelector("#round-label"),
+      courtsSummary: document.querySelector("#courts-summary"),
+      courtsGrid: document.querySelector("#courts-grid"),
+      queueList: document.querySelector("#queue-list"),
+      leaderboardList: document.querySelector("#leaderboard-list")
+    };
+
+    /* =========================================================
+       GENERAL UTILITIES
+       ========================================================= */
+    function createId(prefix = "item") {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return `${prefix}-${window.crypto.randomUUID()}`;
+      }
+
+      return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function shuffle(items) {
+      const copy = [...items];
+
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+      }
+
+      return copy;
+    }
+
+    function getPlayerById(playerId) {
+      return state.players.find((player) => player.id === playerId);
+    }
+
+    function getSelectedMatchType() {
+      return document.querySelector('input[name="match-type"]:checked').value;
+    }
+
+    function getTeammateLimit() {
+      const rawValue = elements.teammateLimit.value;
+      return rawValue === "unlimited" ? Infinity : Number(rawValue);
+    }
+
+    function getPairKey(playerA, playerB) {
+      return [playerA.id, playerB.id].sort().join("|");
+    }
+
+    function getTeammateCount(playerA, playerB) {
+      return state.teammateHistory.get(getPairKey(playerA, playerB)) || 0;
+    }
+
+    function getWinRate(player) {
+      const totalMatches = player.wins + player.losses;
+      return totalMatches === 0 ? 0 : (player.wins / totalMatches) * 100;
+    }
+
+    function setStatus(element, message = "", type = "info") {
+      element.textContent = message;
+      element.className = "status-message";
+
+      if (message) {
+        element.classList.add("show", type);
+      }
+    }
+
+    function getAssignedPlayerIds() {
+      return new Set(
+        state.activeMatches.flatMap((match) =>
+          [...match.sideA, ...match.sideB].map((player) => player.id)
+        )
+      );
+    }
+
+    /* =========================================================
+       PLAYER MANAGEMENT
+       ========================================================= */
+    function addPlayer(name, skill) {
+      const cleanName = name.trim().replace(/\s+/g, " ");
+
+      if (!cleanName) {
+        return { ok: false, message: "Please enter a player name." };
+      }
+
+      const duplicateExists = state.players.some(
+        (player) => player.name.toLowerCase() === cleanName.toLowerCase()
+      );
+
+      if (duplicateExists) {
+        return { ok: false, message: "That player is already in the roster." };
+      }
+
+      state.players.push({
+        id: createId("player"),
+        name: cleanName,
+        skill,
+        roundsWaited: 0,
+        wins: 0,
+        losses: 0,
+        lastPlayedRound: null
+      });
+
+      return { ok: true, message: `${cleanName} was added to the roster.` };
+    }
+
+    function removePlayer(playerId) {
+      const player = getPlayerById(playerId);
+      if (!player) return;
+
+      state.players = state.players.filter((item) => item.id !== playerId);
+
+      // Remove any displayed court containing this player.
+      state.activeMatches = state.activeMatches.filter((match) => {
+        const matchPlayerIds = [...match.sideA, ...match.sideB].map((item) => item.id);
+        return !matchPlayerIds.includes(playerId);
+      });
+
+      // Remove teammate-history records involving the deleted player.
+      for (const pairKey of state.teammateHistory.keys()) {
+        if (pairKey.split("|").includes(playerId)) {
+          state.teammateHistory.delete(pairKey);
+        }
+      }
+
+      renderAll();
+      setStatus(elements.playerFormMessage, `${player.name} was removed.`, "info");
+    }
+
+    function updatePlayerRecord(playerId, stat, amount) {
+      const player = getPlayerById(playerId);
+      if (!player || !["wins", "losses"].includes(stat)) return;
+
+      player[stat] = Math.max(0, player[stat] + amount);
+      renderRoster();
+      renderQueue();
+      renderLeaderboard();
+    }
+
+    /* =========================================================
+       STRICT QUEUE PRIORITY
+
+       1. Players are grouped by rounds waited, highest first.
+       2. Players tied within the same group are shuffled.
+       3. The exact number needed is taken from the top.
+
+       This prevents a player with fewer rounds waited from jumping
+       ahead of someone with a greater wait.
+       ========================================================= */
+    function getPrioritizedQueue(players = state.players) {
+      const groupsByWait = new Map();
+
+      players.forEach((player) => {
+        if (!groupsByWait.has(player.roundsWaited)) {
+          groupsByWait.set(player.roundsWaited, []);
+        }
+        groupsByWait.get(player.roundsWaited).push(player);
+      });
+
+      return [...groupsByWait.keys()]
+        .sort((a, b) => b - a)
+        .flatMap((roundsWaited) => shuffle(groupsByWait.get(roundsWaited)));
+    }
+
+    function selectPriorityPlayers(requiredPlayerCount) {
+      return getPrioritizedQueue().slice(0, requiredPlayerCount);
+    }
+
+    /* =========================================================
+       RANDOMIZED MATCHUP BUILDERS
+
+       The selected priority group never changes. Multiple random
+       layouts are sampled, then one of the better layouts is picked
+       randomly. This keeps matches unpredictable while still giving
+       similar-skill matchups a useful preference.
+       ========================================================= */
+    function scoreSinglesLayout(matches) {
+      return matches.reduce((score, match) => {
+        return score + Math.abs(
+          SKILL_VALUES[match.sideA[0].skill] - SKILL_VALUES[match.sideB[0].skill]
+        );
+      }, 0);
+    }
+
+    function buildSinglesLayoutFromOrder(orderedPlayers) {
+      const matches = [];
+
+      for (let index = 0; index < orderedPlayers.length; index += 2) {
+        matches.push({
+          id: createId("match"),
+          sideA: [orderedPlayers[index]],
+          sideB: [orderedPlayers[index + 1]],
+          status: "active",
+          winnerSide: null
+        });
+      }
+
+      return matches;
+    }
+
+    function buildRandomizedSinglesMatches(selectedPlayers) {
+      const candidates = [];
+      const attemptCount = Math.min(500, Math.max(80, selectedPlayers.length * 35));
+
+      for (let attempt = 0; attempt < attemptCount; attempt += 1) {
+        const matches = buildSinglesLayoutFromOrder(shuffle(selectedPlayers));
+        candidates.push({ matches, score: scoreSinglesLayout(matches) });
+      }
+
+      candidates.sort((a, b) => a.score - b.score);
+      const preferredPoolSize = Math.max(1, Math.ceil(candidates.length * 0.15));
+      return candidates[Math.floor(Math.random() * preferredPoolSize)].matches;
+    }
+
+    function isTeammatePairAllowed(team, teammateLimit) {
+      if (teammateLimit === Infinity) return true;
+      return getTeammateCount(team[0], team[1]) < teammateLimit;
+    }
+
+    function scoreDoublesLayout(matches) {
+      return matches.reduce((score, match) => {
+        const teamASkill = match.sideA.reduce(
+          (total, player) => total + SKILL_VALUES[player.skill],
+          0
+        );
+        const teamBSkill = match.sideB.reduce(
+          (total, player) => total + SKILL_VALUES[player.skill],
+          0
+        );
+        const allSkills = [...match.sideA, ...match.sideB].map(
+          (player) => SKILL_VALUES[player.skill]
+        );
+        const teammateRepeatCost =
+          getTeammateCount(match.sideA[0], match.sideA[1]) +
+          getTeammateCount(match.sideB[0], match.sideB[1]);
+
+        return (
+          score +
+          Math.abs(teamASkill - teamBSkill) * 5 +
+          (Math.max(...allSkills) - Math.min(...allSkills)) +
+          teammateRepeatCost * 2
+        );
+      }, 0);
+    }
+
+    function buildDoublesLayoutFromOrder(orderedPlayers, teammateLimit) {
+      const matches = [];
+
+      for (let index = 0; index < orderedPlayers.length; index += 4) {
+        const sideA = [orderedPlayers[index], orderedPlayers[index + 1]];
+        const sideB = [orderedPlayers[index + 2], orderedPlayers[index + 3]];
+
+        if (
+          !isTeammatePairAllowed(sideA, teammateLimit) ||
+          !isTeammatePairAllowed(sideB, teammateLimit)
+        ) {
+          return null;
+        }
+
+        matches.push({
+          id: createId("match"),
+          sideA,
+          sideB,
+          status: "active",
+          winnerSide: null
+        });
+      }
+
+      return matches;
+    }
+
+    function buildRandomizedDoublesMatches(selectedPlayers, teammateLimit) {
+      const validCandidates = [];
+      const attemptCount = Math.min(6000, Math.max(1200, selectedPlayers.length * 260));
+
+      for (let attempt = 0; attempt < attemptCount; attempt += 1) {
+        const matches = buildDoublesLayoutFromOrder(shuffle(selectedPlayers), teammateLimit);
+        if (!matches) continue;
+
+        validCandidates.push({
+          matches,
+          score: scoreDoublesLayout(matches)
+        });
+
+        // Enough variety has been collected to choose unpredictably.
+        if (validCandidates.length >= 180) break;
+      }
+
+      if (validCandidates.length === 0) return null;
+
+      validCandidates.sort((a, b) => a.score - b.score);
+      const preferredPoolSize = Math.max(1, Math.ceil(validCandidates.length * 0.2));
+      return validCandidates[Math.floor(Math.random() * preferredPoolSize)].matches;
+    }
+
+    /* =========================================================
+       ROUND GENERATION AND WAITING STATE
+       ========================================================= */
+    function createRoundPlan(config) {
+      const playersPerCourt = config.matchType === "singles" ? 2 : 4;
+      const maximumPossibleCourts = Math.floor(state.players.length / playersPerCourt);
+      const activeCourtCount = Math.min(config.courtCount, maximumPossibleCourts);
+
+      if (activeCourtCount < 1) {
+        return {
+          ok: false,
+          message: `You need at least ${playersPerCourt} players for a ${config.matchType} match.`
+        };
+      }
+
+      const requiredPlayerCount = activeCourtCount * playersPerCourt;
+      const selectedPlayers = selectPriorityPlayers(requiredPlayerCount);
+      const matches =
+        config.matchType === "singles"
+          ? buildRandomizedSinglesMatches(selectedPlayers)
+          : buildRandomizedDoublesMatches(selectedPlayers, config.teammateLimit);
+
+      if (!matches) {
+        return {
+          ok: false,
+          message:
+            "The top-priority waiting group cannot be arranged without breaking the teammate-repeat limit. Increase the teammate limit, or complete another round with a different roster configuration."
+        };
+      }
+
+      return {
+        ok: true,
+        matches,
+        selectedPlayers,
+        courtCount: activeCourtCount,
+        reducedCourts: activeCourtCount < config.courtCount,
+        requestedCourtCount: config.courtCount
+      };
+    }
+
+    function recordGeneratedTeammates(matches, matchType) {
+      if (matchType !== "doubles") return;
+
+      matches.forEach((match) => {
+        [match.sideA, match.sideB].forEach((team) => {
+          const pairKey = getPairKey(team[0], team[1]);
+          state.teammateHistory.set(pairKey, getTeammateCount(team[0], team[1]) + 1);
+        });
+      });
+    }
+
+    function applyRoundPlan(roundPlan, matchType) {
+      const selectedIds = new Set(roundPlan.selectedPlayers.map((player) => player.id));
+
+      state.currentRound += 1;
+      state.activeMatches = roundPlan.matches;
+
+      state.players.forEach((player) => {
+        if (selectedIds.has(player.id)) {
+          player.roundsWaited = 0;
+          player.lastPlayedRound = state.currentRound;
+        } else {
+          player.roundsWaited += 1;
+        }
+      });
+
+      recordGeneratedTeammates(roundPlan.matches, matchType);
+    }
+
+    function generateNextRound() {
+      const config = {
+        matchType: getSelectedMatchType(),
+        courtCount: Math.max(1, Math.min(20, Number(elements.courtCount.value) || 1)),
+        teammateLimit: getTeammateLimit()
+      };
+
+      elements.courtCount.value = String(config.courtCount);
+      const result = createRoundPlan(config);
+
+      if (!result.ok) {
+        setStatus(elements.generationMessage, result.message, "error");
+        return;
+      }
+
+      applyRoundPlan(result, config.matchType);
+      renderAll();
+
+      if (result.reducedCourts) {
+        setStatus(
+          elements.generationMessage,
+          `Round ${state.currentRound} generated with ${result.courtCount} court(s), because the roster can only fill that many of the ${result.requestedCourtCount} requested court(s).`,
+          "warning"
+        );
+      } else {
+        setStatus(
+          elements.generationMessage,
+          `Round ${state.currentRound} generated. Selected players were reset to 0 rounds waited; benched players gained 1 round waited.`,
+          "info"
+        );
+      }
+    }
+
+    /* =========================================================
+       CLICK-TO-WIN MATCH RESULTS
+       ========================================================= */
+    function declareWinner(matchId, winningSide) {
+      const match = state.activeMatches.find((item) => item.id === matchId);
+      if (!match || match.status === "finished") return;
+
+      const winners = winningSide === "A" ? match.sideA : match.sideB;
+      const losers = winningSide === "A" ? match.sideB : match.sideA;
+
+      winners.forEach((playerReference) => {
+        const player = getPlayerById(playerReference.id);
+        if (player) player.wins += 1;
+      });
+
+      losers.forEach((playerReference) => {
+        const player = getPlayerById(playerReference.id);
+        if (player) player.losses += 1;
+      });
+
+      match.status = "finished";
+      match.winnerSide = winningSide;
+      renderAll();
+
+      setStatus(
+        elements.generationMessage,
+        `Court ${state.activeMatches.indexOf(match) + 1} finished. Results and leaderboard updated.`,
+        "info"
+      );
+    }
+
+    /* =========================================================
+       RENDERING HELPERS
+       ========================================================= */
+    function createEmptyState(message) {
+      const emptyState = document.createElement("div");
+      emptyState.className = "empty-state";
+      emptyState.textContent = message;
+      return emptyState;
+    }
+
+    function renderRoster() {
+      elements.rosterList.innerHTML = "";
+      elements.rosterCount.textContent = `${state.players.length} player${state.players.length === 1 ? "" : "s"}`;
+
+      if (state.players.length === 0) {
+        const listItem = document.createElement("li");
+        listItem.appendChild(createEmptyState("No players added yet."));
+        elements.rosterList.appendChild(listItem);
+        return;
+      }
+
+      [...state.players]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach((player) => {
+          const listItem = document.createElement("li");
+          listItem.className = "roster-player";
+
+          listItem.innerHTML = `
+            <div class="player-topline">
+              <div>
+                <h3 class="player-name"></h3>
+                <span class="skill-badge"></span>
+              </div>
+            </div>
+
+            <div class="player-stats">
+              <div class="stat-box"><strong>${player.wins}</strong>Wins</div>
+              <div class="stat-box"><strong>${player.losses}</strong>Losses</div>
+              <div class="stat-box"><strong>${player.roundsWaited}</strong>Rounds Waited</div>
+            </div>
+
+            <div class="record-controls">
+              <button class="mini-button" type="button" data-action="win-plus">Win +1</button>
+              <button class="mini-button" type="button" data-action="win-minus">Win −1</button>
+              <button class="mini-button" type="button" data-action="loss-plus">Loss +1</button>
+              <button class="mini-button" type="button" data-action="loss-minus">Loss −1</button>
+              <button class="mini-button remove" type="button" data-action="remove">Remove Player</button>
+            </div>
+          `;
+
+          listItem.querySelector(".player-name").textContent = player.name;
+          listItem.querySelector(".skill-badge").textContent = SKILL_LABELS[player.skill];
+
+          listItem.addEventListener("click", (event) => {
+            const actionButton = event.target.closest("button[data-action]");
+            if (!actionButton) return;
+
+            const action = actionButton.dataset.action;
+
+            if (action === "win-plus") updatePlayerRecord(player.id, "wins", 1);
+            if (action === "win-minus") updatePlayerRecord(player.id, "wins", -1);
+            if (action === "loss-plus") updatePlayerRecord(player.id, "losses", 1);
+            if (action === "loss-minus") updatePlayerRecord(player.id, "losses", -1);
+            if (action === "remove") removePlayer(player.id);
+          });
+
+          elements.rosterList.appendChild(listItem);
+        });
+    }
+
+    function createSideCard(match, side, label, players) {
+      const card = document.createElement("div");
+      const isWinner = match.status === "finished" && match.winnerSide === side;
+      card.className = `side-card${isWinner ? " winner" : ""}`;
+
+      const labelElement = document.createElement("span");
+      labelElement.className = "side-label";
+      labelElement.textContent = label;
+
+      const playersContainer = document.createElement("div");
+      playersContainer.className = "team-players";
+
+      players.forEach((player) => {
+        const playerElement = document.createElement("div");
+        playerElement.className = "assigned-player";
+        playerElement.textContent = `${player.name} (${SKILL_LABELS[player.skill]})`;
+        playersContainer.appendChild(playerElement);
+      });
+
+      const winnerButton = document.createElement("button");
+      winnerButton.type = "button";
+      winnerButton.className = `winner-button${isWinner ? " confirmed" : ""}`;
+      winnerButton.dataset.matchId = match.id;
+      winnerButton.dataset.winningSide = side;
+      winnerButton.disabled = match.status === "finished";
+      winnerButton.textContent = isWinner
+        ? "Winner Recorded"
+        : match.status === "finished"
+          ? "Match Finished"
+          : `Declare ${label} Winner`;
+
+      card.append(labelElement, playersContainer, winnerButton);
+      return card;
+    }
+
+    function renderCourts() {
+      elements.courtsGrid.innerHTML = "";
+      elements.courtsSummary.innerHTML = "";
+
+      if (state.activeMatches.length === 0) {
+        elements.roundLabel.textContent = "No round generated yet.";
+        elements.courtsGrid.appendChild(
+          createEmptyState("Add enough players, configure the session, and generate a round.")
+        );
+        return;
+      }
+
+      elements.roundLabel.textContent = `Round ${state.currentRound}`;
+
+      const finishedCount = state.activeMatches.filter(
+        (match) => match.status === "finished"
+      ).length;
+      const playerCount = state.activeMatches.reduce(
+        (total, match) => total + match.sideA.length + match.sideB.length,
+        0
+      );
+
+      const summaryLeft = document.createElement("span");
+      summaryLeft.textContent = `${state.activeMatches.length} court(s) • ${finishedCount} finished`;
+
+      const summaryRight = document.createElement("span");
+      summaryRight.textContent = `${playerCount} assigned player(s)`;
+
+      elements.courtsSummary.append(summaryLeft, summaryRight);
+
+      state.activeMatches.forEach((match, index) => {
+        const article = document.createElement("article");
+        article.className = `court-card${match.status === "finished" ? " finished" : ""}`;
+
+        const heading = document.createElement("div");
+        heading.className = "court-heading";
+
+        const title = document.createElement("h3");
+        title.className = "court-title";
+        title.textContent = `Court ${index + 1}`;
+
+        const status = document.createElement("span");
+        status.className = `court-status${match.status === "finished" ? " finished" : ""}`;
+        status.textContent = match.status === "finished" ? "Finished" : "In Progress";
+
+        heading.append(title, status);
+
+        const matchDisplay = document.createElement("div");
+        matchDisplay.className = "match-display";
+
+        const isDoubles = match.sideA.length === 2;
+        const sideALabel = isDoubles ? "Team A" : "Player A";
+        const sideBLabel = isDoubles ? "Team B" : "Player B";
+
+        const versus = document.createElement("div");
+        versus.className = "versus";
+        versus.textContent = "VS";
+
+        matchDisplay.append(
+          createSideCard(match, "A", sideALabel, match.sideA),
+          versus,
+          createSideCard(match, "B", sideBLabel, match.sideB)
+        );
+
+        article.append(heading, matchDisplay);
+        elements.courtsGrid.appendChild(article);
+      });
+    }
+
+    function renderQueue() {
+      elements.queueList.innerHTML = "";
+
+      const assignedIds = getAssignedPlayerIds();
+      const waitingPlayers = state.players.filter((player) => !assignedIds.has(player.id));
+
+      // Display order is deterministic inside ties for a stable screen.
+      // Tie randomization happens only at selection time.
+      waitingPlayers.sort((a, b) =>
+        b.roundsWaited - a.roundsWaited || a.name.localeCompare(b.name)
+      );
+
+      if (waitingPlayers.length === 0) {
+        const listItem = document.createElement("li");
+        listItem.appendChild(
+          createEmptyState(
+            state.activeMatches.length === 0
+              ? "The waiting queue will appear after a round is generated."
+              : "No players are waiting. Everyone is assigned to a court."
+          )
+        );
+        elements.queueList.appendChild(listItem);
+        return;
+      }
+
+      waitingPlayers.forEach((player, index) => {
+        const listItem = document.createElement("li");
+        listItem.className = "queue-item";
+
+        const position = document.createElement("span");
+        position.className = "queue-position";
+        position.textContent = String(index + 1);
+
+        const info = document.createElement("div");
+        info.className = "queue-player-info";
+
+        const name = document.createElement("strong");
+        name.textContent = player.name;
+
+        const details = document.createElement("span");
+        details.textContent = `${SKILL_LABELS[player.skill]} • ${player.wins}W / ${player.losses}L`;
+
+        const wait = document.createElement("span");
+        wait.className = "queue-wait";
+        wait.textContent = `${player.roundsWaited} round${player.roundsWaited === 1 ? "" : "s"} waited`;
+
+        info.append(name, details);
+        listItem.append(position, info, wait);
+        elements.queueList.appendChild(listItem);
+      });
+    }
+
+    function getRankedPlayers() {
+      return [...state.players].sort((a, b) => {
+        const winsDifference = b.wins - a.wins;
+        if (winsDifference !== 0) return winsDifference;
+
+        const winRateDifference = getWinRate(b) - getWinRate(a);
+        if (Math.abs(winRateDifference) > 0.0001) return winRateDifference;
+
+        const lossesDifference = a.losses - b.losses;
+        if (lossesDifference !== 0) return lossesDifference;
+
+        return a.name.localeCompare(b.name);
+      });
+    }
+
+    function renderLeaderboard() {
+      elements.leaderboardList.innerHTML = "";
+
+      const rankedPlayers = getRankedPlayers();
+
+      if (rankedPlayers.length === 0) {
+        const listItem = document.createElement("li");
+        listItem.appendChild(createEmptyState("Add players to begin the leaderboard."));
+        elements.leaderboardList.appendChild(listItem);
+        return;
+      }
+
+      rankedPlayers.forEach((player, index) => {
+        const listItem = document.createElement("li");
+        listItem.className = "leaderboard-row";
+
+        const rank = document.createElement("span");
+        rank.className = "leaderboard-number";
+        rank.textContent = `#${index + 1}`;
+
+        const name = document.createElement("span");
+        name.className = "leaderboard-name";
+        name.textContent = player.name;
+
+        const wins = document.createElement("span");
+        wins.className = "leaderboard-stat";
+        wins.dataset.label = "Wins";
+        wins.textContent = String(player.wins);
+
+        const losses = document.createElement("span");
+        losses.className = "leaderboard-stat";
+        losses.dataset.label = "Losses";
+        losses.textContent = String(player.losses);
+
+        const winRate = document.createElement("span");
+        winRate.className = "leaderboard-stat";
+        winRate.dataset.label = "Win Rate";
+        winRate.textContent = `${getWinRate(player).toFixed(1)}%`;
+
+        listItem.append(rank, name, wins, losses, winRate);
+        elements.leaderboardList.appendChild(listItem);
+      });
+    }
+
+    function renderAll() {
+      renderRoster();
+      renderCourts();
+      renderQueue();
+      renderLeaderboard();
+    }
+
+    /* =========================================================
+       EVENT LISTENERS
+       ========================================================= */
+    elements.playerForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const result = addPlayer(elements.playerName.value, elements.playerSkill.value);
+
+      if (!result.ok) {
+        setStatus(elements.playerFormMessage, result.message, "error");
+        return;
+      }
+
+      setStatus(elements.playerFormMessage, result.message, "info");
+      elements.playerForm.reset();
+      elements.playerSkill.value = "intermediate";
+      elements.playerName.focus();
+      renderAll();
+    });
+
+    elements.generateRound.addEventListener("click", generateNextRound);
+
+    elements.courtsGrid.addEventListener("click", (event) => {
+      const winnerButton = event.target.closest("button[data-match-id][data-winning-side]");
+      if (!winnerButton) return;
+
+      declareWinner(winnerButton.dataset.matchId, winnerButton.dataset.winningSide);
+    });
+
+    // The teammate rule does not apply to singles.
+    document.querySelectorAll('input[name="match-type"]').forEach((radio) => {
+      radio.addEventListener("change", () => {
+        elements.teammateLimit.disabled = getSelectedMatchType() === "singles";
+      });
+    });
+
+    /* =========================================================
+       INITIAL RENDER
+       ========================================================= */
+    renderAll();
+  </script>
+</body>
+</html>
