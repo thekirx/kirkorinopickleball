@@ -12,6 +12,7 @@ const state = {
   teammateHistory: new Map(),
   sessionName: "Tuesday Night Rally",
   matchType: "doubles",
+  skillMatching: "mixed",
   courtCount: 2,
   teammateLimit: 2
 };
@@ -148,6 +149,7 @@ function loadState() {
     state.players = saved.players.map((player) => ({ active: true, streak: 0, ...player }));
     state.activeMatches = (saved.activeMatches || []).map((match) => ({ startedAt: Date.now(), ...match }));
     state.matchHistory = saved.matchHistory || [];
+    state.skillMatching = saved.skillMatching || "mixed";
     state.teammateHistory = new Map(saved.teammateHistory || []);
   } catch (error) {
     console.warn("KirQ could not restore the previous session.", error);
@@ -244,6 +246,45 @@ function getPrioritizedQueue(players = getActivePlayers()) {
   return [...groups.keys()].sort((a, b) => b - a).flatMap((wait) => shuffle(groups.get(wait)));
 }
 
+function getSameSkillBatches(playersPerCourt, maximumCourts = state.courtCount, randomizeTies = true) {
+  const skillGroups = Object.keys(SKILL_LABELS).map((skill) => {
+    const players = getActivePlayers().filter((player) => player.skill === skill);
+    return randomizeTies
+      ? getPrioritizedQueue(players)
+      : players.sort((a, b) => b.roundsWaited - a.roundsWaited || a.name.localeCompare(b.name));
+  });
+  const batches = [];
+
+  skillGroups.forEach((players) => {
+    for (let index = 0; index + playersPerCourt <= players.length; index += playersPerCourt) {
+      const group = players.slice(index, index + playersPerCourt);
+      batches.push({
+        players: group,
+        highestWait: Math.max(...group.map((player) => player.roundsWaited)),
+        totalWait: group.reduce((total, player) => total + player.roundsWaited, 0)
+      });
+    }
+  });
+
+  return batches
+    .sort((a, b) => b.highestWait - a.highestWait || b.totalWait - a.totalWait)
+    .slice(0, maximumCourts)
+    .map((batch) => batch.players);
+}
+
+function getSkillEligibility(playersPerCourt) {
+  const counts = Object.keys(SKILL_LABELS).map((skill) => ({
+    skill,
+    count: getActivePlayers().filter((player) => player.skill === skill).length
+  }));
+  const strongestGroup = counts.sort((a, b) => b.count - a.count)[0];
+  return {
+    eligible: state.skillMatching === "mixed" ? getActivePlayers().length >= playersPerCourt : strongestGroup.count >= playersPerCourt,
+    strongestGroup,
+    needed: Math.max(0, playersPerCourt - (state.skillMatching === "mixed" ? getActivePlayers().length : strongestGroup.count))
+  };
+}
+
 function scoreSinglesLayout(matches) {
   return matches.reduce((score, match) => score + Math.abs(
     SKILL_VALUES[match.sideA[0].skill] - SKILL_VALUES[match.sideB[0].skill]), 0);
@@ -297,8 +338,14 @@ function buildDoublesMatches(selectedPlayers) {
 function generateRound() {
   const playersPerCourt = state.matchType === "singles" ? 2 : 4;
   const activePlayers = getActivePlayers();
+  const eligibility = getSkillEligibility(playersPerCourt);
+  if (!eligibility.eligible) {
+    const message = state.skillMatching === "same"
+      ? `Same Skill Only needs ${playersPerCourt} players in one tier. Add ${eligibility.needed} more ${SKILL_LABELS[eligibility.strongestGroup.skill].toLowerCase()} player${eligibility.needed === 1 ? "" : "s"}, or switch to Mixed Skills.`
+      : `Add at least ${playersPerCourt} active players first.`;
+    return showToast(message, "error");
+  }
   const courtCount = Math.min(state.courtCount, Math.floor(activePlayers.length / playersPerCourt));
-  if (courtCount < 1) return showToast(`Add at least ${playersPerCourt} active players first.`, "error");
   if (state.activeMatches.some((match) => match.status !== "finished")) {
     return showConfirmation({
       title: "Replace live matches?",
@@ -311,10 +358,22 @@ function generateRound() {
 }
 
 function createAndApplyRound(courtCount, playersPerCourt) {
-  const selected = getPrioritizedQueue().slice(0, courtCount * playersPerCourt);
-  const matches = state.matchType === "singles" ? buildSinglesMatches(selected) : buildDoublesMatches(selected);
+  const sameSkillBatches = state.skillMatching === "same" ? getSameSkillBatches(playersPerCourt, courtCount) : null;
+  const selected = sameSkillBatches
+    ? sameSkillBatches.flat()
+    : getPrioritizedQueue().slice(0, courtCount * playersPerCourt);
+  const matchBuilder = state.matchType === "singles" ? buildSinglesMatches : buildDoublesMatches;
+  const sameSkillMatches = sameSkillBatches?.map((players) => matchBuilder(players));
+  const matches = sameSkillMatches
+    ? sameSkillMatches.some((skillMatches) => !skillMatches)
+      ? null
+      : sameSkillMatches.flat()
+    : matchBuilder(selected);
   if (!matches) {
     return showToast("The priority group cannot meet the teammate-repeat limit. Increase the limit in settings.", "error");
+  }
+  if (!matches.length) {
+    return showToast(`No ${state.matchType} court can be filled within one skill level yet.`, "error");
   }
   state.currentRound += 1;
   state.activeMatches = matches;
@@ -396,6 +455,9 @@ function getWaitingPlayers() {
 
 function getNextPlayers() {
   const perCourt = state.matchType === "singles" ? 2 : 4;
+  if (state.skillMatching === "same") {
+    return getSameSkillBatches(perCourt, 1, false)[0] || [];
+  }
   return getWaitingPlayers().slice(0, perCourt);
 }
 
@@ -424,7 +486,8 @@ function renderSummary() {
   elements.courtDetail.textContent = `${availableCourts} available`;
   elements.roundDetail.textContent = state.currentRound ? "Session in motion" : "Ready when you are";
   const limit = state.teammateLimit === "unlimited" ? "Unlimited Repeat Teammates" : `Maximum ${state.teammateLimit} Repeat Teammate${Number(state.teammateLimit) === 1 ? "" : "s"}`;
-  elements.sessionSummaryCopy.textContent = `${state.matchType === "doubles" ? "Doubles" : "Singles"} · ${state.courtCount} Court${state.courtCount === 1 ? "" : "s"} · ${limit}`;
+  const skillMode = state.skillMatching === "same" ? "Same Skill Only" : "Mixed Skills";
+  elements.sessionSummaryCopy.textContent = `${state.matchType === "doubles" ? "Doubles" : "Singles"} · ${skillMode} · ${state.courtCount} Court${state.courtCount === 1 ? "" : "s"} · ${limit}`;
 }
 
 function renderCourts() {
@@ -465,7 +528,7 @@ function renderCourts() {
 function renderUpNext() {
   const players = getNextPlayers();
   if (!players.length) {
-    elements.upNextList.innerHTML = `<p class="next-empty">${state.players.length ? "Add or activate more waiting players to build the next group." : "Add players to start building your fair queue."}</p>`;
+    elements.upNextList.innerHTML = `<p class="next-empty">${state.players.length ? state.skillMatching === "same" ? "No single skill tier can fill a court yet. Add more players in one tier or choose Mixed Skills." : "Add or activate more waiting players to build the next group." : "Add players to start building your fair queue."}</p>`;
     return;
   }
   elements.upNextList.innerHTML = players.map((player) => `<article class="next-player"><span class="avatar">${initials(player.name)}</span><div><strong>${escapeHtml(player.name)}</strong><small>${SKILL_LABELS[player.skill]} · Waited ${player.roundsWaited}</small><span class="next-label">Eligible Next</span></div></article>`).join("");
@@ -539,6 +602,7 @@ function renderMatchHistory() {
 function getWorkflowState() {
   const needed = state.matchType === "singles" ? 2 : 4;
   const activeCount = getActivePlayers().length;
+  const skillEligibility = getSkillEligibility(needed);
   const readyMatch = state.activeMatches.find((match) => match.status === "ready");
   const liveMatch = state.activeMatches.find((match) => match.status === "active");
   const allFinished = state.activeMatches.length > 0 && state.activeMatches.every((match) => match.status === "finished");
@@ -546,6 +610,10 @@ function getWorkflowState() {
   if (activeCount < needed) {
     const remaining = needed - activeCount;
     return { step: "Step 1", title: activeCount ? `Add ${remaining} more player${remaining === 1 ? "" : "s"}` : "Add your first player", guidance: `You need ${needed} active players for a ${state.matchType} match.`, action: "add", label: "Add Player" };
+  }
+  if (state.skillMatching === "same" && !skillEligibility.eligible) {
+    const tier = SKILL_LABELS[skillEligibility.strongestGroup.skill];
+    return { step: "Step 1", title: "Build a same-skill group", guidance: `Add ${skillEligibility.needed} more ${tier.toLowerCase()} player${skillEligibility.needed === 1 ? "" : "s"}, or choose Mixed Skills in Settings.`, action: "add", label: "Add Player" };
   }
   if (readyMatch) return { step: "Step 3", title: "Match ready for confirmation", guidance: "Players are assigned to a court. Confirm when everyone is ready to begin.", action: "start", label: "Start Match", matchId: readyMatch.id };
   if (liveMatch) return { step: "Step 4", title: "Match in progress", guidance: "Record the winner when play finishes.", action: "winner", label: "Record Winner", matchId: liveMatch.id };
@@ -583,14 +651,19 @@ function renderWorkflow() {
 function updateGenerateButton() {
   const needed = state.matchType === "singles" ? 2 : 4;
   const count = getActivePlayers().length;
+  const skillEligibility = getSkillEligibility(needed);
   const unfinished = state.activeMatches.some((match) => match.status !== "finished");
-  elements.generateRound.disabled = count < needed;
+  elements.generateRound.disabled = !skillEligibility.eligible;
   elements.generateRound.querySelector("span").textContent = state.activeMatches.length && !unfinished ? "Generate Next Match" : "Generate Matchup";
-  elements.generateHelp.textContent = count < needed
+  elements.generateHelp.textContent = state.skillMatching === "same" && !skillEligibility.eligible
+    ? `Same Skill Only: add ${skillEligibility.needed} more ${SKILL_LABELS[skillEligibility.strongestGroup.skill].toLowerCase()} player${skillEligibility.needed === 1 ? "" : "s"} to fill one court.`
+    : count < needed
     ? `Add ${needed - count} more active player${needed - count === 1 ? "" : "s"} to generate a ${state.matchType} match.`
     : unfinished
       ? "Finish or clear current court assignments before creating the next round."
-      : `${count} active players are eligible. KirQ will prioritize wait time and balanced skill.`;
+      : state.skillMatching === "same"
+        ? "A same-skill group is eligible. Queue priority applies within that skill tier."
+        : `${count} active players are eligible. KirQ will prioritize wait time and balanced skill.`;
 }
 
 function renderAll() {
@@ -616,6 +689,7 @@ function openSettings() {
   elements.courtCount.value = state.courtCount;
   elements.teammateLimit.value = String(state.teammateLimit);
   document.querySelector(`input[name="match-type"][value="${state.matchType}"]`).checked = true;
+  document.querySelector(`input[name="skill-matching"][value="${state.skillMatching}"]`).checked = true;
   elements.teammateLimit.disabled = state.matchType === "singles";
   elements.settingsOverlay.hidden = false;
 
@@ -640,6 +714,7 @@ function saveSettings() {
   state.courtCount = Math.max(1, Math.min(20, Number(elements.courtCount.value) || 1));
   state.teammateLimit = elements.teammateLimit.value;
   state.matchType = document.querySelector('input[name="match-type"]:checked').value;
+  state.skillMatching = document.querySelector('input[name="skill-matching"]:checked').value;
   if (state.activeMatches.length > state.courtCount) state.activeMatches = state.activeMatches.slice(0, state.courtCount);
   saveState(); renderAll(); closeSettings(); showToast("Session settings saved.");
 }

@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20260714-3" />
+    <link rel="stylesheet" href="styles.css?v=20260714-5" />
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -111,7 +111,6 @@
             <ol id="queue-list" class="queue-list"></ol>
           </section>
         </aside>
-      </div>
 
       <section id="activity" class="panel activity-panel" aria-labelledby="activity-title">
         <div class="activity-heading"><div><p class="eyebrow">Session details</p><h2 id="activity-title">Players and Results</h2></div><div class="activity-heading-actions"><span id="roster-count" class="count-badge">0 players</span><button id="remove-all-players" class="button remove-all-button" type="button" hidden>Remove All Players</button></div></div>
@@ -132,6 +131,7 @@
           <div id="match-history-list" class="match-history-list"></div>
         </div>
       </section>
+      </div>
     </main>
 
     <footer><div class="footer-brand"><strong>KirQ</strong><span>Built for better rallies.</span></div><p>Made courtside by <a href="https://www.tiktok.com" target="_blank" rel="noreferrer">Kirk Orino</a></p></footer>
@@ -149,8 +149,11 @@
           <fieldset><legend>Match type</legend><div class="segmented-control two-up">
             <label><input type="radio" name="match-type" value="singles" /><span>Singles</span></label><label><input type="radio" name="match-type" value="doubles" checked /><span>Doubles</span></label>
           </div></fieldset>
+          <fieldset><legend>Skill matching</legend><div class="segmented-control two-up">
+            <label><input type="radio" name="skill-matching" value="mixed" checked /><span>Mixed Skills</span></label><label><input type="radio" name="skill-matching" value="same" /><span>Same Skill Only</span></label>
+          </div><p class="setting-help">Mixed Skills balances teams across levels. Same Skill Only keeps every court within one skill tier.</p></fieldset>
           <div class="settings-grid"><div><label for="court-count">Available courts</label><input id="court-count" type="number" min="1" max="20" value="2" /></div><div><label for="teammate-limit">Repeat teammates</label><select id="teammate-limit"><option value="unlimited">No limit</option><option value="1">Maximum once</option><option value="2" selected>Maximum twice</option><option value="3">Maximum thrice</option></select></div></div>
-          <div class="settings-note"><strong>Fairness priority</strong><p>Longest wait first, then balanced skill and teammate variety.</p></div>
+          <div class="settings-note"><strong>Fairness priority</strong><p>Longest wait first among eligible players, then balanced teams and teammate variety.</p></div>
         </div>
         <div class="drawer-footer"><button id="reset-session" class="button danger-button" type="button">Reset session</button><button id="save-settings" class="button button-primary" type="button">Save settings</button></div>
       </section>
@@ -160,6 +163,6 @@
       <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title"><span class="confirm-icon">!</span><h2 id="confirm-title">Are you sure?</h2><p id="confirm-copy"></p><div><button id="confirm-cancel" class="button secondary-button" type="button">Keep it</button><button id="confirm-action" class="button danger-button" type="button">Confirm</button></div></section>
     </div>
 
-    <script src="app.js?v=20260714-3"></script>
+    <script src="app.js?v=20260714-5"></script>
   </body>
 </html>

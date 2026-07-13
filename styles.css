@@ -200,7 +200,7 @@ fieldset { margin: 0 0 16px; padding: 0; border: 0; }
 .segmented-control { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 4px; border: 1px solid var(--border); border-radius: 13px; background: rgba(7,17,15,.75); }
 .segmented-control.two-up { grid-template-columns: repeat(2, 1fr); }
 .segmented-control label { margin: 0; cursor: pointer; }
-.segmented-control input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented-control input { position: absolute; width: 1px; min-height: 0; height: 1px; margin: 0; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); opacity: 0; pointer-events: none; }
 .segmented-control span { display: grid; place-items: center; min-height: 38px; border-radius: 9px; color: var(--muted); font-size: .66rem; font-weight: 700; }
 .segmented-control input:checked + span { color: var(--ink); background: var(--lime); }
 .button { min-height: 48px; padding: 11px 16px; border: 0; border-radius: 13px; font-weight: 800; }
@@ -380,7 +380,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .empty-session-guide h2 { margin: 0; font-size: 1.2rem; }
 .empty-session-guide p { grid-column: 2; margin: 3px 0 0; color: var(--muted); font-size: .95rem; }
 
-.game-day-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(330px, .65fr); align-items: start; gap: 18px; margin-bottom: 18px; }
+.game-day-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(330px, .65fr); grid-template-areas: "courts controls" "activity controls"; align-items: start; gap: 18px; margin-bottom: 18px; }
+.game-day-grid > *, .control-rail > *, .section-heading > *, .activity-heading > * { min-width: 0; }
+.courts-section { grid-area: courts; }
 .dashboard-section { margin-bottom: 0; }
 .courts-heading { align-items: center; margin-bottom: 4px; }
 .court-actions { display: flex; align-items: center; gap: 10px; }
@@ -393,10 +395,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .courts-grid { grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 12px; }
 .court-card { min-height: 0; border-color: rgba(235,249,241,.22); }
 .court-card.match-ready { border-style: dashed; border-color: rgba(88,168,255,.58); }
-.court-heading { padding: 14px 16px; }
+.court-heading { flex-wrap: wrap; gap: 8px 12px; padding: 14px 16px; }
+.court-number { min-width: 0; }
 .court-number h3 { font-size: 1.05rem; }
 .court-number small { color: var(--muted); font-size: .82rem; }
-.status-badge { padding: 7px 10px; font-size: .78rem; }
+.status-badge { max-width: 100%; padding: 7px 10px; font-size: .78rem; text-align: center; white-space: normal; }
 .status-badge.ready { color: #b9d9ff; border: 1px solid rgba(88,168,255,.4); background: rgba(88,168,255,.13); }
 .match-content { padding: 18px 16px 12px; }
 .team-label { font-size: .76rem; }
@@ -417,7 +420,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .compact-available .empty-court-content h3 { align-self: end; margin: 0; font-size: 1rem; }
 .compact-available .empty-court-content p { align-self: start; font-size: .88rem; }
 
-.control-rail { display: flex; flex-direction: column; gap: 12px; }
+.control-rail { grid-area: controls; display: flex; align-self: start; flex-direction: column; gap: 12px; }
 .control-rail .panel { padding: 18px; }
 .control-rail .section-heading h2 { font-size: 1.25rem; }
 .control-rail label, .control-rail legend { color: var(--text); font-size: .9rem; }
@@ -445,7 +448,7 @@ input, select { min-height: 50px; border-color: rgba(235,249,241,.28); font-size
 .player-status { padding: 6px 9px; font-size: .78rem; }
 .player-status.assigned { color: #c7e1ff; border: 1px solid rgba(88,168,255,.3); background: rgba(88,168,255,.12); }
 
-.activity-panel { margin-bottom: 16px; padding: 0; overflow: hidden; scroll-margin-top: 160px; }
+.activity-panel { grid-area: activity; margin-bottom: 0; padding: 0; overflow: hidden; scroll-margin-top: 160px; }
 .activity-heading { display: flex; justify-content: space-between; align-items: center; padding: 20px 22px 10px; }
 .activity-heading h2 { margin: 0; font-size: 1.4rem; }
 .activity-heading-actions { display: flex; align-items: center; gap: 10px; }
@@ -478,11 +481,12 @@ td { padding: 14px 12px; font-size: .92rem; }
 .history-winner { color: var(--lime); font-weight: 800; }
 .mobile-context-action { display: none; }
 .settings-drawer label, .settings-drawer legend { color: var(--text); font-size: .92rem; }
+.setting-help { margin: 8px 2px 0; color: var(--muted); font-size: .86rem; line-height: 1.45; }
 .settings-note strong { font-size: .95rem; }
 .settings-note p, .confirm-dialog p { color: var(--muted); font-size: .9rem; }
 
 .session-empty .session-metrics { display: none; }
-.session-empty .game-day-grid { grid-template-columns: minmax(0, 520px); justify-content: center; }
+.session-empty .game-day-grid { grid-template-columns: minmax(0, 520px); grid-template-areas: "controls"; justify-content: center; }
 .session-empty .courts-section,
 .session-empty .up-next-panel,
 .session-empty .queue-panel,
@@ -492,7 +496,7 @@ td { padding: 14px 12px; font-size: .92rem; }
   .session-command { grid-template-columns: 1fr auto; }
   .session-metrics { grid-row: 2; grid-column: 1 / -1; justify-content: stretch; }
   .session-metrics > div { flex: 1; }
-  .game-day-grid { grid-template-columns: 1fr; }
+  .game-day-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "courts" "controls" "activity"; }
   .control-rail { display: grid; grid-template-columns: 1fr 1fr; }
   .queue-panel { grid-column: 1 / -1; }
 }
@@ -509,6 +513,8 @@ td { padding: 14px 12px; font-size: .92rem; }
   .session-metrics > div { min-width: 68px; padding: 8px 5px; }
   .session-metrics dt { font-size: .72rem; }.session-metrics dd { font-size: 1.08rem; }
   .workflow-banner { position: static; padding: 12px; }.workflow-banner .workflow-action { display: none; }
+  .workflow-copy > div, .session-identity { min-width: 0; }
+  .workflow-copy strong, .workflow-copy p, .session-identity h1, .session-identity > p, .generate-help, .section-description { overflow-wrap: anywhere; }
   .workflow-copy p { font-size: .84rem; }.workflow-step { padding: 6px 8px; }
   .empty-session-guide { align-items: stretch; flex-direction: column; padding: 18px; }.empty-session-guide button { width: 100%; }
   .control-rail { display: flex; }.courts-heading { align-items: flex-start; }.court-actions { align-items: flex-end; flex-direction: column; }.court-actions .generate-button { display: none; }
@@ -523,6 +529,10 @@ td { padding: 14px 12px; font-size: .92rem; }
 
 @media (max-width: 540px) {
   .session-empty .session-metrics { display: none; }
+  .session-command { align-items: start; }
+  .workflow-copy { align-items: flex-start; }
+  .workflow-step { margin-top: 1px; }
+  .court-card, .match-content, .team, .team-player { width: 100%; max-width: 100%; min-width: 0; }
   .match-content { padding: 14px; }
   .team-player strong { font-size: 1rem; }
   .match-footer { align-items: stretch; flex-direction: column; }.start-match { width: 100%; }
@@ -531,4 +541,5 @@ td { padding: 14px 12px; font-size: .92rem; }
   .history-item { grid-template-columns: 1fr; gap: 12px; }.history-teams { grid-template-columns: 1fr; }.history-teams b { display: none; }
   .mobile-player-stats span { font-size: .78rem; }
   .player-card-mobile .row-action { min-height: 44px; font-size: .82rem; }
+  .toast { right: 10px; left: 10px; max-width: none; }
 }
