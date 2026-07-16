@@ -65,8 +65,8 @@ None. Existing component-specific hard-coded green treatments remain intentional
 
 ### Commit SHA
 
-Pending until this fix is committed.
+`89b2b8b` - `fix: resolve Task 1 review findings`.
 
 ### Concerns
 
-The existing destructive border/background alpha treatments still use legacy red rgba values; this fix changes only text contrast and the required font assignments.
+None for the requested findings. The existing destructive border/background alpha treatments still use legacy red rgba values, but they do not affect normal-size text contrast.
