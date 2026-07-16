@@ -643,6 +643,8 @@ function renderWorkflow() {
   elements.workflowGuidance.textContent = workflow.guidance;
   elements.workflowAction.textContent = workflow.label;
   elements.mobileContextAction.textContent = workflow.label;
+  elements.workflowAction.dataset.action = workflow.action;
+  elements.mobileContextAction.dataset.action = workflow.action;
   const isEmpty = getActivePlayers().length === 0;
   document.body.classList.toggle("session-empty", isEmpty);
   elements.emptySessionGuide.hidden = !isEmpty;
