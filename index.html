@@ -29,7 +29,7 @@
 
       --line: rgba(10, 10, 10, 0.25);
       --line-strong: #0a0a0a;
-      --muted: rgba(10, 10, 10, 0.6);
+      --muted: rgba(10, 10, 10, 0.72);
 
       --danger: #c8102e;
 
@@ -65,8 +65,8 @@
       background: var(--paper);
       color: var(--ink);
       font-family: var(--display);
-      font-size: 15px;
-      line-height: 1.45;
+      font-size: 16px;
+      line-height: 1.55;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -92,7 +92,7 @@
     }
 
     /* Shared mono label treatment: uppercase, tracked, small. */
-    .section-note,
+    /* Short labels only: tracked uppercase is fine in small doses. */
     .panel-eyebrow,
     .brand-meta,
     .ticker,
@@ -109,12 +109,20 @@
     .leaderboard-stat,
     .history-round,
     .history-time,
-    .status-message,
-    .empty-state,
     .summary-bar {
       font-family: var(--mono);
       letter-spacing: 0.06em;
       text-transform: uppercase;
+    }
+
+    /* Running copy stays sentence case and untracked so it can be read
+       at a glance, courtside, by anyone. */
+    .section-note,
+    .status-message,
+    .empty-state {
+      font-family: var(--mono);
+      letter-spacing: 0.01em;
+      text-transform: none;
     }
 
     /* =========================================================
@@ -144,7 +152,7 @@
     }
 
     .brand-meta {
-      font-size: 0.66rem;
+      font-size: 0.82rem;
       color: var(--muted);
     }
 
@@ -199,7 +207,7 @@
 
     .header-tag {
       font-family: var(--mono);
-      font-size: 0.66rem;
+      font-size: 0.82rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
@@ -212,7 +220,7 @@
       padding: 11px 0;
       background: var(--blue);
       color: var(--white);
-      font-size: 0.66rem;
+      font-size: 0.82rem;
       border-bottom: 1px solid var(--line-strong);
     }
 
@@ -290,7 +298,7 @@
     .panel-eyebrow {
       display: block;
       margin-bottom: 6px;
-      font-size: 0.62rem;
+      font-size: 0.78rem;
       color: var(--blue);
     }
 
@@ -307,8 +315,8 @@
 
     .section-note {
       margin: 8px 0 0;
-      max-width: 60ch;
-      font-size: 0.62rem;
+      max-width: 68ch;
+      font-size: 0.78rem;
       line-height: 1.6;
       color: var(--muted);
     }
@@ -334,7 +342,7 @@
 
     label,
     legend {
-      font-size: 0.62rem;
+      font-size: 0.78rem;
       color: var(--muted);
     }
 
@@ -392,7 +400,7 @@
       border: 1px solid var(--line-strong);
       background: var(--white);
       font-family: var(--mono);
-      font-size: 0.68rem;
+      font-size: 0.84rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--ink);
@@ -421,7 +429,7 @@
       min-height: var(--tap-size);
       padding: 12px 18px;
       border: 1px solid var(--line-strong);
-      font-size: 0.7rem;
+      font-size: 0.86rem;
       font-weight: 700;
       transition: background 0.12s linear, color 0.12s linear;
     }
@@ -450,13 +458,13 @@
     .button-small {
       min-height: 40px;
       padding: 9px 13px;
-      font-size: 0.62rem;
+      font-size: 0.78rem;
     }
 
     .generate-button {
       width: 100%;
       min-height: 68px;
-      font-size: 0.82rem;
+      font-size: 0.95rem;
     }
 
     .panel-actions {
@@ -474,7 +482,7 @@
       padding: 11px 13px;
       border: 1px solid var(--line-strong);
       border-left-width: 5px;
-      font-size: 0.62rem;
+      font-size: 0.78rem;
       line-height: 1.6;
       letter-spacing: 0.04em;
     }
@@ -551,7 +559,7 @@
     .skill-badge {
       display: inline-block;
       margin-top: 6px;
-      font-size: 0.58rem;
+      font-size: 0.75rem;
       color: var(--blue);
     }
 
@@ -571,7 +579,7 @@
       gap: 3px;
       padding: 9px 4px;
       border-left: 1px solid var(--line);
-      font-size: 0.52rem;
+      font-size: 0.75rem;
       color: var(--muted);
       text-align: center;
     }
@@ -600,7 +608,7 @@
       border: 1px solid var(--line-strong);
       background: var(--white);
       color: var(--ink);
-      font-size: 0.58rem;
+      font-size: 0.75rem;
       font-weight: 700;
       transition: background 0.12s linear, color 0.12s linear;
     }
@@ -634,7 +642,7 @@
       padding: 9px 12px;
       background: var(--ink);
       color: var(--paper);
-      font-size: 0.6rem;
+      font-size: 0.76rem;
     }
 
     .summary-bar:empty {
@@ -680,7 +688,7 @@
     }
 
     .court-status {
-      font-size: 0.56rem;
+      font-size: 0.75rem;
       opacity: 0.85;
     }
 
@@ -705,7 +713,7 @@
     }
 
     .side-label {
-      font-size: 0.56rem;
+      font-size: 0.75rem;
       color: var(--blue);
     }
 
@@ -728,7 +736,7 @@
     .versus {
       padding: 9px 0;
       font-family: var(--mono);
-      font-size: 0.6rem;
+      font-size: 0.76rem;
       letter-spacing: 0.12em;
       color: var(--muted);
       text-align: center;
@@ -741,7 +749,7 @@
       background: var(--white);
       color: var(--ink);
       font-family: var(--mono);
-      font-size: 0.6rem;
+      font-size: 0.76rem;
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -792,7 +800,7 @@
       height: 34px;
       border: 1px solid var(--line-strong);
       font-family: var(--mono);
-      font-size: 0.62rem;
+      font-size: 0.78rem;
       font-weight: 700;
     }
 
@@ -819,7 +827,7 @@
 
     .queue-player-info span {
       font-family: var(--mono);
-      font-size: 0.58rem;
+      font-size: 0.75rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
@@ -827,7 +835,7 @@
 
     .queue-wait {
       flex: 0 0 auto;
-      font-size: 0.58rem;
+      font-size: 0.75rem;
       font-weight: 700;
       text-align: right;
       color: var(--muted);
@@ -844,7 +852,7 @@
     .leaderboard-header {
       padding: 0 0 9px;
       border-bottom: 1px solid var(--line-strong);
-      font-size: 0.56rem;
+      font-size: 0.75rem;
       color: var(--muted);
     }
 
@@ -859,7 +867,7 @@
 
     .leaderboard-number {
       font-family: var(--mono);
-      font-size: 0.68rem;
+      font-size: 0.84rem;
       font-weight: 700;
       color: var(--blue);
     }
@@ -876,7 +884,7 @@
 
     .leaderboard-stat {
       font-family: var(--mono);
-      font-size: 0.72rem;
+      font-size: 0.88rem;
       font-weight: 700;
       text-align: center;
     }
@@ -895,7 +903,7 @@
     }
 
     .history-round {
-      font-size: 0.56rem;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--blue);
     }
@@ -916,17 +924,78 @@
 
     .history-result span {
       font-family: var(--mono);
-      font-size: 0.56rem;
+      font-size: 0.75rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
     }
 
     .history-time {
-      font-size: 0.56rem;
+      font-size: 0.75rem;
       color: var(--muted);
       text-align: right;
       white-space: nowrap;
+    }
+
+    /* Brief highlight when jumped to from the top bar. */
+    .panel.flash {
+      animation: panel-flash 1.2s ease-out;
+    }
+
+    @keyframes panel-flash {
+      from {
+        box-shadow: inset 0 0 0 3px var(--blue);
+      }
+      to {
+        box-shadow: inset 0 0 0 3px transparent;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .panel.flash {
+        animation: none;
+      }
+    }
+
+    .session-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px var(--gutter);
+      border-bottom: 1px solid var(--line-strong);
+      background: var(--white);
+    }
+
+    .session-bar-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1 1 260px;
+      min-width: 0;
+    }
+
+    .session-bar-main label {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+
+    .session-bar-main select {
+      flex: 1 1 auto;
+      min-width: 0;
+      max-width: 420px;
+      min-height: 42px;
+    }
+
+    .session-bar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    body.is-viewer .session-bar {
+      display: none;
     }
 
     .share-grid {
@@ -961,7 +1030,7 @@
 
     .share-details input {
       font-family: var(--mono);
-      font-size: 0.66rem;
+      font-size: 0.82rem;
       font-weight: 400;
       letter-spacing: 0;
       text-transform: none;
@@ -989,7 +1058,7 @@
       background: var(--ink);
       color: var(--paper);
       font-family: var(--mono);
-      font-size: 0.62rem;
+      font-size: 0.78rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
@@ -1015,7 +1084,7 @@
     .empty-state {
       padding: 26px 18px;
       border: 1px dashed var(--line);
-      font-size: 0.6rem;
+      font-size: 0.76rem;
       line-height: 1.7;
       color: var(--muted);
       text-align: center;
@@ -1091,13 +1160,34 @@
 
       .leaderboard-row .leaderboard-stat::before {
         content: attr(data-label);
-        font-size: 0.5rem;
+        font-size: 0.75rem;
         font-weight: 400;
         color: var(--muted);
       }
 
       .share-grid {
         grid-template-columns: 1fr;
+      }
+
+      .session-bar {
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 10px;
+      }
+
+      /* Without this the flex-grow meant for the desktop row stretches
+         the bar vertically once it stacks. */
+      .session-bar-main {
+        flex: 0 0 auto;
+      }
+
+      .session-bar-main select {
+        max-width: none;
+      }
+
+      .session-bar-actions .button {
+        flex: 1 1 auto;
       }
 
       .history-item {
@@ -1267,6 +1357,20 @@
     </div>
   </header>
 
+  <div id="session-bar" class="session-bar">
+    <div class="session-bar-main">
+      <label for="session-select">Session</label>
+      <select id="session-select" aria-label="Switch session"></select>
+    </div>
+
+    <div class="session-bar-actions">
+      <button id="session-qr" class="button button-primary button-small" type="button">Share QR</button>
+      <button id="session-new" class="button button-secondary button-small" type="button">New</button>
+      <button id="session-rename" class="button button-secondary button-small" type="button">Rename</button>
+      <button id="session-delete" class="button button-secondary button-small" type="button">Delete</button>
+    </div>
+  </div>
+
   <div id="viewer-banner" class="viewer-banner" hidden>
     <strong>Live view</strong>
     <span id="viewer-updated">Read-only. Standings update as the scorekeeper records results.</span>
@@ -1352,10 +1456,49 @@
          RIGHT COLUMN: CONFIGURATION, COURTS, QUEUE, LEADERBOARD
          ======================================================= -->
     <main class="main-content">
+      <section class="panel" aria-labelledby="share-title">
+        <div class="panel-header">
+          <div>
+            <span class="panel-eyebrow">03 / Share</span>
+            <h2 id="share-title">Session QR</h2>
+            <p id="share-status" class="section-note" data-status="idle">Not shared</p>
+          </div>
+
+          <div class="panel-actions">
+            <button id="share-publish" class="button button-primary button-small" type="button">
+              Publish &amp; Get QR
+            </button>
+            <button id="share-refresh" class="button button-secondary button-small" type="button">
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="share-grid">
+          <div id="share-qr" class="share-qr"></div>
+
+          <div class="share-details">
+            <p class="section-note">
+              Publishing uploads a copy of this session. Anyone who scans the code sees
+              live standings and results, but cannot change anything. Your device stays
+              the scorekeeper and keeps working with no signal.
+            </p>
+
+            <label for="share-link">Share link</label>
+            <input id="share-link" type="text" readonly placeholder="Not published yet" />
+
+            <button id="share-copy" class="button button-secondary button-small" type="button">
+              Copy link
+            </button>
+          </div>
+        </div>
+
+        <div id="share-message" class="status-message" role="status" aria-live="polite"></div>
+      </section>
       <section class="panel config-panel" aria-labelledby="configuration-title">
         <div class="panel-header">
           <div>
-            <span class="panel-eyebrow">03 / Setup</span>
+            <span class="panel-eyebrow">04 / Setup</span>
             <h2 id="configuration-title">Session Config</h2>
             <p class="section-note">The highest-priority waiting players are selected before teams are randomized.</p>
           </div>
@@ -1405,7 +1548,7 @@
       <section class="panel" aria-labelledby="courts-title">
         <div class="panel-header">
           <div>
-            <span class="panel-eyebrow">04 / In Play</span>
+            <span class="panel-eyebrow">05 / In Play</span>
             <h2 id="courts-title">Live Courts</h2>
             <p id="round-label" class="section-note">No round generated yet.</p>
           </div>
@@ -1418,7 +1561,7 @@
       <section class="panel" aria-labelledby="queue-title">
         <div class="panel-header">
           <div>
-            <span class="panel-eyebrow">05 / Waiting</span>
+            <span class="panel-eyebrow">06 / Waiting</span>
             <h2 id="queue-title">Next Up</h2>
             <p class="section-note">Ordered by rounds waited, with ties randomized on each round.</p>
           </div>
@@ -1430,7 +1573,7 @@
       <section class="panel" aria-labelledby="leaderboard-title">
         <div class="panel-header">
           <div>
-            <span class="panel-eyebrow">06 / Standings</span>
+            <span class="panel-eyebrow">07 / Standings</span>
             <h2 id="leaderboard-title">Leaderboard</h2>
             <p class="section-note">Ranked by wins, then win rate, then fewer losses.</p>
           </div>
@@ -1449,7 +1592,7 @@
       <section class="panel" aria-labelledby="history-title">
         <div class="panel-header">
           <div>
-            <span class="panel-eyebrow">07 / Records</span>
+            <span class="panel-eyebrow">08 / Records</span>
             <h2 id="history-title">Match History</h2>
             <p id="history-count" class="section-note">No matches logged yet.</p>
           </div>
@@ -1478,45 +1621,6 @@
         <div id="history-message" class="status-message" role="status" aria-live="polite"></div>
       </section>
 
-      <section class="panel" aria-labelledby="share-title">
-        <div class="panel-header">
-          <div>
-            <span class="panel-eyebrow">08 / Share</span>
-            <h2 id="share-title">Session QR</h2>
-            <p id="share-status" class="section-note" data-status="idle">Not shared</p>
-          </div>
-
-          <div class="panel-actions">
-            <button id="share-publish" class="button button-primary button-small" type="button">
-              Publish &amp; Get QR
-            </button>
-            <button id="share-refresh" class="button button-secondary button-small" type="button">
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        <div class="share-grid">
-          <div id="share-qr" class="share-qr"></div>
-
-          <div class="share-details">
-            <p class="section-note">
-              Publishing uploads a copy of this session. Anyone who scans the code sees
-              live standings and results, but cannot change anything. Your device stays
-              the scorekeeper and keeps working with no signal.
-            </p>
-
-            <label for="share-link">Share link</label>
-            <input id="share-link" type="text" readonly placeholder="Not published yet" />
-
-            <button id="share-copy" class="button button-secondary button-small" type="button">
-              Copy link
-            </button>
-          </div>
-        </div>
-
-        <div id="share-message" class="status-message" role="status" aria-live="polite"></div>
-      </section>
     </main>
   </div>
 
@@ -1961,6 +2065,8 @@
       activeMatches: [],
       matchLog: [],
       viewerMode: false,
+      sessionId: null,
+      sessionName: "",
       share: null,
 
       // Key format: "lowerPlayerId|higherPlayerId"
@@ -2005,6 +2111,13 @@
       historyList: document.querySelector("#history-list"),
       historyCount: document.querySelector("#history-count"),
       historyMessage: document.querySelector("#history-message"),
+      sessionBar: document.querySelector("#session-bar"),
+      sessionSelect: document.querySelector("#session-select"),
+      sessionQr: document.querySelector("#session-qr"),
+      sessionNew: document.querySelector("#session-new"),
+      sessionRename: document.querySelector("#session-rename"),
+      sessionDelete: document.querySelector("#session-delete"),
+
       viewerBanner: document.querySelector("#viewer-banner"),
       viewerUpdated: document.querySelector("#viewer-updated"),
 
@@ -2032,8 +2145,98 @@
        on load. Player objects are stored once; matches only keep
        player ids and are re-linked to the roster on restore.
        ========================================================= */
-    const STORAGE_KEY = "kirkorino-pickleball-session-v1";
+    const LEGACY_STORAGE_KEY = "kirkorino-pickleball-session-v1";
+    const LEGACY_SHARE_KEY = "kirq-share-v1";
+    const INDEX_KEY = "kirq-index-v1";
+    const SESSION_PREFIX = "kirq-session-";
+
     let storageAvailable = true;
+
+    function sessionKey(sessionId) {
+      return `${SESSION_PREFIX}${sessionId}`;
+    }
+
+    function readJson(key) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function writeJson(key, value) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (error) {
+        storageAvailable = false;
+        return false;
+      }
+    }
+
+    /* The index is the list of saved sessions plus which one is open. */
+    function loadIndex() {
+      const index = readJson(INDEX_KEY);
+
+      if (index && Array.isArray(index.sessions) && index.sessions.length > 0) {
+        return index;
+      }
+
+      // First run on this browser: adopt any single session saved by an
+      // earlier version rather than throwing it away.
+      const legacy = readJson(LEGACY_STORAGE_KEY);
+      const legacyShare = readJson(LEGACY_SHARE_KEY);
+
+      if (legacy) {
+        const id = createId("session");
+        writeJson(sessionKey(id), { ...legacy, share: legacyShare || null });
+
+        const migrated = {
+          activeId: id,
+          sessions: [{ id, name: "Session 1", createdAt: Date.now(), updatedAt: Date.now() }]
+        };
+
+        writeJson(INDEX_KEY, migrated);
+        return migrated;
+      }
+
+      const id = createId("session");
+      const fresh = {
+        activeId: id,
+        sessions: [{ id, name: defaultSessionName(), createdAt: Date.now(), updatedAt: Date.now() }]
+      };
+
+      writeJson(INDEX_KEY, fresh);
+      return fresh;
+    }
+
+    function saveIndex(index) {
+      writeJson(INDEX_KEY, index);
+    }
+
+    function defaultSessionName() {
+      return new Date().toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function currentSessionEntry() {
+      const index = loadIndex();
+      return index.sessions.find((entry) => entry.id === index.activeId) || index.sessions[0];
+    }
+
+    /* Wipe the in-memory state so a new session starts clean. */
+    function resetStateForNewSession() {
+      state.players = [];
+      state.currentRound = 0;
+      state.activeMatches = [];
+      state.matchLog = [];
+      state.teammateHistory = new Map();
+      state.share = null;
+    }
 
     function serializeMatch(match) {
       return {
@@ -2064,41 +2267,140 @@
 
       schedulePush();
 
-      if (!storageAvailable) return;
+      if (!storageAvailable || !state.sessionId) return;
 
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
-      } catch (error) {
-        storageAvailable = false;
+      const written = writeJson(sessionKey(state.sessionId), {
+        ...serializeState(),
+        share: state.share || null
+      });
+
+      if (!written) {
         setStatus(
           elements.historyMessage,
           "This browser blocked local storage, so results will be lost on refresh. Export a backup to keep them.",
           "warning"
         );
+        return;
+      }
+
+      const index = loadIndex();
+      const entry = index.sessions.find((item) => item.id === state.sessionId);
+
+      if (entry) {
+        entry.updatedAt = Date.now();
+        saveIndex(index);
       }
     }
 
     function restoreState() {
-      let raw = null;
+      const index = loadIndex();
+      const entry = index.sessions.find((item) => item.id === index.activeId) || index.sessions[0];
 
-      try {
-        raw = window.localStorage.getItem(STORAGE_KEY);
-      } catch (error) {
-        storageAvailable = false;
-        return;
-      }
+      state.sessionId = entry.id;
+      state.sessionName = entry.name;
 
-      if (!raw) return;
-
-      let saved = null;
-
-      try {
-        saved = JSON.parse(raw);
-      } catch (error) {
-        return;
-      }
+      const saved = readJson(sessionKey(entry.id));
+      if (!saved) return;
 
       applySnapshot(saved);
+      state.share = saved.share || null;
+    }
+
+    /* ---------- session library operations ---------- */
+    function switchSession(sessionId) {
+      const index = loadIndex();
+      const entry = index.sessions.find((item) => item.id === sessionId);
+      if (!entry || sessionId === state.sessionId) return;
+
+      saveState();
+
+      resetStateForNewSession();
+      state.sessionId = entry.id;
+      state.sessionName = entry.name;
+
+      const saved = readJson(sessionKey(entry.id));
+      if (saved) {
+        applySnapshot(saved);
+        state.share = saved.share || null;
+      }
+
+      index.activeId = sessionId;
+      saveIndex(index);
+      renderAll();
+    }
+
+    function createSession(name) {
+      saveState();
+
+      const index = loadIndex();
+      const id = createId("session");
+      const entry = {
+        id,
+        name: name || defaultSessionName(),
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      index.sessions.push(entry);
+      index.activeId = id;
+      saveIndex(index);
+
+      resetStateForNewSession();
+      state.sessionId = id;
+      state.sessionName = entry.name;
+
+      renderAll();
+      return entry;
+    }
+
+    function renameSession(sessionId, name) {
+      const cleanName = String(name || "").trim().slice(0, 60);
+      if (!cleanName) return false;
+
+      const index = loadIndex();
+      const entry = index.sessions.find((item) => item.id === sessionId);
+      if (!entry) return false;
+
+      entry.name = cleanName;
+      saveIndex(index);
+
+      if (sessionId === state.sessionId) state.sessionName = cleanName;
+
+      renderAll();
+      return true;
+    }
+
+    function deleteSession(sessionId) {
+      const index = loadIndex();
+      if (index.sessions.length <= 1) return false;
+
+      index.sessions = index.sessions.filter((item) => item.id !== sessionId);
+
+      try {
+        window.localStorage.removeItem(sessionKey(sessionId));
+      } catch (error) {
+        /* Nothing more we can do; the index entry is gone either way. */
+      }
+
+      if (index.activeId === sessionId) {
+        index.activeId = index.sessions[0].id;
+        saveIndex(index);
+
+        resetStateForNewSession();
+        state.sessionId = index.sessions[0].id;
+        state.sessionName = index.sessions[0].name;
+
+        const saved = readJson(sessionKey(state.sessionId));
+        if (saved) {
+          applySnapshot(saved);
+          state.share = saved.share || null;
+        }
+      } else {
+        saveIndex(index);
+      }
+
+      renderAll();
+      return true;
     }
 
     /* Load a serialized session (from storage or from a shared link). */
@@ -2203,7 +2505,6 @@
     const SUPABASE_URL = "https://qagqtdctkcvqfxkysoqx.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_UNEuBLNoUd1I48-1gjQU2g_M2GXdiAn";
 
-    const SHARE_KEY = "kirq-share-v1";
     const VIEWER_POLL_MS = 15000;
 
     let pushTimer = null;
@@ -2242,27 +2543,6 @@
       return response.json();
     }
 
-    function loadShareRecord() {
-      try {
-        const raw = window.localStorage.getItem(SHARE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch (error) {
-        return null;
-      }
-    }
-
-    function saveShareRecord(record) {
-      try {
-        if (record) {
-          window.localStorage.setItem(SHARE_KEY, JSON.stringify(record));
-        } else {
-          window.localStorage.removeItem(SHARE_KEY);
-        }
-      } catch (error) {
-        /* Sharing still works for this tab even if it cannot be remembered. */
-      }
-    }
-
     function shareUrlFor(code) {
       const base = `${window.location.origin}${window.location.pathname}`;
       return `${base}?s=${code}`;
@@ -2276,8 +2556,9 @@
       const row = Array.isArray(result) ? result[0] : result;
       if (!row || !row.code) throw new Error("The server did not return a share code.");
 
+      // Stored with the session, so each session keeps its own QR.
       state.share = { code: row.code, editToken: row.edit_token };
-      saveShareRecord(state.share);
+      saveState();
       return state.share;
     }
 
@@ -2361,6 +2642,43 @@
 
       svg.append(background, modules);
       return { svg, version: qr.version };
+    }
+
+    /* =========================================================
+       SESSION SWITCHER
+       ========================================================= */
+    function renderSessionBar() {
+      if (state.viewerMode) return;
+
+      const index = loadIndex();
+      elements.sessionSelect.innerHTML = "";
+
+      index.sessions
+        .slice()
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .forEach((entry) => {
+          const option = document.createElement("option");
+          const isActive = entry.id === state.sessionId;
+
+          // The active session is read from memory: the stored copy is
+          // written after rendering and would be one change behind.
+          const saved = isActive ? null : readJson(sessionKey(entry.id));
+          const playerCount = isActive
+            ? state.players.length
+            : (saved && Array.isArray(saved.players) ? saved.players.length : 0);
+          const matchCount = isActive
+            ? state.matchLog.length
+            : (saved && Array.isArray(saved.matchLog) ? saved.matchLog.length : 0);
+
+          option.value = entry.id;
+          option.textContent =
+            `${entry.name} — ${playerCount} player${playerCount === 1 ? "" : "s"}, ` +
+            `${matchCount} match${matchCount === 1 ? "" : "es"}`;
+          option.selected = isActive;
+          elements.sessionSelect.appendChild(option);
+        });
+
+      elements.sessionDelete.disabled = index.sessions.length <= 1;
     }
 
     /* =========================================================
@@ -3373,6 +3691,7 @@
       renderLeaderboard();
       renderMatchHistory();
       renderSharePanel();
+      renderSessionBar();
       saveState();
     }
 
@@ -3455,6 +3774,47 @@
       state.matchLog = [];
       renderAll();
       setStatus(elements.historyMessage, "Match log cleared.", "info");
+    });
+
+    elements.sessionSelect.addEventListener("change", (event) => {
+      switchSession(event.target.value);
+    });
+
+    elements.sessionQr.addEventListener("click", () => {
+      const panel = elements.shareQr.closest(".panel");
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      panel.classList.add("flash");
+      window.setTimeout(() => panel.classList.remove("flash"), 1200);
+    });
+
+    elements.sessionNew.addEventListener("click", () => {
+      const name = window.prompt("Name this session", defaultSessionName());
+      if (name === null) return;
+
+      const entry = createSession(name.trim());
+      setStatus(elements.playerFormMessage, `Started "${entry.name}". Add players to begin.`, "info");
+    });
+
+    elements.sessionRename.addEventListener("click", () => {
+      const name = window.prompt("Rename this session", state.sessionName);
+      if (name === null) return;
+
+      if (!renameSession(state.sessionId, name)) {
+        setStatus(elements.playerFormMessage, "Please enter a session name.", "error");
+      }
+    });
+
+    elements.sessionDelete.addEventListener("click", () => {
+      const confirmed = window.confirm(
+        `Delete "${state.sessionName}"? Its roster and match log are removed from this device. ` +
+          "Any share link for it stops updating."
+      );
+
+      if (!confirmed) return;
+
+      if (!deleteSession(state.sessionId)) {
+        setStatus(elements.playerFormMessage, "You cannot delete your only session.", "warning");
+      }
     });
 
     elements.sharePublish.addEventListener("click", async () => {
@@ -3574,7 +3934,6 @@
       bootSharedView(sharedCode);
     } else {
       restoreState();
-      state.share = loadShareRecord();
       renderAll();
     }
   </script>
