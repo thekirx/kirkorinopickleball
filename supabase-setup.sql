@@ -15,8 +15,6 @@
 --     so the table cannot grow without bound.
 -- =====================================================================
 
-create extension if not exists pgcrypto;
-
 create table if not exists public.kirq_sessions (
   id          uuid primary key default gen_random_uuid(),
   code        text        not null unique,
@@ -57,8 +55,10 @@ begin
   -- Opportunistic sweep of expired sessions.
   delete from public.kirq_sessions where expires_at < now();
 
-  v_code  := encode(gen_random_bytes(9), 'hex');   -- 18 chars, 72 bits
-  v_token := encode(gen_random_bytes(24), 'hex');  -- 48 chars, 192 bits
+  -- gen_random_uuid() is Postgres core, so this needs no extension.
+  v_code  := substr(replace(gen_random_uuid()::text, '-', ''), 1, 18);
+  v_token := replace(gen_random_uuid()::text, '-', '')
+          || replace(gen_random_uuid()::text, '-', '');
 
   insert into public.kirq_sessions (code, edit_token, payload)
   values (v_code, v_token, p_payload);
