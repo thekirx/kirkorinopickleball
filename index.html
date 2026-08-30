@@ -3,50 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PickQue sabi ni Kirk Orino on tiktok</title>
+  <title>PickQue — Kirk Orino</title>
+  <meta name="theme-color" content="#1d36ff" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
 
   <style>
     /* =========================================================
-       DESIGN TOKENS
-       Change these values first when restyling the application.
+       DESIGN TOKENS — kirkorino.com
+       Paper + ink + electric blue, Archivo display, mono labels,
+       hard edges, hairline rules, zero radius.
        ========================================================= */
     :root {
-      --page-bg: #f4f6f8;
-      --surface: #ffffff;
-      --surface-muted: #f8fafc;
-      --text: #17202a;
-      --text-muted: #667085;
-      --border: #d8dee6;
-      --primary: #155eef;
-      --primary-hover: #004eeb;
-      --success: #067647;
-      --success-bg: #ecfdf3;
-      --danger: #b42318;
-      --warning-bg: #fffaeb;
-      --warning-border: #fedf89;
-      --radius: 10px;
-      --shadow: 0 3px 12px rgba(16, 24, 40, 0.07);
-      --gap: 16px;
-      --tap-size: 44px;
+      --paper: #f4f2ed;
+      --ink: #0a0a0a;
+      --blue: #1d36ff;
+      --lime: #e7ff4f;
+      --lavender: #aeb8ff;
+      --white: #ffffff;
+
+      --line: rgba(10, 10, 10, 0.25);
+      --line-strong: #0a0a0a;
+      --muted: rgba(10, 10, 10, 0.6);
+
+      --danger: #c8102e;
+
+      --display: "Archivo", "Archivo Black", "Arial Black", Arial, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+      --gutter: clamp(0.75rem, 2.4vw, 2rem);
+      --gap: clamp(0.75rem, 1.6vw, 1.25rem);
+      --tap-size: 48px;
+
+      /* Legacy aliases so existing markup keeps resolving. */
+      --page-bg: var(--paper);
+      --surface: var(--white);
+      --surface-muted: var(--paper);
+      --text: var(--ink);
+      --text-muted: var(--muted);
+      --border: var(--line-strong);
+      --primary: var(--blue);
+      --primary-hover: var(--ink);
+      --radius: 0;
+      --shadow: none;
     }
 
-    * {
+    *,
+    *::before,
+    *::after {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--page-bg);
-      color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
-      line-height: 1.5;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--display);
+      font-size: 15px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
     }
 
     button,
     input,
     select {
       font: inherit;
+      border-radius: 0;
     }
 
     button {
@@ -55,37 +83,180 @@
 
     button:disabled {
       cursor: not-allowed;
-      opacity: 0.62;
+      opacity: 0.4;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    /* Shared mono label treatment: uppercase, tracked, small. */
+    .section-note,
+    .panel-eyebrow,
+    .brand-meta,
+    .ticker,
+    label,
+    legend,
+    .button,
+    .mini-button,
+    .skill-badge,
+    .stat-box,
+    .court-status,
+    .side-label,
+    .queue-wait,
+    .leaderboard-header,
+    .leaderboard-stat,
+    .history-round,
+    .history-time,
+    .status-message,
+    .empty-state,
+    .summary-bar {
+      font-family: var(--mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* =========================================================
+       MASTHEAD
+       ========================================================= */
+    .brand-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px var(--gutter);
+      border-bottom: 1px solid var(--line-strong);
+      background: var(--paper);
+    }
+
+    .brand-mark {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 1.1rem;
+      letter-spacing: -0.06em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark sup {
+      font-size: 0.5em;
+      vertical-align: super;
+    }
+
+    .brand-meta {
+      font-size: 0.66rem;
+      color: var(--muted);
+    }
+
+    .brand-meta a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-meta a:hover {
+      color: var(--blue);
+      border-color: var(--blue);
     }
 
     .app-header {
-      padding: 22px clamp(16px, 4vw, 48px);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      padding: clamp(20px, 4vw, 44px) var(--gutter) clamp(16px, 3vw, 32px);
+      border-bottom: 1px solid var(--line-strong);
+      background: var(--paper);
     }
 
     .app-header h1 {
       margin: 0;
-      font-size: clamp(1.5rem, 3vw, 2.15rem);
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: clamp(2.75rem, 12vw, 8.5rem);
+      line-height: 0.84;
+      letter-spacing: -0.045em;
+      text-transform: uppercase;
+    }
+
+    .app-header h1 .accent {
+      color: var(--blue);
+    }
+
+    .header-foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: clamp(16px, 3vw, 30px);
     }
 
     .app-header p {
-      margin: 4px 0 0;
-      color: var(--text-muted);
+      max-width: 34ch;
+      margin: 0;
+      font-weight: 700;
+      font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+      line-height: 1.25;
+      letter-spacing: -0.01em;
     }
 
+    .header-tag {
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* Full-bleed ticker, straight off the site. */
+    .ticker {
+      overflow: hidden;
+      padding: 11px 0;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 0.66rem;
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      gap: 42px;
+      padding-left: 42px;
+      animation: ticker-scroll 34s linear infinite;
+    }
+
+    .ticker-track span {
+      white-space: nowrap;
+    }
+
+    .ticker-track span::before {
+      content: "●";
+      margin-right: 42px;
+      font-size: 0.7em;
+      vertical-align: middle;
+    }
+
+    @keyframes ticker-scroll {
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ticker-track {
+        animation: none;
+      }
+    }
+
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
     .app-layout {
       display: grid;
-      grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+      grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
       gap: var(--gap);
-      width: min(1500px, 100%);
+      width: min(1560px, 100%);
       margin: 0 auto;
-      padding: var(--gap);
-    }
-
-    .sidebar,
-    .main-content {
-      min-width: 0;
+      padding: var(--gap) var(--gutter) clamp(40px, 8vw, 90px);
     }
 
     .sidebar,
@@ -93,142 +264,219 @@
       display: flex;
       flex-direction: column;
       gap: var(--gap);
+      min-width: 0;
     }
 
+    /* =========================================================
+       PANELS
+       ========================================================= */
     .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
+      background: var(--white);
+      border: 1px solid var(--line-strong);
+      padding: clamp(14px, 2vw, 22px);
     }
 
     .panel-header {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
+      flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .panel-eyebrow {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.62rem;
+      color: var(--blue);
     }
 
     .panel-header h2,
     .panel-header h3 {
       margin: 0;
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: clamp(1.15rem, 2.1vw, 1.65rem);
+      line-height: 0.95;
+      letter-spacing: -0.035em;
+      text-transform: uppercase;
     }
 
     .section-note {
-      margin: 2px 0 0;
-      color: var(--text-muted);
-      font-size: 0.9rem;
+      margin: 8px 0 0;
+      max-width: 60ch;
+      font-size: 0.62rem;
+      line-height: 1.6;
+      color: var(--muted);
     }
 
+    /* =========================================================
+       FORMS
+       ========================================================= */
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 7px;
     }
 
-    .form-group.full-width {
+    .full-width {
       grid-column: 1 / -1;
     }
 
     label,
     legend {
-      font-weight: 700;
-      font-size: 0.92rem;
+      font-size: 0.62rem;
+      color: var(--muted);
     }
 
-    input,
-    select,
-    .button,
-    .mini-button,
-    .winner-button {
-      min-height: var(--tap-size);
+    legend {
+      padding: 0;
+      margin-bottom: 8px;
     }
 
-    input,
+    input[type="text"],
+    input[type="number"],
     select {
       width: 100%;
-      padding: 9px 11px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: #fff;
-      color: var(--text);
+      min-height: var(--tap-size);
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+      color: var(--ink);
+      font-family: var(--display);
+      font-weight: 700;
+      appearance: none;
+    }
+
+    select {
+      background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+        linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+    }
+
+    input::placeholder {
+      color: rgba(10, 10, 10, 0.35);
+      font-weight: 400;
     }
 
     input:focus,
-    select:focus,
-    button:focus-visible {
-      outline: 3px solid rgba(21, 94, 239, 0.2);
-      outline-offset: 2px;
+    select:focus {
+      outline: 0;
+      border-color: var(--blue);
+      box-shadow: inset 0 0 0 1px var(--blue);
     }
 
     .radio-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: stretch;
+      display: grid;
+      gap: 8px;
     }
 
     .radio-option {
-      display: inline-flex;
-      min-height: var(--tap-size);
+      display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: var(--surface-muted);
-      font-weight: 400;
+      gap: 10px;
+      min-height: var(--tap-size);
+      padding: 8px 12px;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink);
       cursor: pointer;
     }
 
-    .radio-option input {
-      width: 20px;
-      min-height: 20px;
-      margin: 0;
+    .radio-option:has(input:checked) {
+      background: var(--ink);
+      color: var(--paper);
     }
 
+    .radio-option input {
+      accent-color: var(--blue);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* =========================================================
+       BUTTONS
+       ========================================================= */
     .button {
-      padding: 9px 14px;
-      border: 1px solid transparent;
-      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: var(--tap-size);
+      padding: 12px 18px;
+      border: 1px solid var(--line-strong);
+      font-size: 0.7rem;
       font-weight: 700;
+      transition: background 0.12s linear, color 0.12s linear;
     }
 
     .button-primary {
-      background: var(--primary);
-      color: #fff;
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
     }
 
     .button-primary:hover:not(:disabled) {
-      background: var(--primary-hover);
+      background: var(--ink);
+      border-color: var(--ink);
     }
 
     .button-secondary {
-      background: var(--surface-muted);
-      border-color: var(--border);
-      color: var(--text);
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .button-secondary:hover:not(:disabled) {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .button-small {
+      min-height: 40px;
+      padding: 9px 13px;
+      font-size: 0.62rem;
     }
 
     .generate-button {
       width: 100%;
-      min-height: 56px;
-      font-size: 1.05rem;
+      min-height: 68px;
+      font-size: 0.82rem;
     }
 
+    .panel-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* =========================================================
+       STATUS MESSAGES
+       ========================================================= */
     .status-message {
       display: none;
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 7px;
-      font-size: 0.92rem;
+      margin-top: 14px;
+      padding: 11px 13px;
+      border: 1px solid var(--line-strong);
+      border-left-width: 5px;
+      font-size: 0.62rem;
+      line-height: 1.6;
+      letter-spacing: 0.04em;
     }
 
     .status-message.show {
@@ -236,355 +484,464 @@
     }
 
     .status-message.info {
-      background: #eff8ff;
-      border: 1px solid #b2ddff;
-      color: #175cd3;
+      border-left-color: var(--blue);
+      background: var(--white);
     }
 
     .status-message.warning {
-      background: var(--warning-bg);
-      border: 1px solid var(--warning-border);
-      color: #93370d;
+      border-left-color: var(--ink);
+      background: var(--lime);
     }
 
     .status-message.error {
-      background: #fef3f2;
-      border: 1px solid #fecdca;
+      border-left-color: var(--danger);
       color: var(--danger);
+      background: var(--white);
     }
 
+    /* =========================================================
+       ROSTER
+       ========================================================= */
     .roster-list,
     .queue-list,
-    .leaderboard-list {
+    .leaderboard-list,
+    .history-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 0;
       margin: 0;
       padding: 0;
       list-style: none;
     }
 
     .roster-list {
-      max-height: 64vh;
+      max-height: 66vh;
       overflow-y: auto;
-      padding-right: 4px;
     }
 
     .roster-player {
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface-muted);
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .roster-player:first-child {
+      border-top: 0;
+      padding-top: 0;
     }
 
     .player-topline {
       display: flex;
-      align-items: flex-start;
+      align-items: baseline;
       justify-content: space-between;
       gap: 10px;
+      margin-bottom: 12px;
     }
 
     .player-name {
       margin: 0;
-      font-size: 1rem;
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 1.05rem;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
       overflow-wrap: anywhere;
     }
 
-    .skill-badge,
-    .court-status {
-      display: inline-flex;
-      align-items: center;
-      width: fit-content;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
-
     .skill-badge {
-      margin-top: 3px;
-      padding: 3px 8px;
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text-muted);
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.58rem;
+      color: var(--blue);
     }
 
     .player-stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
     }
 
     .stat-box {
-      padding: 7px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 9px 4px;
+      border-left: 1px solid var(--line);
+      font-size: 0.52rem;
+      color: var(--muted);
       text-align: center;
-      font-size: 0.8rem;
+    }
+
+    .stat-box:first-child {
+      border-left: 0;
     }
 
     .stat-box strong {
-      display: block;
-      font-size: 1rem;
+      font-family: var(--display);
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--ink);
     }
 
     .record-controls {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 7px;
-      margin-top: 10px;
+      gap: 6px;
     }
 
     .mini-button {
-      padding: 7px 9px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: #fff;
-      color: var(--text);
-      font-size: 0.84rem;
+      min-height: 40px;
+      padding: 8px 6px;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+      color: var(--ink);
+      font-size: 0.58rem;
+      font-weight: 700;
+      transition: background 0.12s linear, color 0.12s linear;
     }
 
-    .mini-button:hover:not(:disabled) {
-      background: #f1f5f9;
+    .mini-button:hover {
+      background: var(--ink);
+      color: var(--paper);
     }
 
     .mini-button.remove {
       grid-column: 1 / -1;
-      border-color: #fda29b;
+      border-color: var(--danger);
       color: var(--danger);
     }
 
+    .mini-button.remove:hover {
+      background: var(--danger);
+      color: var(--white);
+    }
+
+    /* =========================================================
+       COURTS
+       ========================================================= */
     .summary-bar {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 12px;
-      color: var(--text-muted);
-      font-size: 0.92rem;
+      margin-bottom: 14px;
+      padding: 9px 12px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 0.6rem;
+    }
+
+    .summary-bar:empty {
+      display: none;
     }
 
     .courts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: var(--gap);
     }
 
     .court-card {
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: var(--surface-muted);
+      border: 1px solid var(--line-strong);
+      background: var(--white);
     }
 
     .court-card.finished {
-      border-color: #75e0a7;
-      background: var(--success-bg);
+      background: var(--paper);
     }
 
     .court-heading {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       padding: 11px 13px;
-      background: #eef4ff;
-      border-bottom: 1px solid var(--border);
+      background: var(--ink);
+      color: var(--paper);
     }
 
     .court-card.finished .court-heading {
-      background: var(--success-bg);
+      background: var(--blue);
     }
 
     .court-title {
       margin: 0;
+      font-family: var(--display);
+      font-weight: 900;
       font-size: 1rem;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
     }
 
     .court-status {
-      padding: 4px 8px;
-      background: #fff;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-    }
-
-    .court-status.finished {
-      border-color: #75e0a7;
-      color: var(--success);
+      font-size: 0.56rem;
+      opacity: 0.85;
     }
 
     .match-display {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-      align-items: stretch;
-      gap: 10px;
-      padding: 14px;
+      gap: 0;
+      padding: 13px;
     }
 
     .side-card {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      gap: 8px;
-      min-height: 155px;
-      padding: 11px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: #fff;
-      text-align: center;
+      gap: 9px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: var(--white);
     }
 
     .side-card.winner {
-      border-color: #47cd89;
-      box-shadow: inset 0 0 0 1px #47cd89;
+      border-color: var(--blue);
+      box-shadow: inset 0 0 0 1px var(--blue);
     }
 
     .side-label {
-      color: var(--text-muted);
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      font-size: 0.56rem;
+      color: var(--blue);
     }
 
     .team-players {
       display: flex;
-      flex: 1;
       flex-direction: column;
-      justify-content: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .assigned-player {
-      font-weight: 700;
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 0.98rem;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
       overflow-wrap: anywhere;
     }
 
+    .versus {
+      padding: 9px 0;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-align: center;
+    }
+
     .winner-button {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--primary);
-      border-radius: 7px;
-      background: #fff;
-      color: var(--primary);
+      min-height: var(--tap-size);
+      padding: 11px 12px;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 0.6rem;
       font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: background 0.12s linear, color 0.12s linear;
     }
 
     .winner-button:hover:not(:disabled) {
-      background: #eff4ff;
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
     }
 
     .winner-button.confirmed {
-      border-color: #47cd89;
-      background: var(--success-bg);
-      color: var(--success);
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
+      opacity: 1;
     }
 
-    .versus {
-      align-self: center;
-      font-weight: 800;
-      color: var(--text-muted);
-    }
-
+    /* =========================================================
+       QUEUE + LEADERBOARD + HISTORY ROWS
+       ========================================================= */
     .queue-item,
-    .leaderboard-row {
-      display: flex;
-      min-height: var(--tap-size);
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: var(--surface-muted);
+    .leaderboard-row,
+    .history-item {
+      border-top: 1px solid var(--line);
     }
 
-    .queue-position,
-    .rank-number {
+    .queue-list > .queue-item:first-child,
+    .leaderboard-list > .leaderboard-row:first-child,
+    .history-list > .history-item:first-child {
+      border-top: 0;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 58px;
+      padding: 11px 0;
+    }
+
+    .queue-position {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      flex: 0 0 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #fff;
-      border: 1px solid var(--border);
-      font-size: 0.82rem;
+      flex: 0 0 34px;
+      height: 34px;
+      border: 1px solid var(--line-strong);
+      font-family: var(--mono);
+      font-size: 0.62rem;
       font-weight: 700;
     }
 
-    .queue-player-info,
-    .rank-player-info {
+    .queue-item:nth-child(-n + 4) .queue-position {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
+    }
+
+    .queue-player-info {
       flex: 1;
       min-width: 0;
     }
 
-    .queue-player-info strong,
-    .rank-player-info strong {
+    .queue-player-info strong {
       display: block;
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 0.98rem;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
       overflow-wrap: anywhere;
     }
 
-    .queue-player-info span,
-    .queue-wait,
-    .rank-player-info span {
-      color: var(--text-muted);
-      font-size: 0.86rem;
+    .queue-player-info span {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
     .queue-wait {
       flex: 0 0 auto;
+      font-size: 0.58rem;
       font-weight: 700;
       text-align: right;
+      color: var(--muted);
     }
 
     .leaderboard-header,
     .leaderboard-row {
       display: grid;
-      grid-template-columns: 50px minmax(130px, 1fr) 72px 72px 90px;
+      grid-template-columns: 46px minmax(120px, 1fr) 62px 62px 78px;
       align-items: center;
       gap: 8px;
     }
 
     .leaderboard-header {
-      padding: 0 12px 8px;
-      color: var(--text-muted);
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
+      padding: 0 0 9px;
+      border-bottom: 1px solid var(--line-strong);
+      font-size: 0.56rem;
+      color: var(--muted);
     }
 
     .leaderboard-row {
-      min-height: 54px;
+      min-height: 56px;
+      padding: 10px 0;
+    }
+
+    .leaderboard-list > .leaderboard-row:first-child {
+      border-top: 0;
     }
 
     .leaderboard-number {
-      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.68rem;
       font-weight: 700;
+      color: var(--blue);
     }
 
     .leaderboard-name {
       min-width: 0;
-      font-weight: 700;
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 0.98rem;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
       overflow-wrap: anywhere;
     }
 
     .leaderboard-stat {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 700;
       text-align: center;
+    }
+
+    .history-list {
+      max-height: 62vh;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: grid;
+      grid-template-columns: 118px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+    }
+
+    .history-round {
+      font-size: 0.56rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .history-result {
+      min-width: 0;
+    }
+
+    .history-result strong {
+      display: block;
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 0.95rem;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      overflow-wrap: anywhere;
+    }
+
+    .history-result span {
+      font-family: var(--mono);
+      font-size: 0.56rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .history-time {
+      font-size: 0.56rem;
+      color: var(--muted);
+      text-align: right;
+      white-space: nowrap;
     }
 
     .empty-state {
-      padding: 18px;
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      background: var(--surface-muted);
-      color: var(--text-muted);
+      padding: 26px 18px;
+      border: 1px dashed var(--line);
+      font-size: 0.6rem;
+      line-height: 1.7;
+      color: var(--muted);
       text-align: center;
     }
 
-    /* Stack the primary columns on tablets and phones. */
-    @media (max-width: 950px) {
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+    @media (max-width: 1050px) {
       .app-layout {
         grid-template-columns: 1fr;
       }
@@ -595,95 +952,250 @@
     }
 
     @media (max-width: 700px) {
-      .app-layout {
-        padding: 10px;
+      .brand-meta .hide-narrow {
+        display: none;
       }
 
-      .panel {
-        padding: 14px;
+      .header-foot {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-tag {
+        text-align: left;
       }
 
       .form-grid {
         grid-template-columns: 1fr;
       }
 
-      .form-group.full-width {
-        grid-column: auto;
-      }
-
-      .radio-group,
-      .radio-option {
-        width: 100%;
-      }
-
-      .match-display {
-        grid-template-columns: 1fr;
-      }
-
-      .versus {
-        justify-self: center;
-      }
-
-      .side-card {
-        min-height: 140px;
-      }
-
       .leaderboard-header {
         display: none;
       }
 
+      /* Rank + name on the first line, a three-up stat strip below. */
       .leaderboard-row {
-        grid-template-columns: 44px minmax(0, 1fr);
-        gap: 10px;
+        grid-template-columns: 44px repeat(3, minmax(0, 1fr));
+        row-gap: 10px;
+      }
+
+      .leaderboard-row .leaderboard-number {
+        grid-area: 1 / 1;
+      }
+
+      .leaderboard-row .leaderboard-name {
+        grid-area: 1 / 2 / 2 / 5;
       }
 
       .leaderboard-row .leaderboard-stat {
-        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
         text-align: left;
+      }
+
+      .leaderboard-row .leaderboard-stat:nth-child(3) {
+        grid-area: 2 / 2;
+      }
+
+      .leaderboard-row .leaderboard-stat:nth-child(4) {
+        grid-area: 2 / 3;
+      }
+
+      .leaderboard-row .leaderboard-stat:nth-child(5) {
+        grid-area: 2 / 4;
       }
 
       .leaderboard-row .leaderboard-stat::before {
-        content: attr(data-label) ": ";
-        color: var(--text-muted);
-        font-weight: 700;
+        content: attr(data-label);
+        font-size: 0.5rem;
+        font-weight: 400;
+        color: var(--muted);
       }
-    }
 
-    @media (max-width: 430px) {
-      .player-stats {
+      .history-item {
         grid-template-columns: 1fr;
+        gap: 6px;
       }
 
-      .record-controls {
-        grid-template-columns: 1fr;
-      }
-
-      .mini-button.remove {
-        grid-column: auto;
-      }
-
-      .queue-item {
-        align-items: flex-start;
-        flex-wrap: wrap;
-      }
-
-      .queue-wait {
-        width: 100%;
-        padding-left: 48px;
+      .history-time {
         text-align: left;
       }
 
-      .courts-grid {
-        grid-template-columns: 1fr;
+      .queue-item {
+        flex-wrap: wrap;
+      }
+    }
+
+    /* =========================================================
+       PRINTABLE REPORT
+       Built on demand; only the printer ever sees it.
+       ========================================================= */
+    #print-report {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 14mm;
+      }
+
+      html,
+      body {
+        background: #fff;
+        color: #000;
+      }
+
+      .brand-bar,
+      .ticker,
+      .app-header,
+      .app-layout {
+        display: none !important;
+      }
+
+      #print-report {
+        display: block;
+        font-size: 10.5pt;
+      }
+
+      .report-title {
+        margin: 0;
+        font-family: var(--display);
+        font-weight: 900;
+        font-size: 26pt;
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+      }
+
+      .report-subtitle {
+        margin: 6px 0 0;
+        font-family: var(--mono);
+        font-size: 8pt;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #444;
+      }
+
+      .report-meta {
+        margin: 12px 0 20px;
+        padding: 8px 0;
+        border-top: 1.5pt solid #000;
+        border-bottom: 1.5pt solid #000;
+        font-family: var(--mono);
+        font-size: 8pt;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .report-meta span + span::before {
+        content: " / ";
+      }
+
+      .report-section-title {
+        margin: 20px 0 8px;
+        font-family: var(--display);
+        font-weight: 900;
+        font-size: 13pt;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+        break-after: avoid;
+      }
+
+      .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9.5pt;
+      }
+
+      .report-table th,
+      .report-table td {
+        border: 0.5pt solid #666;
+        padding: 5px 7px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .report-table th {
+        background: #eee;
+        font-family: var(--mono);
+        font-size: 7.5pt;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .report-table thead {
+        display: table-header-group;
+      }
+
+      .report-table tr {
+        break-inside: avoid;
+      }
+
+      .report-table th.report-numeric,
+      .report-table td.report-numeric {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .report-empty {
+        font-family: var(--mono);
+        font-size: 8pt;
+        text-transform: uppercase;
+        color: #555;
+      }
+
+      .report-footer {
+        margin-top: 24px;
+        padding-top: 8px;
+        border-top: 1.5pt solid #000;
+        font-family: var(--mono);
+        font-size: 7.5pt;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #444;
       }
     }
   </style>
 </head>
 <body>
+  <div class="brand-bar">
+    <span class="brand-mark">KO<sup>&#174;</sup></span>
+    <span class="brand-meta">
+      <span class="hide-narrow">Court Session Manager&nbsp;&nbsp;/&nbsp;&nbsp;</span>
+      <a href="https://kirkorino.com" target="_blank" rel="noopener">kirkorino.com &#8599;</a>
+    </span>
+  </div>
+
   <header class="app-header">
-    <h1>PickQue sabi ni Kirk Orino on tiktok</h1>
-    <p>Follow mo na ko sa tiktok andamot mo naman</p>
+    <h1>Pick<span class="accent">Que</span></h1>
+
+    <div class="header-foot">
+      <p>Fair rotations, balanced teams and a printable record for every open-play session.</p>
+      <span class="header-tag">
+        Manila, PH<br />
+        Built by Kirk Orino
+      </span>
+    </div>
   </header>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>Queue Priority</span>
+      <span>Balanced Teams</span>
+      <span>Teammate Limits</span>
+      <span>Live Scoring</span>
+      <span>Saved Locally</span>
+      <span>PDF Reports</span>
+      <span>Queue Priority</span>
+      <span>Balanced Teams</span>
+      <span>Teammate Limits</span>
+      <span>Live Scoring</span>
+      <span>Saved Locally</span>
+      <span>PDF Reports</span>
+    </div>
+  </div>
 
   <div class="app-layout">
     <!-- =======================================================
@@ -692,7 +1204,10 @@
     <aside class="sidebar" aria-label="Player management">
       <section class="panel" aria-labelledby="registration-title">
         <div class="panel-header">
-          <h2 id="registration-title">Add Player</h2>
+          <div>
+            <span class="panel-eyebrow">01 / Roster Intake</span>
+            <h2 id="registration-title">Add Player</h2>
+          </div>
         </div>
 
         <form id="player-form">
@@ -731,7 +1246,8 @@
       <section class="panel" aria-labelledby="roster-title">
         <div class="panel-header">
           <div>
-            <h2 id="roster-title">Active Player Roster</h2>
+            <span class="panel-eyebrow">02 / Active Roster</span>
+            <h2 id="roster-title">Player Roster</h2>
             <p id="roster-count" class="section-note">0 players</p>
           </div>
         </div>
@@ -747,7 +1263,8 @@
       <section class="panel" aria-labelledby="configuration-title">
         <div class="panel-header">
           <div>
-            <h2 id="configuration-title">Session Configuration</h2>
+            <span class="panel-eyebrow">03 / Setup</span>
+            <h2 id="configuration-title">Session Config</h2>
             <p class="section-note">The highest-priority waiting players are selected before teams are randomized.</p>
           </div>
         </div>
@@ -796,6 +1313,7 @@
       <section class="panel" aria-labelledby="courts-title">
         <div class="panel-header">
           <div>
+            <span class="panel-eyebrow">04 / In Play</span>
             <h2 id="courts-title">Live Courts</h2>
             <p id="round-label" class="section-note">No round generated yet.</p>
           </div>
@@ -808,7 +1326,8 @@
       <section class="panel" aria-labelledby="queue-title">
         <div class="panel-header">
           <div>
-            <h2 id="queue-title">Next Up / Waiting Queue</h2>
+            <span class="panel-eyebrow">05 / Waiting</span>
+            <h2 id="queue-title">Next Up</h2>
             <p class="section-note">Ordered by rounds waited, with ties randomized on each round.</p>
           </div>
         </div>
@@ -819,6 +1338,7 @@
       <section class="panel" aria-labelledby="leaderboard-title">
         <div class="panel-header">
           <div>
+            <span class="panel-eyebrow">06 / Standings</span>
             <h2 id="leaderboard-title">Leaderboard</h2>
             <p class="section-note">Ranked by wins, then win rate, then fewer losses.</p>
           </div>
@@ -833,8 +1353,43 @@
         </div>
         <ol id="leaderboard-list" class="leaderboard-list"></ol>
       </section>
+
+      <section class="panel" aria-labelledby="history-title">
+        <div class="panel-header">
+          <div>
+            <span class="panel-eyebrow">07 / Records</span>
+            <h2 id="history-title">Match History</h2>
+            <p id="history-count" class="section-note">No matches logged yet.</p>
+          </div>
+
+          <div class="panel-actions">
+            <button id="export-pdf" class="button button-primary button-small" type="button">
+              Export PDF
+            </button>
+            <button id="export-csv" class="button button-secondary button-small" type="button">
+              Export CSV
+            </button>
+            <button id="export-json" class="button button-secondary button-small" type="button">
+              Export Backup
+            </button>
+            <button id="clear-history" class="button button-secondary button-small" type="button">
+              Clear Log
+            </button>
+          </div>
+        </div>
+
+        <p class="section-note">
+          Results are saved in this browser automatically, so the log survives a refresh.
+        </p>
+
+        <ol id="history-list" class="history-list"></ol>
+        <div id="history-message" class="status-message" role="status" aria-live="polite"></div>
+      </section>
     </main>
   </div>
+
+  <!-- Filled in by buildPrintReport() right before the print dialog opens. -->
+  <div id="print-report" aria-hidden="true"></div>
 
   <script>
     "use strict";
@@ -846,6 +1401,7 @@
       players: [],
       currentRound: 0,
       activeMatches: [],
+      matchLog: [],
 
       // Key format: "lowerPlayerId|higherPlayerId"
       // Value: number of generated doubles rounds as teammates.
@@ -884,8 +1440,338 @@
       courtsSummary: document.querySelector("#courts-summary"),
       courtsGrid: document.querySelector("#courts-grid"),
       queueList: document.querySelector("#queue-list"),
-      leaderboardList: document.querySelector("#leaderboard-list")
+      leaderboardList: document.querySelector("#leaderboard-list"),
+
+      historyList: document.querySelector("#history-list"),
+      historyCount: document.querySelector("#history-count"),
+      historyMessage: document.querySelector("#history-message"),
+      printReport: document.querySelector("#print-report"),
+      exportPdf: document.querySelector("#export-pdf"),
+      exportCsv: document.querySelector("#export-csv"),
+      exportJson: document.querySelector("#export-json"),
+      clearHistory: document.querySelector("#clear-history")
     };
+
+    /* =========================================================
+       LOCAL PERSISTENCE
+
+       There is no backend, so the whole session (roster, current
+       round, live courts, teammate history and the match log) is
+       mirrored into localStorage after every change and restored
+       on load. Player objects are stored once; matches only keep
+       player ids and are re-linked to the roster on restore.
+       ========================================================= */
+    const STORAGE_KEY = "kirkorino-pickleball-session-v1";
+    let storageAvailable = true;
+
+    function serializeMatch(match) {
+      return {
+        id: match.id,
+        sideA: match.sideA.map((player) => player.id),
+        sideB: match.sideB.map((player) => player.id),
+        status: match.status,
+        winnerSide: match.winnerSide
+      };
+    }
+
+    function serializeState() {
+      return {
+        version: 1,
+        savedAt: new Date().toISOString(),
+        players: state.players,
+        currentRound: state.currentRound,
+        activeMatches: state.activeMatches.map(serializeMatch),
+        matchLog: state.matchLog,
+        teammateHistory: [...state.teammateHistory.entries()]
+      };
+    }
+
+    function saveState() {
+      if (!storageAvailable) return;
+
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
+      } catch (error) {
+        storageAvailable = false;
+        setStatus(
+          elements.historyMessage,
+          "This browser blocked local storage, so results will be lost on refresh. Export a backup to keep them.",
+          "warning"
+        );
+      }
+    }
+
+    function restoreState() {
+      let raw = null;
+
+      try {
+        raw = window.localStorage.getItem(STORAGE_KEY);
+      } catch (error) {
+        storageAvailable = false;
+        return;
+      }
+
+      if (!raw) return;
+
+      let saved = null;
+
+      try {
+        saved = JSON.parse(raw);
+      } catch (error) {
+        return;
+      }
+
+      if (!saved || !Array.isArray(saved.players)) return;
+
+      state.players = saved.players.map((player) => ({
+        id: player.id,
+        name: player.name,
+        skill: SKILL_LABELS[player.skill] ? player.skill : "intermediate",
+        roundsWaited: Number(player.roundsWaited) || 0,
+        wins: Number(player.wins) || 0,
+        losses: Number(player.losses) || 0,
+        lastPlayedRound: player.lastPlayedRound ?? null
+      }));
+
+      state.currentRound = Number(saved.currentRound) || 0;
+      state.matchLog = Array.isArray(saved.matchLog) ? saved.matchLog : [];
+      state.teammateHistory = new Map(
+        Array.isArray(saved.teammateHistory) ? saved.teammateHistory : []
+      );
+
+      // Re-link stored ids back to the live player objects; drop any
+      // court whose players are no longer on the roster.
+      state.activeMatches = (Array.isArray(saved.activeMatches) ? saved.activeMatches : [])
+        .map((match) => {
+          const sideA = (match.sideA || []).map(getPlayerById);
+          const sideB = (match.sideB || []).map(getPlayerById);
+
+          if (sideA.includes(undefined) || sideB.includes(undefined)) return null;
+          if (sideA.length === 0 || sideB.length === 0) return null;
+
+          return {
+            id: match.id,
+            sideA,
+            sideB,
+            status: match.status === "finished" ? "finished" : "active",
+            winnerSide: match.winnerSide === "A" || match.winnerSide === "B"
+              ? match.winnerSide
+              : null
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function downloadFile(fileName, mimeType, contents) {
+      const blob = new Blob([contents], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function toCsvValue(value) {
+      return `"${String(value).replace(/"/g, '""')}"`;
+    }
+
+    function buildHistoryCsv() {
+      const header = [
+        "Round",
+        "Court",
+        "Match Type",
+        "Winners",
+        "Losers",
+        "Finished At"
+      ];
+
+      const rows = state.matchLog.map((entry) => [
+        entry.round,
+        entry.court,
+        entry.matchType,
+        entry.winners.join(" & "),
+        entry.losers.join(" & "),
+        entry.finishedAt
+      ]);
+
+      return [header, ...rows]
+        .map((row) => row.map(toCsvValue).join(","))
+        .join("\r\n");
+    }
+
+    function fileStamp() {
+      return new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    }
+
+    /* =========================================================
+       PDF EXPORT
+
+       No PDF library is bundled, so the report is built as real
+       markup and handed to the browser's print pipeline. Every
+       modern browser offers "Save as PDF" as a print destination,
+       including iOS and Android, so this works offline.
+       ========================================================= */
+    function createReportTable(headers, rows, numericFromIndex) {
+      const table = document.createElement("table");
+      table.className = "report-table";
+
+      const head = document.createElement("thead");
+      const headRow = document.createElement("tr");
+
+      headers.forEach((label, index) => {
+        const cell = document.createElement("th");
+        cell.textContent = label;
+        if (index >= numericFromIndex) cell.className = "report-numeric";
+        headRow.appendChild(cell);
+      });
+
+      head.appendChild(headRow);
+
+      const body = document.createElement("tbody");
+
+      rows.forEach((row) => {
+        const bodyRow = document.createElement("tr");
+
+        row.forEach((value, index) => {
+          const cell = document.createElement("td");
+          cell.textContent = String(value);
+          if (index >= numericFromIndex) cell.className = "report-numeric";
+          bodyRow.appendChild(cell);
+        });
+
+        body.appendChild(bodyRow);
+      });
+
+      table.append(head, body);
+      return table;
+    }
+
+    function appendReportSection(container, title, table, emptyMessage, hasRows) {
+      const heading = document.createElement("h2");
+      heading.className = "report-section-title";
+      heading.textContent = title;
+      container.appendChild(heading);
+
+      if (!hasRows) {
+        const empty = document.createElement("p");
+        empty.className = "report-empty";
+        empty.textContent = emptyMessage;
+        container.appendChild(empty);
+        return;
+      }
+
+      container.appendChild(table);
+    }
+
+    function buildPrintReport() {
+      const container = elements.printReport;
+      container.innerHTML = "";
+
+      const generatedAt = new Date();
+
+      const title = document.createElement("h1");
+      title.className = "report-title";
+      title.textContent = "PickQue Session Report";
+
+      const subtitle = document.createElement("p");
+      subtitle.className = "report-subtitle";
+      subtitle.textContent = `Generated ${generatedAt.toLocaleString()}`;
+
+      const meta = document.createElement("p");
+      meta.className = "report-meta";
+
+      const playedRounds = state.matchLog.reduce(
+        (highest, entry) => Math.max(highest, entry.round),
+        0
+      );
+
+      [
+        `${state.players.length} player(s)`,
+        `${Math.max(state.currentRound, playedRounds)} round(s)`,
+        `${state.matchLog.length} match(es) logged`
+      ].forEach((text) => {
+        const item = document.createElement("span");
+        item.textContent = text;
+        meta.appendChild(item);
+      });
+
+      container.append(title, subtitle, meta);
+
+      // Final standings.
+      const rankedPlayers = getRankedPlayers();
+      const leaderboardRows = rankedPlayers.map((player, index) => [
+        `#${index + 1}`,
+        player.name,
+        SKILL_LABELS[player.skill],
+        player.wins,
+        player.losses,
+        `${getWinRate(player).toFixed(1)}%`
+      ]);
+
+      appendReportSection(
+        container,
+        "Final Standings",
+        createReportTable(
+          ["Rank", "Player", "Skill", "Wins", "Losses", "Win Rate"],
+          leaderboardRows,
+          3
+        ),
+        "No players on the roster.",
+        leaderboardRows.length > 0
+      );
+
+      // Match log, printed oldest first so the session reads in order.
+      const logRows = [...state.matchLog]
+        .reverse()
+        .map((entry) => [
+          entry.round,
+          entry.court,
+          entry.matchType,
+          entry.winners.join(" & "),
+          entry.losers.join(" & "),
+          new Date(entry.finishedAt).toLocaleTimeString()
+        ]);
+
+      appendReportSection(
+        container,
+        "Match Results",
+        createReportTable(
+          ["Round", "Court", "Type", "Winners", "Losers", "Time"],
+          logRows,
+          5
+        ),
+        "No matches have been finished yet.",
+        logRows.length > 0
+      );
+
+      const footer = document.createElement("p");
+      footer.className = "report-footer";
+      footer.textContent = "PickQue — Court Session Manager / kirkorino.com";
+      container.appendChild(footer);
+    }
+
+    function exportReportAsPdf() {
+      buildPrintReport();
+
+      // Browsers use the document title as the suggested PDF filename.
+      const previousTitle = document.title;
+      document.title = `PickQue-Session-Report-${fileStamp()}`;
+
+      const restoreTitle = () => {
+        document.title = previousTitle;
+        window.removeEventListener("afterprint", restoreTitle);
+      };
+
+      window.addEventListener("afterprint", restoreTitle);
+      window.print();
+
+      // Safari does not always fire afterprint, so restore defensively.
+      window.setTimeout(restoreTitle, 3000);
+    }
 
     /* =========================================================
        GENERAL UTILITIES
@@ -1014,6 +1900,7 @@
       renderRoster();
       renderQueue();
       renderLeaderboard();
+      saveState();
     }
 
     /* =========================================================
@@ -1257,6 +2144,9 @@
       }
 
       applyRoundPlan(result, config.matchType);
+
+      // The previous round's "complete" prompt no longer applies.
+      setStatus(elements.historyMessage);
       renderAll();
 
       if (result.reducedCourts) {
@@ -1296,13 +2186,37 @@
 
       match.status = "finished";
       match.winnerSide = winningSide;
+
+      state.matchLog.unshift({
+        id: match.id,
+        round: state.currentRound,
+        court: state.activeMatches.indexOf(match) + 1,
+        matchType: match.sideA.length === 2 ? "Doubles" : "Singles",
+        winners: winners.map((player) => player.name),
+        losers: losers.map((player) => player.name),
+        winnerSide: winningSide,
+        finishedAt: new Date().toISOString()
+      });
+
       renderAll();
+
+      const roundIsComplete = state.activeMatches.every(
+        (item) => item.status === "finished"
+      );
 
       setStatus(
         elements.generationMessage,
         `Court ${state.activeMatches.indexOf(match) + 1} finished. Results and leaderboard updated.`,
         "info"
       );
+
+      if (roundIsComplete) {
+        setStatus(
+          elements.historyMessage,
+          `Round ${state.currentRound} is complete. Tap Export PDF to save the results.`,
+          "info"
+        );
+      }
     }
 
     /* =========================================================
@@ -1590,11 +2504,56 @@
       });
     }
 
+    function renderMatchHistory() {
+      elements.historyList.innerHTML = "";
+
+      if (state.matchLog.length === 0) {
+        elements.historyCount.textContent = "No matches logged yet.";
+        elements.historyList.appendChild(
+          createEmptyState("Finished matches are logged here automatically.")
+        );
+        return;
+      }
+
+      elements.historyCount.textContent = `${state.matchLog.length} match${
+        state.matchLog.length === 1 ? "" : "es"
+      } logged`;
+
+      state.matchLog.forEach((entry) => {
+        const listItem = document.createElement("li");
+        listItem.className = "history-item";
+
+        const round = document.createElement("span");
+        round.className = "history-round";
+        round.textContent = `Round ${entry.round} • Court ${entry.court}`;
+
+        const result = document.createElement("div");
+        result.className = "history-result";
+
+        const winners = document.createElement("strong");
+        winners.textContent = `${entry.winners.join(" & ")} def. ${entry.losers.join(" & ")}`;
+
+        const meta = document.createElement("span");
+        meta.textContent = entry.matchType;
+
+        result.append(winners, meta);
+
+        const time = document.createElement("span");
+        time.className = "history-time";
+        time.textContent = new Date(entry.finishedAt).toLocaleString();
+
+        listItem.append(round, result, time);
+        elements.historyList.appendChild(listItem);
+      });
+    }
+
     function renderAll() {
       renderRoster();
       renderCourts();
       renderQueue();
       renderLeaderboard();
+      renderMatchHistory();
+      saveState();
     }
 
     /* =========================================================
@@ -1633,9 +2592,55 @@
       });
     });
 
+    elements.exportPdf.addEventListener("click", () => {
+      exportReportAsPdf();
+      setStatus(
+        elements.historyMessage,
+        'Choose "Save as PDF" as the destination in the print dialog to save the report.',
+        "info"
+      );
+    });
+
+    elements.exportCsv.addEventListener("click", () => {
+      if (state.matchLog.length === 0) {
+        setStatus(elements.historyMessage, "There are no logged matches to export yet.", "warning");
+        return;
+      }
+
+      downloadFile(`pickleball-matches-${fileStamp()}.csv`, "text/csv;charset=utf-8", buildHistoryCsv());
+      setStatus(elements.historyMessage, "Match log exported as CSV.", "info");
+    });
+
+    elements.exportJson.addEventListener("click", () => {
+      downloadFile(
+        `pickleball-session-${fileStamp()}.json`,
+        "application/json",
+        JSON.stringify(serializeState(), null, 2)
+      );
+      setStatus(elements.historyMessage, "Full session backup downloaded.", "info");
+    });
+
+    elements.clearHistory.addEventListener("click", () => {
+      if (state.matchLog.length === 0) {
+        setStatus(elements.historyMessage, "The match log is already empty.", "warning");
+        return;
+      }
+
+      const confirmed = window.confirm(
+        "Clear the match log? Player win/loss records and the leaderboard are not affected."
+      );
+
+      if (!confirmed) return;
+
+      state.matchLog = [];
+      renderAll();
+      setStatus(elements.historyMessage, "Match log cleared.", "info");
+    });
+
     /* =========================================================
        INITIAL RENDER
        ========================================================= */
+    restoreState();
     renderAll();
   </script>
 </body>
