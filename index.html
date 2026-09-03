@@ -539,10 +539,28 @@
 
     .player-topline {
       display: flex;
-      align-items: baseline;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
       margin-bottom: 12px;
+    }
+
+    .roster-player.is-paused {
+      background: rgba(174, 184, 255, 0.18);
+    }
+
+    .player-availability {
+      display: inline-block;
+      margin-top: 6px;
+      margin-left: 7px;
+      padding: 1px 5px;
+      border: 1px solid var(--ink);
+      background: var(--lime);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .player-name {
@@ -622,6 +640,18 @@
       grid-column: 1 / -1;
       border-color: var(--danger);
       color: var(--danger);
+    }
+
+    .mini-button.availability {
+      grid-column: 1 / -1;
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .roster-player.is-paused .mini-button.availability {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
     }
 
     .mini-button.remove:hover {
@@ -731,6 +761,76 @@
       letter-spacing: -0.03em;
       text-transform: uppercase;
       overflow-wrap: anywhere;
+    }
+
+    .assigned-player-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .assigned-player-row:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .assigned-player-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 5px;
+    }
+
+    .player-match-action {
+      min-height: 34px;
+      padding: 6px 8px;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .player-match-action.injury {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .replacement-picker {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      padding-top: 3px;
+    }
+
+    .replacement-picker[hidden] {
+      display: none;
+    }
+
+    .replacement-picker select {
+      min-width: 0;
+      min-height: 40px;
+      padding: 6px 8px;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+    }
+
+    .match-change-window {
+      display: block;
+      margin-top: 3px;
+      color: var(--lime);
+      font-family: var(--mono);
+      font-size: 0.67rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .versus {
@@ -1072,6 +1172,8 @@
     body.is-viewer .config-panel,
     body.is-viewer .winner-button,
     body.is-viewer .record-controls,
+    body.is-viewer .assigned-player-actions,
+    body.is-viewer .replacement-picker,
     body.is-viewer #share-publish,
     body.is-viewer .panel-actions .button-small[data-hide-viewer] {
       display: none !important;
@@ -1201,6 +1303,14 @@
 
       .queue-item {
         flex-wrap: wrap;
+      }
+
+      .assigned-player-row {
+        grid-template-columns: 1fr;
+      }
+
+      .assigned-player-actions {
+        justify-content: flex-start;
       }
     }
 
@@ -2086,6 +2196,8 @@
       pro: "Pro"
     };
 
+    const PLAYER_CHANGE_WINDOW_MS = 2 * 60 * 1000;
+
     /* =========================================================
        DOM REFERENCES
        ========================================================= */
@@ -2244,7 +2356,8 @@
         sideA: match.sideA.map((player) => player.id),
         sideB: match.sideB.map((player) => player.id),
         status: match.status,
-        winnerSide: match.winnerSide
+        winnerSide: match.winnerSide,
+        generatedAt: match.generatedAt
       };
     }
 
@@ -2414,7 +2527,8 @@
         roundsWaited: Number(player.roundsWaited) || 0,
         wins: Number(player.wins) || 0,
         losses: Number(player.losses) || 0,
-        lastPlayedRound: player.lastPlayedRound ?? null
+        lastPlayedRound: player.lastPlayedRound ?? null,
+        active: player.active !== false
       }));
 
       state.currentRound = Number(saved.currentRound) || 0;
@@ -2440,7 +2554,8 @@
             status: match.status === "finished" ? "finished" : "active",
             winnerSide: match.winnerSide === "A" || match.winnerSide === "B"
               ? match.winnerSide
-              : null
+              : null,
+            generatedAt: Number(match.generatedAt) || Date.now()
           };
         })
         .filter(Boolean);
@@ -3000,7 +3115,8 @@
         roundsWaited: 0,
         wins: 0,
         losses: 0,
-        lastPlayedRound: null
+        lastPlayedRound: null,
+        active: true
       });
 
       return { ok: true, message: `${cleanName} was added to the roster.` };
@@ -3040,6 +3156,20 @@
       saveState();
     }
 
+    function setPlayerActive(playerId, active) {
+      const player = getPlayerById(playerId);
+      if (!player) return { ok: false, message: "Player not found." };
+
+      player.active = Boolean(active);
+      return {
+        ok: true,
+        player,
+        message: player.active
+          ? `${player.name} is active and can join the queue again.`
+          : `${player.name} is timed out and will not join the queue.`
+      };
+    }
+
     /* =========================================================
        STRICT QUEUE PRIORITY
 
@@ -3065,8 +3195,8 @@
         .flatMap((roundsWaited) => shuffle(groupsByWait.get(roundsWaited)));
     }
 
-    function selectPriorityPlayers(requiredPlayerCount) {
-      return getPrioritizedQueue().slice(0, requiredPlayerCount);
+    function selectPriorityPlayers(requiredPlayerCount, players = state.players) {
+      return getPrioritizedQueue(players).slice(0, requiredPlayerCount);
     }
 
     /* =========================================================
@@ -3201,18 +3331,19 @@
        ========================================================= */
     function createRoundPlan(config) {
       const playersPerCourt = config.matchType === "singles" ? 2 : 4;
-      const maximumPossibleCourts = Math.floor(state.players.length / playersPerCourt);
+      const availablePlayers = state.players.filter((player) => player.active !== false);
+      const maximumPossibleCourts = Math.floor(availablePlayers.length / playersPerCourt);
       const activeCourtCount = Math.min(config.courtCount, maximumPossibleCourts);
 
       if (activeCourtCount < 1) {
         return {
           ok: false,
-          message: `You need at least ${playersPerCourt} players for a ${config.matchType} match.`
+          message: `You need at least ${playersPerCourt} active players for a ${config.matchType} match.`
         };
       }
 
       const requiredPlayerCount = activeCourtCount * playersPerCourt;
-      const selectedPlayers = selectPriorityPlayers(requiredPlayerCount);
+      const selectedPlayers = selectPriorityPlayers(requiredPlayerCount, availablePlayers);
       const matches =
         config.matchType === "singles"
           ? buildRandomizedSinglesMatches(selectedPlayers)
@@ -3247,13 +3378,18 @@
       });
     }
 
-    function applyRoundPlan(roundPlan, matchType) {
+    function applyRoundPlan(roundPlan, matchType, generatedAt = Date.now()) {
       const selectedIds = new Set(roundPlan.selectedPlayers.map((player) => player.id));
 
       state.currentRound += 1;
       state.activeMatches = roundPlan.matches;
+      state.activeMatches.forEach((match) => {
+        match.generatedAt = generatedAt;
+      });
 
       state.players.forEach((player) => {
+        if (player.active === false) return;
+
         if (selectedIds.has(player.id)) {
           player.roundsWaited = 0;
           player.lastPlayedRound = state.currentRound;
@@ -3263,6 +3399,123 @@
       });
 
       recordGeneratedTeammates(roundPlan.matches, matchType);
+    }
+
+    function matchChangeTimeRemaining(match, now = Date.now()) {
+      return Math.max(0, PLAYER_CHANGE_WINDOW_MS - (now - match.generatedAt));
+    }
+
+    function canChangeMatchPlayer(match, now = Date.now()) {
+      return match.status !== "finished" && matchChangeTimeRemaining(match, now) > 0;
+    }
+
+    function getReplacementCandidates(excludedPlayerId = null) {
+      const assignedIds = getAssignedPlayerIds();
+
+      return state.players
+        .filter((player) =>
+          player.id !== excludedPlayerId &&
+          player.active !== false &&
+          !assignedIds.has(player.id)
+        )
+        .sort((a, b) =>
+          b.roundsWaited - a.roundsWaited || a.name.localeCompare(b.name)
+        );
+    }
+
+    function adjustTeammateHistory(playerA, playerB, amount) {
+      if (!playerA || !playerB) return;
+
+      const pairKey = getPairKey(playerA, playerB);
+      const nextCount = Math.max(0, getTeammateCount(playerA, playerB) + amount);
+
+      if (nextCount === 0) {
+        state.teammateHistory.delete(pairKey);
+      } else {
+        state.teammateHistory.set(pairKey, nextCount);
+      }
+    }
+
+    function replaceMatchPlayer(matchId, outgoingPlayerId, replacementPlayerId, now = Date.now(), reason = "standard") {
+      const match = state.activeMatches.find((item) => item.id === matchId);
+      if (!match || match.status === "finished") {
+        return { ok: false, reason: "match-unavailable", message: "This match can no longer be changed." };
+      }
+
+      if (reason !== "injury" && !canChangeMatchPlayer(match, now)) {
+        return {
+          ok: false,
+          reason: "change-window-expired",
+          message: "The two-minute player-change window has closed. Use injury substitution if needed."
+        };
+      }
+
+      const outgoingPlayer = getPlayerById(outgoingPlayerId);
+      const replacementPlayer = getPlayerById(replacementPlayerId);
+      const side = match.sideA.some((player) => player.id === outgoingPlayerId)
+        ? match.sideA
+        : match.sideB.some((player) => player.id === outgoingPlayerId)
+          ? match.sideB
+          : null;
+
+      if (!side || !outgoingPlayer) {
+        return { ok: false, reason: "player-not-in-match", message: "That player is not assigned to this match." };
+      }
+
+      const validReplacement = getReplacementCandidates(outgoingPlayerId)
+        .some((player) => player.id === replacementPlayerId);
+
+      if (!replacementPlayer || !validReplacement) {
+        return { ok: false, reason: "replacement-unavailable", message: "Choose an active player who is waiting." };
+      }
+
+      const outgoingIndex = side.findIndex((player) => player.id === outgoingPlayerId);
+      const teammate = side.length === 2 ? side[1 - outgoingIndex] : null;
+
+      adjustTeammateHistory(outgoingPlayer, teammate, -1);
+      side[outgoingIndex] = replacementPlayer;
+      adjustTeammateHistory(replacementPlayer, teammate, 1);
+
+      replacementPlayer.roundsWaited = 0;
+      replacementPlayer.lastPlayedRound = state.currentRound;
+
+      if (reason === "injury") {
+        outgoingPlayer.active = false;
+      } else {
+        outgoingPlayer.roundsWaited += 1;
+      }
+
+      return {
+        ok: true,
+        outgoingPlayer,
+        replacement: replacementPlayer,
+        message: `${replacementPlayer.name} replaced ${outgoingPlayer.name}.`
+      };
+    }
+
+    function substituteInjuredPlayer(matchId, injuredPlayerId, now = Date.now()) {
+      const injuredPlayer = getPlayerById(injuredPlayerId);
+      if (!injuredPlayer) {
+        return { ok: false, reason: "player-not-found", message: "Player not found." };
+      }
+
+      const replacement = getReplacementCandidates(injuredPlayerId)
+        .sort((a, b) => {
+          const skillDifference =
+            Math.abs(SKILL_VALUES[a.skill] - SKILL_VALUES[injuredPlayer.skill]) -
+            Math.abs(SKILL_VALUES[b.skill] - SKILL_VALUES[injuredPlayer.skill]);
+          return skillDifference || b.roundsWaited - a.roundsWaited || a.name.localeCompare(b.name);
+        })[0];
+
+      if (!replacement) {
+        return {
+          ok: false,
+          reason: "no-replacement",
+          message: "No active waiting player is available as an injury substitute."
+        };
+      }
+
+      return replaceMatchPlayer(matchId, injuredPlayerId, replacement.id, now, "injury");
     }
 
     function generateNextRound() {
@@ -3368,7 +3621,11 @@
 
     function renderRoster() {
       elements.rosterList.innerHTML = "";
-      elements.rosterCount.textContent = `${state.players.length} player${state.players.length === 1 ? "" : "s"}`;
+      const activeCount = state.players.filter((player) => player.active !== false).length;
+      const pausedCount = state.players.length - activeCount;
+      elements.rosterCount.textContent = pausedCount > 0
+        ? `${activeCount} active • ${pausedCount} timed out`
+        : `${activeCount} player${activeCount === 1 ? "" : "s"}`;
 
       if (state.players.length === 0) {
         const listItem = document.createElement("li");
@@ -3381,13 +3638,14 @@
         .sort((a, b) => a.name.localeCompare(b.name))
         .forEach((player) => {
           const listItem = document.createElement("li");
-          listItem.className = "roster-player";
+          listItem.className = `roster-player${player.active === false ? " is-paused" : ""}`;
 
           listItem.innerHTML = `
             <div class="player-topline">
               <div>
                 <h3 class="player-name"></h3>
                 <span class="skill-badge"></span>
+                <span class="player-availability" hidden>Timed Out</span>
               </div>
             </div>
 
@@ -3398,6 +3656,7 @@
             </div>
 
             <div class="record-controls">
+              <button class="mini-button availability" type="button" data-action="toggle-active"></button>
               <button class="mini-button" type="button" data-action="win-plus">Win +1</button>
               <button class="mini-button" type="button" data-action="win-minus">Win −1</button>
               <button class="mini-button" type="button" data-action="loss-plus">Loss +1</button>
@@ -3408,6 +3667,9 @@
 
           listItem.querySelector(".player-name").textContent = player.name;
           listItem.querySelector(".skill-badge").textContent = SKILL_LABELS[player.skill];
+          listItem.querySelector(".player-availability").hidden = player.active !== false;
+          listItem.querySelector('[data-action="toggle-active"]').textContent =
+            player.active === false ? "Activate Player" : "Time Out Player";
 
           listItem.addEventListener("click", (event) => {
             const actionButton = event.target.closest("button[data-action]");
@@ -3419,11 +3681,49 @@
             if (action === "win-minus") updatePlayerRecord(player.id, "wins", -1);
             if (action === "loss-plus") updatePlayerRecord(player.id, "losses", 1);
             if (action === "loss-minus") updatePlayerRecord(player.id, "losses", -1);
+            if (action === "toggle-active") {
+              const result = setPlayerActive(player.id, player.active === false);
+              renderAll();
+              setStatus(elements.playerFormMessage, result.message, "info");
+            }
             if (action === "remove") removePlayer(player.id);
           });
 
           elements.rosterList.appendChild(listItem);
         });
+    }
+
+    function createReplacementPicker(match, outgoingPlayer) {
+      const picker = document.createElement("div");
+      picker.className = "replacement-picker";
+      picker.hidden = true;
+
+      const select = document.createElement("select");
+      select.setAttribute("aria-label", `Replacement for ${outgoingPlayer.name}`);
+      select.dataset.replacementSelect = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Choose waiting player";
+      select.appendChild(placeholder);
+
+      getReplacementCandidates(outgoingPlayer.id).forEach((candidate) => {
+        const option = document.createElement("option");
+        option.value = candidate.id;
+        option.textContent = `${candidate.name} — ${SKILL_LABELS[candidate.skill]}, waited ${candidate.roundsWaited}`;
+        select.appendChild(option);
+      });
+
+      const confirmButton = document.createElement("button");
+      confirmButton.type = "button";
+      confirmButton.className = "player-match-action";
+      confirmButton.dataset.action = "confirm-replacement";
+      confirmButton.dataset.matchId = match.id;
+      confirmButton.dataset.outgoingPlayerId = outgoingPlayer.id;
+      confirmButton.textContent = "Apply Change";
+
+      picker.append(select, confirmButton);
+      return picker;
     }
 
     function createSideCard(match, side, label, players) {
@@ -3439,10 +3739,41 @@
       playersContainer.className = "team-players";
 
       players.forEach((player) => {
+        const playerRow = document.createElement("div");
+        playerRow.className = "assigned-player-row";
+
         const playerElement = document.createElement("div");
         playerElement.className = "assigned-player";
         playerElement.textContent = `${player.name} (${SKILL_LABELS[player.skill]})`;
-        playersContainer.appendChild(playerElement);
+
+        const actions = document.createElement("div");
+        actions.className = "assigned-player-actions";
+
+        if (!state.viewerMode && match.status !== "finished") {
+          const candidatesAvailable = getReplacementCandidates(player.id).length > 0;
+          const changeButton = document.createElement("button");
+          changeButton.type = "button";
+          changeButton.className = "player-match-action change-player-button";
+          changeButton.dataset.action = "show-replacements";
+          changeButton.disabled = !canChangeMatchPlayer(match) || !candidatesAvailable;
+          changeButton.textContent = "Change Player";
+
+          const injuryButton = document.createElement("button");
+          injuryButton.type = "button";
+          injuryButton.className = "player-match-action injury";
+          injuryButton.dataset.action = "injury-substitute";
+          injuryButton.dataset.matchId = match.id;
+          injuryButton.dataset.outgoingPlayerId = player.id;
+          injuryButton.disabled = !candidatesAvailable;
+          injuryButton.textContent = "Injury Substitute";
+
+          actions.append(changeButton, injuryButton);
+          playerRow.append(playerElement, actions, createReplacementPicker(match, player));
+        } else {
+          playerRow.appendChild(playerElement);
+        }
+
+        playersContainer.appendChild(playerRow);
       });
 
       const winnerButton = document.createElement("button");
@@ -3506,6 +3837,13 @@
         status.className = `court-status${match.status === "finished" ? " finished" : ""}`;
         status.textContent = match.status === "finished" ? "Finished" : "In Progress";
 
+        if (match.status !== "finished") {
+          const changeWindow = document.createElement("span");
+          changeWindow.className = "match-change-window";
+          changeWindow.dataset.changeDeadline = String(match.generatedAt + PLAYER_CHANGE_WINDOW_MS);
+          status.appendChild(changeWindow);
+        }
+
         heading.append(title, status);
 
         const matchDisplay = document.createElement("div");
@@ -3534,7 +3872,9 @@
       elements.queueList.innerHTML = "";
 
       const assignedIds = getAssignedPlayerIds();
-      const waitingPlayers = state.players.filter((player) => !assignedIds.has(player.id));
+      const waitingPlayers = state.players.filter(
+        (player) => player.active !== false && !assignedIds.has(player.id)
+      );
 
       // Display order is deterministic inside ties for a stable screen.
       // Tie randomization happens only at selection time.
@@ -3547,8 +3887,8 @@
         listItem.appendChild(
           createEmptyState(
             state.activeMatches.length === 0
-              ? "The waiting queue will appear after a round is generated."
-              : "No players are waiting. Everyone is assigned to a court."
+              ? "The active-player queue will appear after a round is generated."
+              : "No active players are waiting. Everyone available is assigned to a court."
           )
         );
         elements.queueList.appendChild(listItem);
@@ -3684,6 +4024,29 @@
       });
     }
 
+    function refreshMatchChangeWindows(now = Date.now()) {
+      document.querySelectorAll("[data-change-deadline]").forEach((timer) => {
+        const remaining = Math.max(0, Number(timer.dataset.changeDeadline) - now);
+        const courtCard = timer.closest(".court-card");
+
+        if (remaining === 0) {
+          timer.textContent = "Standard changes closed";
+          courtCard?.querySelectorAll(".change-player-button").forEach((button) => {
+            button.disabled = true;
+          });
+          courtCard?.querySelectorAll(".replacement-picker").forEach((picker) => {
+            picker.hidden = true;
+          });
+          return;
+        }
+
+        const totalSeconds = Math.ceil(remaining / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        timer.textContent = `Changes close in ${minutes}:${seconds}`;
+      });
+    }
+
     function renderAll() {
       renderRoster();
       renderCourts();
@@ -3692,6 +4055,7 @@
       renderMatchHistory();
       renderSharePanel();
       renderSessionBar();
+      refreshMatchChangeWindows();
       saveState();
     }
 
@@ -3718,6 +4082,63 @@
     elements.generateRound.addEventListener("click", generateNextRound);
 
     elements.courtsGrid.addEventListener("click", (event) => {
+      const actionButton = event.target.closest("button[data-action]");
+
+      if (actionButton?.dataset.action === "show-replacements") {
+        const picker = actionButton.closest(".assigned-player-row").querySelector(".replacement-picker");
+        picker.hidden = !picker.hidden;
+        if (!picker.hidden) picker.querySelector("select").focus();
+        return;
+      }
+
+      if (actionButton?.dataset.action === "confirm-replacement") {
+        const picker = actionButton.closest(".replacement-picker");
+        const replacementPlayerId = picker.querySelector("select").value;
+
+        if (!replacementPlayerId) {
+          setStatus(elements.generationMessage, "Choose a waiting player first.", "warning");
+          return;
+        }
+
+        const result = replaceMatchPlayer(
+          actionButton.dataset.matchId,
+          actionButton.dataset.outgoingPlayerId,
+          replacementPlayerId
+        );
+
+        if (!result.ok) {
+          setStatus(elements.generationMessage, result.message, "warning");
+          refreshMatchChangeWindows();
+          return;
+        }
+
+        renderAll();
+        setStatus(elements.generationMessage, result.message, "info");
+        return;
+      }
+
+      if (actionButton?.dataset.action === "injury-substitute") {
+        const injuredPlayer = getPlayerById(actionButton.dataset.outgoingPlayerId);
+        const confirmed = window.confirm(
+          `Substitute ${injuredPlayer.name} for an injury? The closest-skill waiting player will be assigned, and ${injuredPlayer.name} will be timed out.`
+        );
+        if (!confirmed) return;
+
+        const result = substituteInjuredPlayer(
+          actionButton.dataset.matchId,
+          actionButton.dataset.outgoingPlayerId
+        );
+
+        if (!result.ok) {
+          setStatus(elements.generationMessage, result.message, "warning");
+          return;
+        }
+
+        renderAll();
+        setStatus(elements.generationMessage, `${result.message} The injured player was timed out.`, "info");
+        return;
+      }
+
       const winnerButton = event.target.closest("button[data-match-id][data-winning-side]");
       if (!winnerButton) return;
 
@@ -3929,6 +4350,8 @@
     }
 
     const sharedCode = new URLSearchParams(window.location.search).get("s");
+
+    window.setInterval(refreshMatchChangeWindows, 1000);
 
     if (sharedCode) {
       bootSharedView(sharedCode);
