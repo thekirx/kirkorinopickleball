@@ -11,7 +11,7 @@
 --   * Updating additionally requires an edit token that never leaves the
 --     scorekeeper's device, so a share link cannot be used to overwrite
 --     the session it points at.
---   * Sessions self-expire after 30 days and are swept on each insert,
+--   * Sessions self-expire 7 days after their last update and are swept on each insert,
 --     so the table cannot grow without bound.
 -- =====================================================================
 
@@ -22,7 +22,7 @@ create table if not exists public.kirq_sessions (
   payload     jsonb       not null,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
-  expires_at  timestamptz not null default now() + interval '30 days'
+  expires_at  timestamptz not null default now() + interval '7 days'
 );
 
 create index if not exists kirq_sessions_code_idx on public.kirq_sessions (code);
@@ -90,7 +90,7 @@ begin
   update public.kirq_sessions
      set payload    = p_payload,
          updated_at = now(),
-         expires_at = now() + interval '30 days'
+         expires_at = now() + interval '7 days'
    where code = p_code
      and edit_token = p_edit_token
      and expires_at > now()
