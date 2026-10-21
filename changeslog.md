@@ -10,12 +10,12 @@ This is the shared, repository-tracked handoff for switching between AI assistan
 
 1. **What to do next:** `docs/superpowers/plans/2026-10-21-next-stages.md`. Its stages are ordered; owner decisions D0–D9 are listed there, and stages marked ⛔ wait for them.
 2. **What to build:** `docs/superpowers/specs/2026-10-18-kirq-tournament-design.md`. **Read §R first:** it records owner decisions that override the original §7 layout and §8 drag-and-drop text.
-3. **Two folders, neither committed:**
+3. **Two folders, both committed and pushed (2026-10-21):**
    - this folder, branch `codex/react-phase-1`: Phase 1 React app with the original screens; 115 tests
    - `../kirkorinopickleball-prototype`, branch `prototype/play-mode`: the same plus owner-approved **easy mode**, drag and drop, the late-arrival setting and the desktop layout; 141 tests
 
    The prototype's own `changeslog.md` holds its detailed history. **This file is the canonical handoff.**
-4. **Most urgent:** nothing is committed or pushed (Stage 0, owner decision D0), and Vercel's production branch is unknown (D1).
+4. **Stage 0 is done (2026-10-21):** both branches are committed and pushed (`codex/react-phase-1` @ `24df4f6`, `prototype/play-mode` @ `28ec6e1`). The next stage is Stage 1 (owner decision D2).
 
 ### Repository and scope
 
@@ -23,7 +23,7 @@ This is the shared, repository-tracked handoff for switching between AI assistan
 - Active branch at this handoff: `codex/react-phase-1`.
 - GitHub repository: `thekirx/kirkorinopickleball`.
 - Last committed revision checked: `3efbb25` (Phase 1 execution plan). Legacy behavior baseline: `8b39e95` (player timeouts and substitutions).
-- The React implementation and this handoff documentation are currently **uncommitted and unpublished**. Inspect `git status --short`; preserve the existing changes. Do not switch to the stale `kirkorinopickleball-main` folder or replace this implementation with old `main`.
+- The React implementation is committed and pushed on `codex/react-phase-1` (`24df4f6`, 2026-10-21). It is **not** merged into `main` or `kirkorino` and not deployed to production. Inspect `git status --short` before working. Do not switch to the stale `kirkorinopickleball-main` folder or replace this implementation with old `main`.
 - Phase 1 is done locally; the next work follows the next-stages plan. Previews: this folder `npm run dev -- --port 5176`; the prototype `npm run dev:lan` (port 5177). Check that they are running rather than assuming it.
 
 ### Authoritative plans and phase status
@@ -86,7 +86,10 @@ Results below are dated. On 2026-10-21 this folder's suite was rerun: **12 files
 - **Prototype, not merged: easy mode** in a separate git worktree, `../kirkorinopickleball-prototype`, on branch `prototype/play-mode`, uncommitted. The owner approved the design direction on 2026-10-20: guided setup (Option A) + phone tabs (Option C), players addable any time. The worktree starts from this tree; this tree does not contain it. Details are in that worktree's `changeslog.md`. It includes an organizer setting the owner requested for late arrivals: back of the line (default, fair for open play) or play in the next round (family and friends). Do not merge without the owner's decision.
 - **Pre-existing, kept for parity:** "Generate Next Round" replaces the current round even if its matches are unfinished, and those matches are discarded without a result. The legacy app did the same. Raise it with the owner before Phase 2, which reworks courts.
 - Initial independent review reported cross-session offline update loss and blocked-storage startup failure. Both were reproduced with failing regression tests, fixed, and included in the passing suite. The final consolidated review (Claude, 2026-10-19) covered domain, migration, storage, session store, Supabase client, sync manager, the sharing hook and the court/share panels against legacy `8b39e95`. It found and fixed two defects, recorded under Verification; it found no further defects in the Phase 1 scope.
-- Nothing from this implementation has been pushed or deployed. No Vercel Production Branch setting was changed. The plan's warning about production pointing at the wrong branch remains unresolved and requires inspection before any authorized deployment.
+- Pushed 2026-10-21 (owner-authorized) to `codex/react-phase-1` and `prototype/play-mode` only; `main` (`264a2c2`) and `kirkorino` (`8b39e95`) are untouched. Nothing is deployed to production.
+  - **D1 partly answered:** Vercel built both branches as **Preview** deployments, not Production, and `https://kirq.vercel.app` still serves the legacy `8b39e95` build. So neither branch is the production branch. Production's last deployment (17 days before 2026-10-21) matches `kirkorino`. Confirm in Vercel (Settings → Environments → Production → Branch Tracking) before Stage 5.
+  - Previews: Phase 1 at `https://kirkorinopickleball-git-codex-react-phase-1-thekirxs-projects.vercel.app`, easy mode at `https://kirkorinopickleball-git-prototype-play-mode-thekirxs-projects.vercel.app` (both returned 200). They use the **real** Supabase backend, so any QR published there is a real share (it expires after 7 days).
+  - This clone's `remote.origin.fetch` only tracks `kirkorino`, so `git branch -r` won't list the new branches. Use `git ls-remote --heads origin` to see them.
   - Observed 2026-10-18: production serves the legacy single-file build at exactly `8b39e95` (latest `kirkorino` commit), not the earlier manually promoted `e73a1c7`. So `8b39e95` reached production after that promotion, either because Production Branch is now `kirkorino` or through a later manual promote — **which one is unknown**. If it is the branch setting, merging this React work into `kirkorino` would auto-deploy unfinished Phase 1 to production. Check Vercel → Settings → Git before any merge into `kirkorino`.
   - 2026-10-19: the owner shared a screenshot of Vercel's **Git → Connected Git Repository** page (repository `thekirx/kirkorinopickleball`, connected Jun 25). That page does not show the production branch, so it is **still unknown**. In current Vercel it is under **Settings → Environments → Production → Branch Tracking**.
 
@@ -94,7 +97,7 @@ Results below are dated. On 2026-10-21 this folder's suite was rerun: **12 files
 
 Follow `docs/superpowers/plans/2026-10-21-next-stages.md` in order:
 
-1. **Stage 0 — secure the work** (needs owner decision D0 to commit and push; D1 before any merge into a production branch).
+1. ~~Stage 0 — secure the work~~ **done 2026-10-21** (`24df4f6`, `28ec6e1`).
 2. **Stage 1 — merge easy mode into this branch** (needs D2).
 3. **Stage 2 — remember settings per game day** (needs D3).
 4. **Stage 3 — courts become objects** (minimap only with D4).
@@ -127,6 +130,13 @@ git diff --check
 - `vercel.json`, `scripts/check-deployment.mjs`: local deployment configuration and its check.
 
 ## Change history
+
+### 2026-10-21 — Stage 0: both branches committed and pushed
+
+- Changed: committed everything. Main folder `24df4f6` on `codex/react-phase-1` (61 files); prototype `28ec6e1` on `prototype/play-mode` (67 files). The owner asked to "push to git", so both were pushed to `origin` under those names only. `main` and `kirkorino` were not touched. This log update is a follow-up commit on each branch.
+- Verified before committing: staged files contained no `.env*`, `.vercel`, `service_role` or `sb_secret_` content, and no `node_modules/` or `dist/`. Tests: main 115 passed, prototype 141 passed; both builds passed. After pushing: `git ls-remote --heads origin` shows `codex/react-phase-1` = `24df4f6`, `prototype/play-mode` = `28ec6e1`, `kirkorino` = `8b39e95`, `main` = `264a2c2`. `vercel ls` shows two new **Preview** deployments (Ready) and no new Production one. Both previews return 200, and each serves the expected screens. `kirq.vercel.app` still serves the legacy build.
+- Remaining: Stage 1 (merge easy mode into `codex/react-phase-1`) needs owner decision D2; D1 still needs final confirmation in Vercel before Stage 5.
+- Delivery: committed and pushed to two non-production branches; nothing deployed to production.
 
 ### 2026-10-21 — Handoff made ready for the next stages
 
