@@ -129,6 +129,13 @@ git diff --check
 
 ## Change history
 
+### 2026-10-21 — Stage 0: both branches committed and pushed
+
+- Changed: committed everything. Main folder `24df4f6` on `codex/react-phase-1` (61 files); prototype `28ec6e1` on `prototype/play-mode` (67 files). The owner asked to "push to git", so both were pushed to `origin` under those names only. `main` and `kirkorino` were not touched. This log update is a follow-up commit on each branch.
+- Verified before committing: staged files contained no `.env*`, `.vercel`, `service_role` or `sb_secret_` content, and no `node_modules/` or `dist/`. Tests: main 115 passed, prototype 141 passed; both builds passed. After pushing: `git ls-remote --heads origin` shows `codex/react-phase-1` = `24df4f6`, `prototype/play-mode` = `28ec6e1`, `kirkorino` = `8b39e95`, `main` = `264a2c2`. `vercel ls` shows two new **Preview** deployments (Ready) and no new Production one. Both previews return 200, and each serves the expected screens. `kirq.vercel.app` still serves the legacy build.
+- Remaining: Stage 1 (merge easy mode into `codex/react-phase-1`) needs owner decision D2; D1 still needs final confirmation in Vercel before Stage 5.
+- Delivery: committed and pushed to two non-production branches; nothing deployed to production.
+
 ### 2026-10-21 — Handoff made ready for the next stages (prototype copy)
 
 - Changed: removed the dead courts-first CSS block from `src/styles.css`. All of its selectors were unreferenced, and the file now equals the main folder's, which removes a merge conflict. Copied in the revised design doc (§R) and `docs/superpowers/plans/2026-10-21-next-stages.md` from the main folder (identical files). Added the canonical-handoff pointer above.
