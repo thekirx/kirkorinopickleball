@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "savedAt": "2026-10-17T17:03:14.208Z",
+  "players": [
+    {
+      "id": "player-545077a3-f2f8-4f76-89fd-4e6cef51a8a8",
+      "name": "QA Alice",
+      "skill": "intermediate",
+      "roundsWaited": 0,
+      "wins": 1,
+      "losses": 0,
+      "lastPlayedRound": 1,
+      "active": true
+    },
+    {
+      "id": "player-7fd38cf1-9292-4480-95c5-007f0495b76e",
+      "name": "QA Bea",
+      "skill": "intermediate",
+      "roundsWaited": 0,
+      "wins": 1,
+      "losses": 0,
+      "lastPlayedRound": 1,
+      "active": true
+    },
+    {
+      "id": "player-c31fef74-22b2-4cc3-9a0e-3cb1f42675fd",
+      "name": "QA Cara",
+      "skill": "intermediate",
+      "roundsWaited": 1,
+      "wins": 0,
+      "losses": 0,
+      "lastPlayedRound": null,
+      "active": true
+    },
+    {
+      "id": "player-36bc1832-79ab-4b74-962d-4a4cd20281dc",
+      "name": "QA Dana",
+      "skill": "intermediate",
+      "roundsWaited": 0,
+      "wins": 0,
+      "losses": 1,
+      "lastPlayedRound": 1,
+      "active": true
+    },
+    {
+      "id": "player-0194b46e-3595-4d59-b2e3-f6396aa61336",
+      "name": "QA Eli",
+      "skill": "intermediate",
+      "roundsWaited": 0,
+      "wins": 0,
+      "losses": 1,
+      "lastPlayedRound": 1,
+      "active": true
+    }
+  ],
+  "currentRound": 1,
+  "activeMatches": [
+    {
+      "id": "match-525a3b41-aeaf-4926-afa5-bb50d18fe90b",
+      "sideA": [
+        "player-545077a3-f2f8-4f76-89fd-4e6cef51a8a8",
+        "player-7fd38cf1-9292-4480-95c5-007f0495b76e"
+      ],
+      "sideB": [
+        "player-0194b46e-3595-4d59-b2e3-f6396aa61336",
+        "player-36bc1832-79ab-4b74-962d-4a4cd20281dc"
+      ],
+      "status": "finished",
+      "winnerSide": "A",
+      "generatedAt": 1792256593903
+    }
+  ],
+  "matchLog": [
+    {
+      "id": "match-525a3b41-aeaf-4926-afa5-bb50d18fe90b",
+      "round": 1,
+      "court": 1,
+      "matchType": "Doubles",
+      "winners": [
+        "QA Alice",
+        "QA Bea"
+      ],
+      "losers": [
+        "QA Eli",
+        "QA Dana"
+      ],
+      "winnerSide": "A",
+      "finishedAt": "2026-10-17T17:03:14.180Z"
+    }
+  ],
+  "teammateHistory": [
+    [
+      "player-545077a3-f2f8-4f76-89fd-4e6cef51a8a8|player-7fd38cf1-9292-4480-95c5-007f0495b76e",
+      1
+    ],
+    [
+      "player-0194b46e-3595-4d59-b2e3-f6396aa61336|player-36bc1832-79ab-4b74-962d-4a4cd20281dc",
+      1
+    ]
+  ]
+}

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KirQ — easy mode options (mock)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&display=swap" rel="stylesheet" />
+<style>
+  /* MOCK ONLY — design exploration, not production code. */
+  :root{
+    --paper:#f4f2ed; --ink:#0a0a0a; --blue:#1d36ff; --blue-soft:#e9ecff; --lime:#e7ff4f;
+    --white:#fff; --muted:#4a4a4a; --line:#d6d3cc; --warn:#fff4d6; --warn-ink:#6b4a00;
+    --font:"Archivo",Arial,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  svg.i{width:22px;height:22px;flex:0 0 auto}
+
+  /* ---------- option switcher (not part of the design) ---------- */
+  .switch{background:var(--ink);color:var(--paper);padding:14px 16px 0}
+  .switch h1{margin:0 0 4px;font-size:1.05rem;font-weight:800}
+  .switch p{margin:0 0 12px;font-size:.88rem;opacity:.8;max-width:62ch}
+  .switch-tabs{display:flex;gap:6px;overflow-x:auto}
+  .switch-tabs button{flex:0 0 auto;border:0;padding:10px 14px;background:#2a2a2a;color:var(--paper);font-weight:600;font-size:.92rem;min-height:44px}
+  .switch-tabs button[aria-selected="true"]{background:var(--paper);color:var(--ink)}
+  .switch-tabs small{display:block;font-weight:400;font-size:.75rem;opacity:.75}
+
+  /* ---------- shared app chrome ---------- */
+  .stage{max-width:440px;margin:0 auto;min-height:calc(100vh - 120px);background:var(--paper);position:relative}
+  .stage.wide{max-width:1100px}
+  .top{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--white);border-bottom:1px solid var(--line)}
+  .logo{font-weight:900;letter-spacing:-.05em;font-size:1.3rem}
+  .logo span{color:var(--blue)}
+  .top .spacer{flex:1}
+  .icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;padding:0 10px;border:1px solid var(--line);background:var(--white);border-radius:10px;font-weight:600;font-size:.9rem}
+  .pad{padding:18px 16px 120px}
+  h2{font-size:1.6rem;line-height:1.15;margin:4px 0 6px;font-weight:900;letter-spacing:-.02em}
+  .lead{color:var(--muted);margin:0 0 18px}
+  .card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 18px;border-radius:12px;border:2px solid var(--ink);background:var(--white);font-weight:800;font-size:1rem}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.block{width:100%}
+  .btn.ghost{border-color:transparent;background:transparent;text-decoration:underline;font-weight:600;min-height:44px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .tag{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:var(--paper)}
+  .tag.live{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+  .tag.done{border-color:var(--ink);background:var(--lime)}
+  .tag.break{background:#eee;color:var(--muted)}
+  .hint{font-size:.92rem;color:var(--muted)}
+  .warn{background:var(--warn);color:var(--warn-ink);border:1px solid #f0d58a;border-radius:12px;padding:12px 14px;font-size:.95rem}
+
+  /* sticky footer action */
+  .footer{position:sticky;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent, var(--paper) 18%);display:flex;flex-direction:column;gap:8px}
+  .footer .why{font-size:.88rem;color:var(--muted);text-align:center}
+
+  /* steps */
+  .steps{display:flex;gap:6px;padding:12px 16px 0}
+  .steps span{flex:1;height:6px;border-radius:999px;background:var(--line)}
+  .steps span.on{background:var(--blue)}
+  .step-label{padding:8px 16px 0;font-size:.85rem;font-weight:700;color:var(--blue)}
+
+  /* how it works */
+  .how{display:grid;gap:10px;margin:0 0 18px;padding:0;list-style:none}
+  .how li{display:flex;gap:12px;align-items:flex-start}
+  .how b{display:inline-grid;place-items:center;flex:0 0 32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;font-weight:800}
+
+  /* add players */
+  .add-row{display:flex;gap:8px}
+  .add-row input{flex:1;min-width:0;min-height:52px;padding:0 14px;border:2px solid var(--ink);border-radius:12px;background:var(--white);font-size:1.05rem}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;padding:0;list-style:none}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:6px 6px 6px 12px;border-radius:999px;background:var(--white);border:1px solid var(--line);font-weight:600}
+  .chip button{border:0;background:transparent;min-width:32px;min-height:32px;border-radius:50%;display:inline-grid;place-items:center}
+  .chip button:hover{background:var(--paper)}
+
+  /* courts stepper + type */
+  .stepper{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0 4px}
+  .stepper button{width:64px;height:64px;border-radius:50%;border:2px solid var(--ink);background:var(--white);font-size:1.8rem;font-weight:800}
+  .stepper output{font-size:3.2rem;font-weight:900;min-width:2ch;text-align:center}
+  .choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .choice button{text-align:left;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--white);min-height:96px}
+  .choice button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}
+  .choice strong{display:block;font-size:1.05rem}
+  .choice span{font-size:.88rem;color:var(--muted)}
+  .preview{margin-top:14px}
+
+  /* court card (A & C) */
+  .court-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .court-head h3{margin:0;font-size:1.2rem;font-weight:900}
+  .team{display:flex;align-items:center;gap:10px;width:100%;text-align:left;min-height:64px;padding:10px 14px;border-radius:12px;border:2px solid var(--line);background:var(--white)}
+  .team .names{flex:1;font-weight:800;font-size:1.12rem;line-height:1.25}
+  .team .mark{font-size:.85rem;font-weight:700;color:var(--muted)}
+  .team[aria-pressed="true"]{border-color:var(--blue);background:var(--blue);color:#fff}
+  .team[aria-pressed="true"] .mark{color:#fff}
+  .vs{text-align:center;font-size:.8rem;font-weight:700;color:var(--muted);margin:6px 0}
+  .court-hint{font-size:.85rem;color:var(--muted);margin:8px 0 0;text-align:center}
+
+  /* up next */
+  .next-list{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .next-list li{display:flex;align-items:center;gap:10px}
+  .next-list .n{display:inline-grid;place-items:center;flex:0 0 28px;height:28px;border-radius:50%;background:var(--paper);border:1px solid var(--line);font-size:.85rem;font-weight:800}
+  .next-list .who{flex:1;font-weight:700}
+
+  /* sheet */
+  .scrim{position:fixed;inset:0;background:rgba(10,10,10,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+  .sheet{background:var(--white);width:100%;max-width:440px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto}
+  .sheet h3{margin:0 0 6px;font-size:1.3rem;font-weight:900}
+  .menu-item{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:0 6px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;font-weight:700;font-size:1.02rem}
+  .player-row{display:flex;align-items:center;gap:10px;min-height:56px;border-bottom:1px solid var(--line)}
+  .player-row .who{flex:1;font-weight:700}
+  .toggle{min-height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--ink);background:var(--white);font-weight:700;font-size:.88rem}
+  .toggle[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;display:flex;gap:12px;align-items:center;z-index:60;max-width:92vw}
+  .toast button{border:0;background:transparent;color:var(--lime);font-weight:800;min-height:36px}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<style>
+  /* ---------- Option B: court board ---------- */
+  .board{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;padding:16px 16px 120px}
+  @media (max-width:820px){.board{grid-template-columns:1fr}}
+  .board-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px 0}
+  .board-head h2{margin:0;font-size:1.5rem}
+  .board-courts{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .bcourt{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .bcourt-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:900}
+  .bcourt-field{display:grid;grid-template-columns:1fr 6px 1fr;min-height:150px;background:#dfe9d8}
+  .bside{border:0;background:transparent;padding:14px 10px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center;font-weight:800;font-size:1.02rem;line-height:1.25;min-height:150px}
+  .bside small{font-weight:600;font-size:.78rem;color:var(--muted)}
+  .bside[aria-pressed="true"]{background:var(--blue);color:#fff}
+  .bside[aria-pressed="true"] small{color:#fff}
+  .net{background:repeating-linear-gradient(var(--ink) 0 6px, transparent 6px 10px)}
+  .bcourt-foot{padding:8px 14px;font-size:.85rem;color:var(--muted);text-align:center}
+  .side-panel{display:flex;flex-direction:column;gap:14px}
+
+  /* ---------- Option C: tabs ---------- */
+  .tabbar{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--white);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{border:0;background:transparent;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.78rem;font-weight:700;color:var(--muted)}
+  .tabbar button[aria-current="page"]{color:var(--blue)}
+  .tabbar button[aria-current="page"] svg{stroke:var(--blue)}
+  .c-action{position:sticky;bottom:64px;padding:10px 16px;background:linear-gradient(transparent,var(--paper) 25%)}
+  .qr-box{display:grid;place-items:center;aspect-ratio:1;max-width:260px;margin:8px auto;background:var(--white);border:2px solid var(--ink);border-radius:12px}
+  .standings{margin:0;padding:0;list-style:none}
+  .standings li{display:flex;gap:10px;align-items:center;min-height:52px;border-bottom:1px solid var(--line)}
+  .standings .rank{flex:0 0 28px;font-weight:900;color:var(--blue)}
+  .standings .who{flex:1;font-weight:700}
+  .standings .rec{font-variant-numeric:tabular-nums;font-weight:700}
+</style>
+
+<div class="switch">
+  <h1>Easy mode: three directions (mock)</h1>
+  <p>Same game, three ways to run it. Every screen is clickable. Start with <b>Try with sample players</b>, play a round, then switch options to compare. Nothing here touches the real app.</p>
+  <div class="switch-tabs" role="tablist" aria-label="Design options">
+    <button role="tab" data-opt="A" aria-selected="true">A · Step by step<small>Best for first-timers</small></button>
+    <button role="tab" data-opt="B" aria-selected="false">B · Court board<small>Best for a tablet at the venue</small></button>
+    <button role="tab" data-opt="C" aria-selected="false">C · Phone tabs<small>Best for one organizer on a phone</small></button>
+  </div>
+</div>
+<div id="app"></div>
+<div id="live" class="sr" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Tiny mock engine. Same fairness idea as KirQ: whoever has
+   waited longest plays next; partners are mixed up each round.
+   ============================================================ */
+const SAMPLE = ["Ria","Marco","Joy","Dante","Bea","Nico","Mika","Paolo","Carla","Ethan"];
+const S = {
+  opt: "A", stepA: 0, tabC: "courts", sheet: null, toast: null,
+  players: [], courts: 2, format: "doubles", round: 0, matches: [], results: []
+};
+let uid = 0;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const say = m => { document.getElementById("live").textContent = m; };
+const byId = id => S.players.find(p => p.id === id);
+const names = ids => ids.map(id => byId(id)?.name ?? "?").join(" & ");
+const perCourt = () => S.format === "doubles" ? 4 : 2;
+const here = () => S.players.filter(p => !p.onBreak);
+const playingIds = () => new Set(S.matches.filter(m => !m.winner).flatMap(m => [...m.a, ...m.b]));
+
+function addPlayer(name){
+  name = name.trim().replace(/\s+/g," ");
+  if(!name) return "Type a name first.";
+  const existing = S.players.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if(existing) return `${existing.name} is already on the list.`;
+  S.players.push({id:"p"+(++uid), name, waited:0, wins:0, losses:0, onBreak:false});
+  return null;
+}
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function queue(){ // longest wait first; ties shuffled
+  return shuffle(here()).sort((x,y) => y.waited - x.waited);
+}
+function courtsUsable(){ return Math.min(S.courts, Math.floor(here().length / perCourt())); }
+function newRound(){
+  const n = courtsUsable();
+  if(n < 1) return `You need at least ${perCourt()} players here to start.`;
+  const chosen = queue().slice(0, n * perCourt());
+  const chosenIds = new Set(chosen.map(p => p.id));
+  here().forEach(p => { p.waited = chosenIds.has(p.id) ? 0 : p.waited + 1; });
+  const mixed = shuffle(chosen.map(p => p.id));
+  S.round += 1;
+  S.matches = Array.from({length:n}, (_, c) => {
+    const g = mixed.slice(c*perCourt(), (c+1)*perCourt());
+    return {court:c+1, a:g.slice(0, perCourt()/2), b:g.slice(perCourt()/2), winner:null};
+  });
+  return null;
+}
+function setWinner(court, side){
+  const m = S.matches.find(x => x.court === court);
+  if(!m) return;
+  const prev = m.winner;
+  if(prev){ // undo previous result first
+    const [w,l] = prev === "a" ? [m.a,m.b] : [m.b,m.a];
+    w.forEach(id => byId(id).wins--); l.forEach(id => byId(id).losses--);
+  }
+  m.winner = prev === side ? null : side; // tapping the same team again clears it
+  if(m.winner){
+    const [w,l] = m.winner === "a" ? [m.a,m.b] : [m.b,m.a];
+    w.forEach(id => byId(id).wins++); l.forEach(id => byId(id).losses++);
+    say(`Court ${court}: ${names(w)} won.`);
+  } else say(`Court ${court}: result cleared.`);
+}
+const unfinished = () => S.matches.filter(m => !m.winner).length;
+const inRoundIds = () => new Set(S.matches.flatMap(m => [...m.a, ...m.b]));
+const upNext = () => { const inRound = inRoundIds(); return queue().filter(p => !inRound.has(p.id)); };
+function plural(n, one, many){ return `${n} ${n === 1 ? one : many}`; }
+
+/* ---------- icons (inline SVG, never emoji) ---------- */
+const I = {
+  back:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
+  more:'<svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  x:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  check:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+  plus:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  courts:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M12 5v14M3 12h18"/></svg>',
+  people:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c3 .3 5.5 2.6 5.5 5.8"/></svg>',
+  trophy:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4z"/><path d="M8 6H4a3 3 0 0 0 4 3M16 6h4a3 3 0 0 1-4 3M12 12v4M8 20h8M9 16h6v4H9z"/></svg>',
+  share:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 19h2M19 14h2"/></svg>'
+};
+</script>
+<script>
+"use strict";
+/* ============================================================
+   Shared pieces
+   ============================================================ */
+function addForm(id, compact){
+  return `<form class="add-row" data-form="add" aria-label="Add a player">
+      <label class="sr" for="${id}">Player name</label>
+      <input id="${id}" name="n" autocomplete="off" maxlength="30" placeholder="${compact ? "Add someone" : "Type a name, e.g. Ria"}" />
+      <button class="btn primary" type="submit" data-fk="add-${id}">${I.plus}<span>Add</span></button>
+    </form>`;
+}
+function sampleBtn(){
+  return S.players.length ? "" :
+    `<button class="btn ghost" data-act="sample" data-fk="sample">Just looking? Try with 10 sample players</button>`;
+}
+function courtCard(m){
+  const team = (side, ids) => {
+    const won = m.winner === side;
+    return `<button class="team" aria-pressed="${won}" data-act="win" data-court="${m.court}" data-side="${side}" data-fk="win-${m.court}-${side}">
+        <span class="names">${esc(names(ids))}</span>
+        <span class="mark">${won ? I.check + " Won" : m.winner ? "" : "Tap if they won"}</span>
+      </button>`;
+  };
+  return `<article class="card" aria-label="Court ${m.court}">
+      <div class="court-head"><h3>Court ${m.court}</h3>
+        ${m.winner ? `<span class="tag done">${I.check} Finished</span>` : `<span class="tag live">Playing</span>`}
+      </div>
+      ${team("a", m.a)}<div class="vs">vs</div>${team("b", m.b)}
+      <p class="court-hint">${m.winner ? "Tapped the wrong team? Tap the other one, or tap again to clear." : "When the game ends, tap the team that won."}</p>
+    </article>`;
+}
+function upNextCard(){
+  const list = upNext();
+  const onBreak = S.players.filter(p => p.onBreak);
+  return `<section class="card" aria-labelledby="next-h">
+      <h3 id="next-h" style="margin:0;font-size:1.15rem;font-weight:900">Sitting out this round</h3>
+      <p class="hint" style="margin:4px 0 0">They go first next round, so everyone gets fair court time.</p>
+      ${list.length ? `<ol class="next-list">${list.map((p,i) => `<li><span class="n">${i+1}</span><span class="who">${esc(p.name)}</span><span class="hint">${p.waited ? `waited ${plural(p.waited,"round","rounds")}` : "just played"}</span></li>`).join("")}</ol>`
+        : `<p class="hint">Nobody is sitting out. Everyone is on a court.</p>`}
+      ${onBreak.length ? `<p class="hint" style="margin-top:8px">On a break: ${onBreak.map(p => esc(p.name)).join(", ")}</p>` : ""}
+    </section>`;
+}
+function nextRoundFooter(label){
+  const left = unfinished();
+  const why = !S.round ? "" : left ? `${plural(left,"court is","courts are")} still playing. Tap who won first.` : "All games are done. Ready when you are.";
+  return `<div class="footer">
+      ${why ? `<p class="why">${why}</p>` : ""}
+      <button class="btn primary block" data-act="next" data-fk="next">${label || "Start next round"}</button>
+    </div>`;
+}
+function playersList(){
+  const busy = playingIds();
+  if(!S.players.length) return `<p class="hint">No one yet. Add the people who are here.</p>`;
+  return S.players.map(p => `<div class="player-row">
+      <span class="who">${esc(p.name)}${busy.has(p.id) ? ` <span class="tag live">On court</span>` : p.onBreak ? ` <span class="tag break">On a break</span>` : ""}</span>
+      <button class="toggle" aria-pressed="${p.onBreak}" data-act="break" data-id="${p.id}" data-fk="break-${p.id}"
+        aria-label="${p.onBreak ? `${esc(p.name)} is back` : `${esc(p.name)} is taking a break`}">${p.onBreak ? "I'm back" : "Break"}</button>
+      <button class="icon-btn" data-act="remove" data-id="${p.id}" data-fk="rm-${p.id}" aria-label="Remove ${esc(p.name)}" ${busy.has(p.id) ? "disabled title='On a court right now'" : ""}>${I.x}</button>
+    </div>`).join("");
+}
+function standings(){
+  const ranked = [...S.players].sort((a,b) => b.wins - a.wins || a.losses - b.losses || a.name.localeCompare(b.name));
+  if(!S.matches.some(m => m.winner) && !S.players.some(p => p.wins)) return `<p class="hint">No games finished yet. Results appear here as you tap winners.</p>`;
+  return `<ol class="standings">${ranked.map((p,i) => `<li><span class="rank">${i+1}</span><span class="who">${esc(p.name)}</span><span class="rec">${p.wins} won · ${p.losses} lost</span></li>`).join("")}</ol>`;
+}
+function shareBody(){
+  return `<p class="hint">Show this to the group. Anyone who scans it sees the courts and results live on their own phone, and can't change anything.</p>
+    <div class="qr-box" role="img" aria-label="QR code placeholder"><span class="hint">QR code appears here</span></div>
+    <p class="hint" style="text-align:center">kirq.vercel.app/?s=…</p>`;
+}
+function setupBlock(){
+  const n = courtsUsable(), playing = n * perCourt(), sitting = Math.max(0, here().length - playing);
+  return `<div class="stack">
+      <div class="card"><strong>How many courts do you have?</strong>
+        <div class="stepper" role="group" aria-label="Number of courts">
+          <button data-act="courts-" data-fk="c-" aria-label="One fewer court">−</button>
+          <output aria-live="polite">${S.courts}</output>
+          <button data-act="courts+" data-fk="c+" aria-label="One more court">+</button>
+        </div></div>
+      <div class="choice" role="group" aria-label="Game type">
+        <button aria-pressed="${S.format==="doubles"}" data-act="fmt" data-v="doubles" data-fk="f-d"><strong>Doubles</strong><span>2 vs 2, 4 people per court</span></button>
+        <button aria-pressed="${S.format==="singles"}" data-act="fmt" data-v="singles" data-fk="f-s"><strong>Singles</strong><span>1 vs 1, 2 people per court</span></button>
+      </div>
+      <div class="card preview">${here().length < perCourt()
+        ? `You need at least ${perCourt()} players here for ${S.format}. You have ${here().length}.`
+        : `<strong>Each round:</strong> ${playing} people play on ${plural(n,"court","courts")}${n < S.courts ? ` (only enough players for ${n})` : ""}, ${sitting} sit out and go first next time.`}</div>
+    </div>`;
+}
+
+/* ============================================================
+   OPTION A — Step by step
+   ============================================================ */
+function viewA(){
+  const top = (title, back) => `<div class="top">${back ? `<button class="icon-btn" data-act="a-back" data-fk="a-back" aria-label="Back">${I.back}</button>` : ""}<span class="logo">Kir<span>Q</span></span><span class="spacer"></span>${title || ""}</div>`;
+  const bars = i => `<div class="steps" aria-hidden="true">${[0,1,2].map(n => `<span class="${n<=i?"on":""}"></span>`).join("")}</div><p class="step-label">Step ${i+1} of 3</p>`;
+  if(S.stepA === 0){
+    const need = Math.max(0, perCourt() - S.players.length);
+    return `${top("")}${bars(0)}<div class="pad">
+        <h2>Who's here today?</h2>
+        <ol class="how" aria-label="How it works">
+          <li><b>1</b><span>Add everyone who came to play.</span></li>
+          <li><b>2</b><span>Say how many courts you have.</span></li>
+          <li><b>3</b><span>KirQ makes fair teams. You just tap who won.</span></li>
+        </ol>
+        ${addForm("a-name")}
+        ${S.players.length ? `<ul class="chips" aria-label="Players added">${S.players.map(p => `<li class="chip">${esc(p.name)}<button data-act="remove" data-id="${p.id}" data-fk="rm-${p.id}" aria-label="Remove ${esc(p.name)}">${I.x}</button></li>`).join("")}</ul>` : ""}
+        <div style="margin-top:10px">${sampleBtn()}</div>
+      </div>
+      <div class="footer">
+        <p class="why">${!S.players.length ? `Add at least ${perCourt()} people to start. Late arrivals can join any time.` : need ? `${plural(S.players.length,"player","players")} added. Add ${need} more to start.` : `${plural(S.players.length,"player","players")} added. Late arrivals can join any time.`}</p>
+        <button class="btn primary block" data-act="a-step" data-to="1" data-fk="a-next" ${need ? "disabled" : ""}>Next: courts</button>
+      </div>`;
+  }
+  if(S.stepA === 1){
+    return `${top("", true)}${bars(1)}<div class="pad"><h2>Set up the courts</h2><p class="lead">You can change this later.</p>${setupBlock()}</div>
+      <div class="footer"><button class="btn primary block" data-act="a-start" data-fk="a-start" ${courtsUsable() < 1 ? "disabled" : ""}>Start playing</button></div>`;
+  }
+  return `${top(`<span class="tag live">Round ${S.round}</span><button class="icon-btn" data-act="sheet" data-v="menu" data-fk="menu" aria-label="More options">${I.more}</button>`)}
+    <div class="pad stack">${S.matches.map(courtCard).join("")}${upNextCard()}</div>${nextRoundFooter()}`;
+}
+
+/* ============================================================
+   OPTION B — Court board (tablet at the venue)
+   ============================================================ */
+function viewB(){
+  const top = `<div class="top"><span class="logo">Kir<span>Q</span></span><span class="spacer"></span>
+      <button class="icon-btn" data-act="sheet" data-v="share" data-fk="b-share">${I.share}<span>Share</span></button>
+      <button class="icon-btn" data-act="sheet" data-v="results" data-fk="b-res">${I.trophy}<span>Results</span></button></div>`;
+  if(!S.round){
+    return `${top}<div class="board"><div class="stack"><h2>Set up today's games</h2>${setupBlock()}
+        <button class="btn primary block" data-act="b-start" data-fk="b-start" ${courtsUsable() < 1 ? "disabled" : ""}>Start the first round</button></div>
+      <aside class="side-panel card"><strong>Who's here?</strong>${addForm("b-name", true)}${sampleBtn()}<div>${playersList()}</div></aside></div>`;
+  }
+  const left = unfinished();
+  const field = m => {
+    const side = (s, ids) => `<button class="bside" aria-pressed="${m.winner === s}" data-act="win" data-court="${m.court}" data-side="${s}" data-fk="bw-${m.court}-${s}" aria-label="${esc(names(ids))} won on court ${m.court}">
+        ${m.winner === s ? I.check : ""}<span>${esc(names(ids)).replace(" &amp; ","<br>&amp; ")}</span><small>${m.winner === s ? "Won" : "Tap if won"}</small></button>`;
+    return `<article class="bcourt"><div class="bcourt-head"><span>Court ${m.court}</span>${m.winner ? `<span class="tag done">${I.check} Finished</span>` : `<span class="tag live">Playing</span>`}</div>
+      <div class="bcourt-field">${side("a", m.a)}<span class="net" aria-hidden="true"></span>${side("b", m.b)}</div>
+      <div class="bcourt-foot">${m.winner ? "Tap the other side to change it." : "Tap the side that won."}</div></article>`;
+  };
+  return `${top}<div class="board-head"><h2>Round ${S.round}</h2>
+      <span class="tag ${left ? "live" : "done"}">${left ? `${S.matches.length - left} of ${S.matches.length} courts finished` : "All courts finished"}</span>
+      <span class="spacer" style="flex:1"></span>
+      <button class="btn primary" data-act="next" data-fk="b-next">Start next round</button></div>
+    <div class="board"><div class="board-courts">${S.matches.map(field).join("")}</div>
+      <aside class="side-panel">${upNextCard()}
+        <div class="card"><strong>Someone arrived?</strong>${addForm("b-name2", true)}</div>
+        <details class="card"><summary style="min-height:44px;display:flex;align-items:center;font-weight:800;cursor:pointer">Everyone (${S.players.length}): breaks and removals</summary>${playersList()}</details>
+      </aside></div>`;
+}
+
+/* ============================================================
+   OPTION C — Phone tabs
+   ============================================================ */
+function viewC(){
+  const tabs = [["courts","Courts",I.courts],["players","Players",I.people],["results","Results",I.trophy],["share","Share",I.share]];
+  const bar = `<nav class="tabbar" aria-label="Sections">${tabs.map(([k,l,ic]) => `<button data-act="tab" data-v="${k}" data-fk="t-${k}" ${S.tabC===k ? 'aria-current="page"' : ""}>${ic}<span>${l}</span></button>`).join("")}</nav>`;
+  const top = t => `<div class="top"><span class="logo">Kir<span>Q</span></span><span class="spacer"></span><strong>${t}</strong></div>`;
+  let body = "";
+  if(S.tabC === "courts"){
+    if(!S.round){
+      body = `${top("Courts")}<div class="pad">${S.players.length < perCourt()
+        ? `<h2>Add players first</h2><p class="lead">Go to <b>Players</b> and add who's here. Then come back to start.</p><button class="btn primary block" data-act="tab" data-v="players" data-fk="go-players">Add players</button><div style="margin-top:10px">${sampleBtn()}</div>`
+        : `<h2>Ready to play?</h2>${setupBlock()}<div style="margin-top:14px"><button class="btn primary block" data-act="c-start" data-fk="c-start">Start the first round</button></div>`}</div>`;
+    } else body = `${top(`Round ${S.round}`)}<div class="pad stack" style="padding-bottom:20px">${S.matches.map(courtCard).join("")}${upNextCard()}</div>
+      <div class="c-action"><button class="btn primary block" data-act="next" data-fk="c-next">Start next round</button></div>`;
+  }
+  if(S.tabC === "players") body = `${top("Players")}<div class="pad"><h2>Who's here?</h2><p class="lead">Taking a break skips someone until they tap <b>I'm back</b>.</p>${addForm("c-name")}<div style="margin:10px 0">${sampleBtn()}</div><div>${playersList()}</div></div>`;
+  if(S.tabC === "results") body = `${top("Results")}<div class="pad"><h2>Results so far</h2>${standings()}</div>`;
+  if(S.tabC === "share") body = `${top("Share")}<div class="pad"><h2>Let everyone follow along</h2>${shareBody()}</div>`;
+  return body + bar;
+}
+
+/* ============================================================
+   Sheets, toast, render
+   ============================================================ */
+function sheetView(){
+  if(!S.sheet) return "";
+  const close = `<button class="btn block" style="margin-top:14px" data-act="close" data-fk="close">Close</button>`;
+  let inner = "";
+  if(S.sheet === "menu") inner = `<h3>More</h3>
+      <button class="menu-item" data-act="sheet" data-v="players" data-fk="m-p">${I.people} Players: add, breaks</button>
+      <button class="menu-item" data-act="sheet" data-v="results" data-fk="m-r">${I.trophy} Results so far</button>
+      <button class="menu-item" data-act="sheet" data-v="share" data-fk="m-s">${I.share} Share live scores</button>
+      <button class="menu-item" data-act="a-step" data-to="1" data-fk="m-c">${I.courts} Change courts or game type</button>`;
+  if(S.sheet === "players") inner = `<h3>Players</h3><p class="hint">Taking a break skips someone until they're back.</p>${addForm("s-name", true)}<div style="margin-top:8px">${playersList()}</div>`;
+  if(S.sheet === "results") inner = `<h3>Results so far</h3>${standings()}`;
+  if(S.sheet === "share") inner = `<h3>Share live scores</h3>${shareBody()}`;
+  if(S.sheet === "unfinished"){
+    const open = S.matches.filter(m => !m.winner).map(m => `Court ${m.court}`).join(" and ");
+    inner = `<h3>${open} ${unfinished() === 1 ? "is" : "are"} still playing</h3>
+      <p class="warn">Starting a new round now ends ${unfinished() === 1 ? "that game" : "those games"} with <b>no result</b>.</p>
+      <div class="stack" style="margin-top:12px">
+        <button class="btn primary block" data-act="close" data-fk="keep">Keep playing</button>
+        <button class="btn block" data-act="force-next" data-fk="force">Start new round anyway</button></div>`;
+    return `<div class="scrim" data-act="close-scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Games still playing">${inner}</div></div>`;
+  }
+  return `<div class="scrim" data-act="close-scrim"><div class="sheet" role="dialog" aria-modal="true">${inner}${close}</div></div>`;
+}
+function toastView(){
+  if(!S.toast) return "";
+  return `<div class="toast" role="status"><span>${esc(S.toast.text)}</span>${S.toast.undo ? `<button data-act="undo" data-fk="undo">Undo</button>` : ""}</div>`;
+}
+const app = document.getElementById("app");
+function render(){
+  const fk = document.activeElement?.dataset?.fk;
+  const wide = S.opt === "B";
+  app.innerHTML = `<div class="stage${wide ? " wide" : ""}">${S.opt === "A" ? viewA() : S.opt === "B" ? viewB() : viewC()}</div>${sheetView()}${toastView()}`;
+  if(fk) app.querySelector(`[data-fk="${CSS.escape(fk)}"]`)?.focus();
+}
+</script>
+<script>
+"use strict";
+let toastTimer;
+function toast(text, undo){ S.toast = {text, undo}; clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; render(); }, 5000); say(text); }
+
+function startRound(){
+  const err = newRound();
+  if(err){ toast(err); return false; }
+  say(`Round ${S.round} started. ${S.matches.map(m => `Court ${m.court}: ${names(m.a)} versus ${names(m.b)}`).join(". ")}.`);
+  return true;
+}
+
+document.addEventListener("submit", e => {
+  const f = e.target.closest('[data-form="add"]'); if(!f) return;
+  e.preventDefault();
+  const input = f.querySelector("input"), id = input.id;
+  const err = addPlayer(input.value);
+  if(err) toast(err); else say(`${input.value.trim()} added.`);
+  render();
+  const again = document.getElementById(id); if(again){ if(!err) again.value = ""; again.focus(); }
+});
+
+document.addEventListener("click", e => {
+  const tab = e.target.closest("[data-opt]");
+  if(tab){
+    S.opt = tab.dataset.opt; S.sheet = null;
+    document.querySelectorAll("[data-opt]").forEach(b => b.setAttribute("aria-selected", String(b === tab)));
+    if(S.opt === "A" && S.round) S.stepA = 2;
+    render(); return;
+  }
+  const el = e.target.closest("[data-act]"); if(!el || el.disabled) return;
+  const a = el.dataset.act;
+  if(a === "close-scrim" && e.target !== el) return; // clicks inside the sheet
+  switch(a){
+    case "sample": SAMPLE.forEach(addPlayer); say("10 sample players added."); break;
+    case "remove": {
+      const i = S.players.findIndex(p => p.id === el.dataset.id); if(i < 0) break;
+      const [gone] = S.players.splice(i, 1);
+      S.undo = () => S.players.splice(i, 0, gone);
+      toast(`${gone.name} removed`, true); break;
+    }
+    case "undo": S.undo?.(); S.undo = null; S.toast = null; say("Undone."); break;
+    case "a-step": S.stepA = Number(el.dataset.to); S.sheet = null; break;
+    case "a-back": S.stepA = Math.max(0, S.stepA - 1); break;
+    case "courts-": S.courts = Math.max(1, S.courts - 1); break;
+    case "courts+": S.courts = Math.min(12, S.courts + 1); break;
+    case "fmt": S.format = el.dataset.v; break;
+    case "a-start": if(startRound()) S.stepA = 2; break;
+    case "b-start": case "c-start": startRound(); break;
+    case "win": setWinner(Number(el.dataset.court), el.dataset.side); break;
+    case "next": if(unfinished()) S.sheet = "unfinished"; else startRound(); break;
+    case "force-next": S.sheet = null; startRound(); break;
+    case "sheet": S.sheet = el.dataset.v; break;
+    case "close": case "close-scrim": S.sheet = null; break;
+    case "break": {
+      const p = byId(el.dataset.id); p.onBreak = !p.onBreak;
+      const onCourt = playingIds().has(p.id);
+      toast(p.onBreak ? (onCourt ? `${p.name} will sit out after this game.` : `${p.name} is on a break.`) : `${p.name} is back in the line-up.`);
+      break;
+    }
+    case "tab": S.tabC = el.dataset.v; break;
+  }
+  render();
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape" && S.sheet){ S.sheet = null; render(); } });
+render();
+</script>
+</body>
+</html>

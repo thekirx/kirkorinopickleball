@@ -1,8 +1,47 @@
 # KirQ Tournament — Implementation Plan
 
 **Audience:** the engineer/AI implementing this. Self-contained; assumes no memory of prior conversations.
-**Status:** specification. No production code written yet.
-**Date:** 2026-10-18
+**Status:** specification, **revised 2026-10-21** (see §R). Phase 1 is implemented locally; an owner-approved UI ("easy mode") exists as a prototype.
+**Date:** 2026-10-18 · revised 2026-10-21
+
+---
+
+## R. Revision 2026-10-21 — owner decisions that override parts of this document
+
+**Read this section before §7, §8 and §10.** Where this section and the original text disagree, this section wins. The original text is kept for history.
+
+### R1. The UI direction is "easy mode", not the §7 layout contract
+
+The owner tried the §7-style courts-first prototype on 2026-10-20 and found it "hard to understand". The owner then approved a different direction (2026-10-20): **Option A for setup + Option C for play**, with players addable at any time. It is implemented in the prototype worktree `../kirkorinopickleball-prototype`, branch `prototype/play-mode`, under `src/features/easy/`:
+
+- **Setup (Option A):** "Who's here today?" → courts stepper + doubles/singles with a plain-language preview → start. Skill and partner limit are optional, behind links.
+- **Play (Option C):** tabs Courts / Players / Results / Share. Bottom tabs on phones; **left sidebar at ≥1024 px** (adaptive navigation). Tap the winning team; tap again to change or clear it.
+- **Plain language:** no "rounds waited", "teammate limit" or "declare winner". Sentence case; uppercase is reserved for tiny tags. The kirkorino.com colours and Archivo stay.
+
+So **§7's layout contract is superseded**: the sticky minimap on top, the focus pane, the bottom player rail, and §7A minimap tiles as the primary navigation. §7's accessibility rules (colour never alone, ≥44 px targets, 12 px floor, tabular figures) **still apply**.
+
+**Court minimap / venue map:** the owner asked for a minimap on 2026-10-17. The approved easy mode does not have one. Building one is an **open owner decision** (see the next-stages plan). Do not build it or drop it without asking.
+
+### R2. Drag and drop is mostly built; §8 is revised
+
+Built in the prototype (`src/features/easy/Arrange.tsx`, engine `swapBlockReason` / `swapPlayers`):
+
+- A separate **Move players** mode, so drag can never collide with tap-to-win.
+- dnd-kit **MouseSensor** (6 px) + **TouchSensor** (180 ms press, so a finger can still scroll); auto-scroll; announcements in plain words.
+- Every drag has a **tap-one-then-tap-another** alternative. Each name is a real button, so this is also the **keyboard path**. dnd-kit's arrow-key `KeyboardSensor` is **deliberately not used**: it is clumsy, and it would hijack Enter/Space. This replaces §8's "KeyboardSensor gives space-to-lift" requirement; WCAG 2.2 2.5.7 is met by the tap path.
+- `swapBlockReason` is the single source of refusal reasons (§6's `rejectReason` idea). It keeps the 2-minute change window, so courts that started more than 2 minutes ago are locked; "Got hurt" still works after that.
+
+### R3. Late arrivals (owner decision 2026-10-20)
+
+There is an organizer setting: **back of the line** (default, fair for open play) or **play in the next round** (family and friends), via engine `prioritizeForNextRound`. Late arrivals in the same round share one priority level. The §6 scheduler must keep supporting this choice.
+
+### R4. Revised phase definitions
+
+- **Phase 2 (revised): Courts become objects.** Introduce first-class `Court[]` with stable ids, labels and open/closed state, replacing numbering by `activeMatches` index. Easy mode's court cards stay; the minimap is excluded unless the owner decides otherwise (R1). Any schema change needs `schemaVersion` 3 with a migration from v2 **and** a viewer-compatibility plan, because the React `migrate()` refuses unknown versions: an older viewer opening a newer payload would fail.
+- **Phase 3 (revised): Drag and drop.** Done in the prototype except: a property test that no input path can double-book; a real-phone check by the owner; Escape-to-cancel confirmed with a real key press.
+- Phases 4–7 are unchanged in scope. Their UI must follow easy mode (R1), not §7.
+
+The ordered, step-by-step continuation is `docs/superpowers/plans/2026-10-21-next-stages.md`.
 
 ---
 
@@ -300,6 +339,8 @@ That warning at 2pm is worth more than any amount of clever scheduling at 6pm.
 
 ## 7. UX redesign
 
+> **Superseded in part by §R1 (2026-10-21).** The layout contract below was replaced by owner-approved easy mode. The accessibility and density rules still apply.
+
 ### Layout contract
 
 Three fixed regions. The middle one scrolls; the outer two never do.
@@ -355,6 +396,8 @@ Keep the existing kirkorino.com system: paper `#f4f2ed`, ink `#0a0a0a`, electric
 ---
 
 ## 8. Drag and drop
+
+> **Revised by §R2 (2026-10-21).** Built in the prototype; keyboard support is through tap-to-swap buttons, not dnd-kit's KeyboardSensor.
 
 ### Non-negotiable: every drag needs a non-drag equivalent
 
@@ -427,13 +470,19 @@ Each phase ends shippable. Do not start a phase before the previous one's accept
 
 ### Phase 1 — Scaffold and port (no new features)
 Vite + React + TS + Zustand. Port the design tokens, QR encoder, PDF report, exports, session library, and Supabase sync. Implement `schemaVersion` + `migrateV1toV2`.
-**Accept:** feature parity with `8b39e95`; an existing v1 share link still opens; a published session still syncs to a second device within 15s.
+**Accept:** feature parity with `8b39e95`; an existing v1 share link still opens; a published session still syncs to a second device within about 17 s (worst case: 0.9 s write debounce + network + one 15 s poll; owner-accepted 2026-10-19).
 
 ### Phase 2 — Courts become objects
+
+> **Revised by §R4:** no minimap unless the owner decides; keep easy-mode court cards.
+
 Introduce `Court[]`, replace `activeMatches[index]`. Build the minimap (§7A) and focus pane (§7B).
 **Accept:** courts have stable ids; the minimap renders ≥6 courts without vertical scroll at 375px; tapping a tile focuses it.
 
 ### Phase 3 — Drag and drop
+
+> **Revised by §R2/§R4:** mostly done in the prototype; see R4 for what remains.
+
 dnd-kit with pointer + keyboard sensors, auto-scroll, Move dialog, `rejectReason` everywhere.
 **Accept:** every drag is reproducible via keyboard **and** via the Move dialog; an invalid drop is refused with a spoken reason; no double-booking is reachable by any input path.
 
@@ -495,3 +544,5 @@ Accessibility checks: keyboard-only completion of every drag, `prefers-reduced-m
 2. **Can a player's events be capped?** A hard cap (e.g. max 2 events) is far cheaper than scheduling around someone in five.
 3. **Are courts interchangeable?** If a show court is reserved for finals, `Court` needs an `allowedEvents` field.
 4. **Scoring:** fixed 11/win-by-2, or per-event? §5 assumes per-event.
+5. **Late arrivals — decided 2026-10-20:** an organizer setting (see §R3).
+6. **Court minimap — open (2026-10-21):** originally requested, but not in approved easy mode (see §R1).
