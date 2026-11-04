@@ -25,10 +25,10 @@
 - [x] Run existing and new tests; update changeslog.md and commit.
 
 ### Task 2: Organizer UI
-- [ ] Reuse prototype CSS, SVG symbols and component classes for phone tabs and desktop rail.
-- [ ] Implement modal sheets, session management, modes, player editing, timeouts, SUB, Undo and text-only clocks.
-- [ ] Preserve sharing, viewer, QR and all exports/printing; test with stubbed requests only.
-- [ ] Run tests; update changeslog.md and commit.
+- [x] Reuse prototype CSS, SVG symbols and component classes for phone tabs and desktop rail.
+- [x] Implement modal sheets, session management, modes, player editing, timeouts, SUB, Undo and text-only clocks.
+- [x] Preserve sharing, viewer, QR and all exports/printing; test with stubbed requests only.
+- [x] Run tests; update changeslog.md and commit.
 
 ### Task 3: Acceptance and delivery
 - [ ] Serve locally; verify 390x844, 1280x800 and 375px overflow.
