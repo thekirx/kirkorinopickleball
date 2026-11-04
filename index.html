@@ -2171,6 +2171,11 @@
        ========================================================= */
     const state = {
       players: [],
+      mode: "open",
+      started: false,
+      settings: { matchType: "doubles", courtCount: 2, teammateLimit: "2" },
+      called: null,
+      courtMessages: {},
       currentRound: 0,
       activeMatches: [],
       matchLog: [],
@@ -2343,6 +2348,12 @@
     /* Wipe the in-memory state so a new session starts clean. */
     function resetStateForNewSession() {
       state.players = [];
+      state.mode = "open";
+      state.started = false;
+      state.settings = { matchType: "doubles", courtCount: 2, teammateLimit: "2" };
+      state.called = null;
+      state.courtMessages = {};
+      undoSnapshot = null;
       state.currentRound = 0;
       state.activeMatches = [];
       state.matchLog = [];
@@ -2357,13 +2368,20 @@
         sideB: match.sideB.map((player) => player.id),
         status: match.status,
         winnerSide: match.winnerSide,
-        generatedAt: match.generatedAt
+        generatedAt: match.generatedAt,
+        startedAt: match.startedAt ?? match.generatedAt,
+        court: match.court
       };
     }
 
     function serializeState() {
       return {
         version: 1,
+        mode: state.mode,
+        started: state.started,
+        settings: { ...state.settings },
+        called: state.called,
+        courtMessages: { ...state.courtMessages },
         savedAt: new Date().toISOString(),
         players: state.players,
         currentRound: state.currentRound,
@@ -2517,7 +2535,7 @@
     }
 
     /* Load a serialized session (from storage or from a shared link). */
-    function applySnapshot(saved) {
+    function applySnapshot(saved, now = Date.now()) {
       if (!saved || !Array.isArray(saved.players)) return false;
 
       state.players = saved.players.map((player) => ({
@@ -2527,10 +2545,17 @@
         roundsWaited: Number(player.roundsWaited) || 0,
         wins: Number(player.wins) || 0,
         losses: Number(player.losses) || 0,
+        games: (Number(player.wins) || 0) + (Number(player.losses) || 0),
+        since: Number.isFinite(player.since) ? player.since : now - (Number(player.roundsWaited) || 0) * 720000,
         lastPlayedRound: player.lastPlayedRound ?? null,
         active: player.active !== false
       }));
 
+      state.mode = saved.mode === "family" ? "family" : "open";
+      state.started = saved.started ?? (Number(saved.currentRound) > 0 || Boolean(saved.activeMatches?.length));
+      state.settings = normalizeSettings(saved.settings || { courtCount: Math.max(2, saved.activeMatches?.length || 0) });
+      state.called = saved.called || null;
+      state.courtMessages = saved.courtMessages || {};
       state.currentRound = Number(saved.currentRound) || 0;
       state.matchLog = Array.isArray(saved.matchLog) ? saved.matchLog : [];
       state.teammateHistory = new Map(
@@ -2540,7 +2565,8 @@
       // Re-link stored ids back to the live player objects; drop any
       // court whose players are no longer on the roster.
       state.activeMatches = (Array.isArray(saved.activeMatches) ? saved.activeMatches : [])
-        .map((match) => {
+        .map((match, index) => {
+          if (match.status === "finished") return null;
           const sideA = (match.sideA || []).map(getPlayerById);
           const sideB = (match.sideB || []).map(getPlayerById);
 
@@ -2555,7 +2581,9 @@
             winnerSide: match.winnerSide === "A" || match.winnerSide === "B"
               ? match.winnerSide
               : null,
-            generatedAt: Number(match.generatedAt) || Date.now()
+            generatedAt: Number(match.startedAt ?? match.generatedAt) || now,
+            startedAt: Number(match.startedAt ?? match.generatedAt) || now,
+            court: Number(match.court) || index + 1
           };
         })
         .filter(Boolean);
@@ -3083,91 +3111,55 @@
     }
 
     function getAssignedPlayerIds() {
-      return new Set(
-        state.activeMatches.flatMap((match) =>
-          [...match.sideA, ...match.sideB].map((player) => player.id)
-        )
-      );
+      return new Set(state.activeMatches.filter(match => match.status !== "finished")
+        .flatMap(match => [...match.sideA, ...match.sideB].map(player => player.id)));
     }
 
     /* =========================================================
        PLAYER MANAGEMENT
        ========================================================= */
-    function addPlayer(name, skill) {
-      const cleanName = name.trim().replace(/\s+/g, " ");
-
-      if (!cleanName) {
-        return { ok: false, message: "Please enter a player name." };
-      }
-
-      const duplicateExists = state.players.some(
-        (player) => player.name.toLowerCase() === cleanName.toLowerCase()
-      );
-
-      if (duplicateExists) {
+    function addPlayer(name, skill, now = Date.now()) {
+      if (state.viewerMode) return { ok: false };
+      const cleanName = String(name).trim().replace(/\s+/g, " ").slice(0, 40);
+      if (!cleanName) return { ok: false, message: "Please enter a player name." };
+      if (state.players.some(p => p.name.toLowerCase() === cleanName.toLowerCase()))
         return { ok: false, message: "That player is already in the roster." };
-      }
-
-      state.players.push({
-        id: createId("player"),
-        name: cleanName,
-        skill,
-        roundsWaited: 0,
-        wins: 0,
-        losses: 0,
-        lastPlayedRound: null,
-        active: true
-      });
-
-      return { ok: true, message: `${cleanName} was added to the roster.` };
+      const player = { id: createId("player"), name: cleanName,
+        skill: SKILL_LABELS[skill] ? skill : "intermediate", roundsWaited: 0,
+        wins: 0, losses: 0, games: 0, since: now, lastPlayedRound: null, active: true };
+      state.players.push(player);
+      if (state.started) fillIdleCourts(now);
+      return { ok: true, player, message: `${cleanName} was added to the roster.` };
     }
 
-    function removePlayer(playerId) {
-      const player = getPlayerById(playerId);
-      if (!player) return;
-
-      state.players = state.players.filter((item) => item.id !== playerId);
-
-      // Remove any displayed court containing this player.
-      state.activeMatches = state.activeMatches.filter((match) => {
-        const matchPlayerIds = [...match.sideA, ...match.sideB].map((item) => item.id);
-        return !matchPlayerIds.includes(playerId);
-      });
-
-      // Remove teammate-history records involving the deleted player.
-      for (const pairKey of state.teammateHistory.keys()) {
-        if (pairKey.split("|").includes(playerId)) {
-          state.teammateHistory.delete(pairKey);
-        }
-      }
-
-      renderAll();
-      setStatus(elements.playerFormMessage, `${player.name} was removed.`, "info");
+    function removePlayer(playerId, now = Date.now()) {
+      if (state.viewerMode) return;
+      const cancelled = state.activeMatches.filter(m => [...m.sideA, ...m.sideB].some(p => p.id === playerId));
+      cancelled.forEach(m => recordMatchTeammates(m, -1));
+      state.activeMatches = state.activeMatches.filter(m => !cancelled.includes(m));
+      state.players = state.players.filter(p => p.id !== playerId);
+      for (const key of state.teammateHistory.keys()) if (key.split("|").includes(playerId)) state.teammateHistory.delete(key);
+      if (state.started) fillIdleCourts(now);
     }
 
     function updatePlayerRecord(playerId, stat, amount) {
+      if (state.viewerMode) return;
       const player = getPlayerById(playerId);
       if (!player || !["wins", "losses"].includes(stat)) return;
-
       player[stat] = Math.max(0, player[stat] + amount);
-      renderRoster();
-      renderQueue();
-      renderLeaderboard();
-      saveState();
+      player.games = player.wins + player.losses;
     }
 
-    function setPlayerActive(playerId, active) {
+    function setPlayerActive(playerId, active, now = Date.now()) {
+      if (state.viewerMode) return { ok: false };
       const player = getPlayerById(playerId);
       if (!player) return { ok: false, message: "Player not found." };
-
+      if (getAssignedPlayerIds().has(playerId)) return { ok: false, message: "Use Injury in the court SUB panel for an on-court player." };
+      const returning = player.active === false && active;
       player.active = Boolean(active);
-      return {
-        ok: true,
-        player,
-        message: player.active
-          ? `${player.name} is active and can join the queue again.`
-          : `${player.name} is timed out and will not join the queue.`
-      };
+      if (returning) player.since = now;
+      if (returning && state.started) fillIdleCourts(now);
+      return { ok: true, player, message: `${player.name} ${player.active ? "is back in line" : "timed out"}` };
     }
 
     /* =========================================================
@@ -3181,18 +3173,7 @@
        ahead of someone with a greater wait.
        ========================================================= */
     function getPrioritizedQueue(players = state.players) {
-      const groupsByWait = new Map();
-
-      players.forEach((player) => {
-        if (!groupsByWait.has(player.roundsWaited)) {
-          groupsByWait.set(player.roundsWaited, []);
-        }
-        groupsByWait.get(player.roundsWaited).push(player);
-      });
-
-      return [...groupsByWait.keys()]
-        .sort((a, b) => b - a)
-        .flatMap((roundsWaited) => shuffle(groupsByWait.get(roundsWaited)));
+      return [...players].sort((a, b) => compareQueue(a, b, state.mode));
     }
 
     function selectPriorityPlayers(requiredPlayerCount, players = state.players) {
@@ -3385,6 +3366,8 @@
       state.activeMatches = roundPlan.matches;
       state.activeMatches.forEach((match) => {
         match.generatedAt = generatedAt;
+        match.startedAt = generatedAt;
+        match.court = state.activeMatches.indexOf(match) + 1;
       });
 
       state.players.forEach((player) => {
@@ -3402,7 +3385,7 @@
     }
 
     function matchChangeTimeRemaining(match, now = Date.now()) {
-      return Math.max(0, PLAYER_CHANGE_WINDOW_MS - (now - match.generatedAt));
+      return Math.max(0, PLAYER_CHANGE_WINDOW_MS - (now - (match.startedAt ?? match.generatedAt)));
     }
 
     function canChangeMatchPlayer(match, now = Date.now()) {
@@ -3412,15 +3395,7 @@
     function getReplacementCandidates(excludedPlayerId = null) {
       const assignedIds = getAssignedPlayerIds();
 
-      return state.players
-        .filter((player) =>
-          player.id !== excludedPlayerId &&
-          player.active !== false &&
-          !assignedIds.has(player.id)
-        )
-        .sort((a, b) =>
-          b.roundsWaited - a.roundsWaited || a.name.localeCompare(b.name)
-        );
+      return getWaitingPlayers().filter(player => player.id !== excludedPlayerId);
     }
 
     function adjustTeammateHistory(playerA, playerB, amount) {
@@ -3437,6 +3412,7 @@
     }
 
     function replaceMatchPlayer(matchId, outgoingPlayerId, replacementPlayerId, now = Date.now(), reason = "standard") {
+      if (state.viewerMode) return { ok: false };
       const match = state.activeMatches.find((item) => item.id === matchId);
       if (!match || match.status === "finished") {
         return { ok: false, reason: "match-unavailable", message: "This match can no longer be changed." };
@@ -3476,6 +3452,7 @@
       side[outgoingIndex] = replacementPlayer;
       adjustTeammateHistory(replacementPlayer, teammate, 1);
 
+      outgoingPlayer.since = replacementPlayer.since ?? now - (replacementPlayer.roundsWaited || 0) * 720000;
       replacementPlayer.roundsWaited = 0;
       replacementPlayer.lastPlayedRound = state.currentRound;
 
@@ -3504,7 +3481,7 @@
           const skillDifference =
             Math.abs(SKILL_VALUES[a.skill] - SKILL_VALUES[injuredPlayer.skill]) -
             Math.abs(SKILL_VALUES[b.skill] - SKILL_VALUES[injuredPlayer.skill]);
-          return skillDifference || b.roundsWaited - a.roundsWaited || a.name.localeCompare(b.name);
+          return skillDifference || compareQueue(a, b, state.mode);
         })[0];
 
       if (!replacement) {
@@ -3607,6 +3584,133 @@
           "info"
         );
       }
+    }
+
+    /* Rolling courts: compareQueue is the single swappable ordering rule. */
+    function compareQueue(a, b, mode = state.mode) {
+      const games = p => p.wins + p.losses;
+      const since = p => Number.isFinite(p.since) ? p.since : -(p.roundsWaited || 0) * 720000;
+      return (mode === "family" ? games(a) - games(b) : 0) || since(a) - since(b);
+    }
+
+    function getWaitingPlayers() {
+      const assigned = getAssignedPlayerIds();
+      return getPrioritizedQueue(state.players.filter(p => p.active !== false && !assigned.has(p.id)));
+    }
+
+    function normalizeSettings(settings = {}) {
+      return { matchType: settings.matchType === "singles" ? "singles" : "doubles",
+        courtCount: Math.max(1, Math.min(20, Math.trunc(Number(settings.courtCount)) || 2)),
+        teammateLimit: ["1", "2", "3", "unlimited"].includes(String(settings.teammateLimit)) ? String(settings.teammateLimit) : "2" };
+    }
+
+    function setMode(mode) {
+      if (state.viewerMode || !["open", "family"].includes(mode)) return { ok: false };
+      state.mode = mode;
+      return { ok: true };
+    }
+
+    function updateSettings(changes, now = Date.now()) {
+      if (state.viewerMode) return;
+      state.settings = normalizeSettings({ ...state.settings, ...changes });
+      if (state.started) fillIdleCourts(now);
+    }
+
+    function recordMatchTeammates(match, amount) {
+      for (const team of [match.sideA, match.sideB]) if (team.length === 2) adjustTeammateHistory(team[0], team[1], amount);
+    }
+
+    function chooseCourtTeams(queue, type, limit) {
+      const needed = type === "singles" ? 2 : 4;
+      if (queue.length < needed) return null;
+      if (needed === 2) return { sideA: [queue[0]], sideB: [queue[1]] };
+      // Keep the first three; only the fourth can yield to the next eligible player.
+      for (let fourth = 3; fourth < queue.length; fourth += 1) {
+        const [a,b,c,d] = [...queue.slice(0,3), queue[fourth]].sort((a,b) => SKILL_VALUES[b.skill] - SKILL_VALUES[a.skill]);
+        const splits = [[[a,d],[b,c]], [[a,c],[b,d]], [[a,b],[c,d]]];
+        const valid = splits.filter(teams => teams.every(team => isTeammatePairAllowed(team, limit)));
+        const score = teams => Math.abs(teams[0].reduce((n,p) => n + SKILL_VALUES[p.skill],0) - teams[1].reduce((n,p) => n + SKILL_VALUES[p.skill],0)) * 3
+          + (getTeammateCount(...teams[0]) + getTeammateCount(...teams[1])) * 2;
+        valid.sort((a,b) => score(a) - score(b));
+        if (valid.length) return { sideA: valid[0][0], sideB: valid[0][1] };
+      }
+      return null;
+    }
+
+    function fillCourt(court, now = Date.now()) {
+      if (state.viewerMode || court > state.settings.courtCount || state.activeMatches.some(m => m.court === court && m.status !== "finished")) return null;
+      const queue = getWaitingPlayers();
+      const needed = state.settings.matchType === "singles" ? 2 : 4;
+      const limit = state.settings.teammateLimit === "unlimited" ? Infinity : Number(state.settings.teammateLimit);
+      const teams = chooseCourtTeams(queue, state.settings.matchType, limit);
+      delete state.courtMessages[court];
+      if (!teams) {
+        state.courtMessages[court] = queue.length < needed ? `Needs ${needed} players in the queue.`
+          : `Court ${court} can't be filled without repeating teammates. Raise the teammate limit in Settings.`;
+        return null;
+      }
+      const match = { id: createId("match"), ...teams, court, status: "active", winnerSide: null, generatedAt: now, startedAt: now };
+      state.activeMatches.push(match);
+      state.activeMatches.sort((a,b) => a.court - b.court);
+      recordMatchTeammates(match, 1);
+      state.called = { court, at: now };
+      return match;
+    }
+
+    function fillIdleCourts(now = Date.now()) {
+      if (!state.started || state.viewerMode) return;
+      for (let court = 1; court <= state.settings.courtCount; court += 1) fillCourt(court, now);
+    }
+
+    function startCourts(now = Date.now()) {
+      if (state.viewerMode || state.started) return { ok: false };
+      if (getWaitingPlayers().length < (state.settings.matchType === "singles" ? 2 : 4)) return { ok: false };
+      state.started = true;
+      fillIdleCourts(now);
+      return { ok: true };
+    }
+
+    function recordCourtResult(matchId, winningSide, now = Date.now()) {
+      if (state.viewerMode || !["A", "B"].includes(winningSide)) return { ok: false };
+      const match = state.activeMatches.find(m => m.id === matchId && m.status !== "finished");
+      if (!match) return { ok: false };
+      const winners = winningSide === "A" ? match.sideA : match.sideB;
+      const losers = winningSide === "A" ? match.sideB : match.sideA;
+      winners.forEach(p => { p.wins += 1; p.games = p.wins + p.losses; p.since = now; });
+      losers.forEach(p => { p.losses += 1; p.games = p.wins + p.losses; p.since = now; });
+      // Stable sorting preserves this enqueue order when clocks are identical.
+      const returned = [...winners, ...losers];
+      state.players = [...state.players.filter(p => !returned.includes(p)), ...returned];
+      state.currentRound += 1;
+      state.matchLog.unshift({ id: match.id, round: state.currentRound, court: match.court,
+        matchType: match.sideA.length === 2 ? "Doubles" : "Singles",
+        winners: winners.map(p => p.name), losers: losers.map(p => p.name), winnerSide: winningSide,
+        finishedAt: new Date(now).toISOString() });
+      state.activeMatches = state.activeMatches.filter(m => m !== match);
+      fillCourt(match.court, now);
+      return { ok: true, message: `COURT ${match.court}: ${winners.map(p => p.name).join(" & ")} WON` };
+    }
+
+    let undoSnapshot = null;
+    function captureUndo(now = Date.now()) {
+      undoSnapshot = { sessionId: state.sessionId, until: now + 6000, payload: JSON.parse(JSON.stringify(serializeState())) };
+    }
+    function undoLastAction(now = Date.now()) {
+      if (state.viewerMode || !undoSnapshot || undoSnapshot.sessionId !== state.sessionId || now >= undoSnapshot.until) return { ok: false };
+      const payload = undoSnapshot.payload;
+      undoSnapshot = null;
+      state.players = payload.players;
+      state.mode = payload.mode;
+      state.started = payload.started;
+      state.settings = payload.settings;
+      state.called = payload.called;
+      state.courtMessages = payload.courtMessages;
+      state.currentRound = payload.currentRound;
+      state.matchLog = payload.matchLog;
+      state.teammateHistory = new Map(payload.teammateHistory);
+      state.activeMatches = payload.activeMatches.map(match => ({ ...match,
+        sideA: match.sideA.map(getPlayerById), sideB: match.sideB.map(getPlayerById) }));
+      return { ok: true };
     }
 
     /* =========================================================
