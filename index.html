@@ -925,15 +925,20 @@
         transform: translateY(10px);
         opacity: 0;
         pointer-events: none;
+        /* Hidden toast must not be reachable by keyboard or screen readers. */
+        visibility: hidden;
         transition:
           transform 0.2s linear,
-          opacity 0.2s linear;
+          opacity 0.2s linear,
+          visibility 0s linear 0.2s;
         z-index: 5;
       }
       .toast.show {
         transform: none;
         opacity: 1;
         pointer-events: auto;
+        visibility: visible;
+        transition-delay: 0s;
       }
       .toast span {
         flex: 1;
@@ -1843,8 +1848,8 @@
             <div class="exports">
               <button id="export-pdf" class="btn small primary">
                 Export PDF</button
-              ><button id="export-csv" class="btn small">CSV</button
-              ><button id="export-json" class="btn small">Backup</button>
+              ><button id="export-csv" class="btn small" data-organizer>CSV</button
+              ><button id="export-json" class="btn small" data-organizer>Backup</button>
             </div>
             <div
               id="history-message"
