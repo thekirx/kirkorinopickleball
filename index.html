@@ -2701,6 +2701,7 @@
 
         applySnapshot(saved);
         state.share = saved.share || null;
+        resumeRestoredCourts();
       }
 
       /* ---------- session library operations ---------- */
@@ -2719,6 +2720,7 @@
         if (saved) {
           applySnapshot(saved);
           state.share = saved.share || null;
+          resumeRestoredCourts();
         }
 
         index.activeId = sessionId;
@@ -2793,6 +2795,7 @@
           if (saved) {
             applySnapshot(saved);
             state.share = saved.share || null;
+            resumeRestoredCourts();
           }
         } else {
           saveIndex(index);
@@ -4064,10 +4067,19 @@
         return match;
       }
 
+      // Returns how many courts were filled, so callers can save when needed.
       function fillIdleCourts(now = Date.now()) {
-        if (!state.started || state.viewerMode) return;
+        if (!state.started || state.viewerMode) return 0;
+        let filled = 0;
         for (let court = 1; court <= state.settings.courtCount; court += 1)
-          fillCourt(court, now);
+          if (fillCourt(court, now)) filled += 1;
+        return filled;
+      }
+
+      // Restored sessions can have free courts (e.g. legacy rounds that were
+      // all finished). Refill them and persist, so a reload doesn't re-draw.
+      function resumeRestoredCourts() {
+        if (fillIdleCourts()) saveState();
       }
 
       function startCourts(now = Date.now()) {

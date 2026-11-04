@@ -11,6 +11,7 @@ function app() {
       "/* =========================================================\n       EVENT LISTENERS",
     )[0];
   const el = { value: "", dataset: {}, classList: { add() {}, remove() {} } };
+  const memory = new Map();
   const ctx = {
     console,
     Date,
@@ -33,7 +34,7 @@ function app() {
         pathname: "/",
         href: "http://localhost/",
       },
-      localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+      localStorage: { getItem: key => memory.get(key) || null, setItem: (key,value) => memory.set(key,value), removeItem: key => memory.delete(key) },
       setTimeout,
       clearTimeout,
     },
@@ -41,7 +42,7 @@ function app() {
   vm.createContext(ctx);
   vm.runInContext(
     script +
-      "\nglobalThis.app={state, compareQueue, getWaitingPlayers, setMode, addPlayer, fillIdleCourts, recordCourtResult, captureUndo, undoLastAction, serializeState, applySnapshot, setPlayerActive, replaceMatchPlayer, substituteInjuredPlayer, updateSettings, removePlayer, updatePlayerRecord};",
+      "\nglobalThis.app={state, compareQueue, getWaitingPlayers, setMode, addPlayer, fillIdleCourts, recordCourtResult, captureUndo, undoLastAction, serializeState, applySnapshot, setPlayerActive, replaceMatchPlayer, substituteInjuredPlayer, updateSettings, removePlayer, updatePlayerRecord, writeJson, readJson, restoreState};",
     ctx,
   );
   return ctx.app;
@@ -280,4 +281,26 @@ test("record edit keeps real games invariant; removing on-court player cancels w
       .flatMap((m) => [...m.sideA, ...m.sideB])
       .some((p) => p.id === id),
   );
+});
+
+test("organizer restore resumes finished legacy courts without adding duplicate results", () => {
+  const a = setup(8); const saved = a.serializeState();
+  saved.activeMatches.forEach(m => m.status = "finished");
+  delete saved.started; delete saved.settings; delete saved.mode;
+  a.writeJson("kirq-index-v1", { activeId: "old", sessions: [{ id: "old", name: "Old day" }] });
+  a.writeJson("kirq-session-old", saved);
+  const b = a.state.matchLog.length;
+  a.restoreState();
+  assert.equal(a.state.mode, "open");
+  assert.equal(a.state.activeMatches.length, 2);
+  assert.equal(a.state.matchLog.length, b);
+  const ids = a.state.activeMatches.flatMap(m => [...m.sideA,...m.sideB].map(p => p.id));
+  assert.equal(new Set(ids).size, 8);
+
+  // The refill is saved, so a second reload resumes the same courts instead of re-drawing.
+  const stored = a.readJson("kirq-session-old");
+  assert.deepEqual(stored.activeMatches.map(m => m.id), a.state.activeMatches.map(m => m.id));
+  const firstDraw = a.state.activeMatches.map(m => [m.id, m.startedAt]);
+  a.restoreState();
+  assert.deepEqual(a.state.activeMatches.map(m => [m.id, m.startedAt]), firstDraw);
 });
