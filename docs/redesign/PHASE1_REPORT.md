@@ -58,3 +58,19 @@ Tested with a fake Supabase layer added only to a scratch copy, so nothing reach
 - **Friends & family:** should a latecomer get a rest between back-to-back games while catching up?
 - **Report wording:** "Round" in the PDF and CSV could be renamed to "Game". It was kept as is so the export format matches the live app.
 - **Rail tabs on desktop:** they scroll away with the page instead of staying fixed at the top. This is cosmetic.
+
+## Board theme (added after review)
+
+The owner asked for the phone and desktop screens to look like the TV board (`03` / `04`), so the organizer and viewer now use the board's style:
+
+- **Colors:** black background, light text and lavender labels. Lime marks what's happening now.
+- **Header:** session details, the KirQ wordmark and a live clock.
+- **Courts:** each court is drawn from above. Tapping a team's half of the court records that team's win, and Undo works as before. A freshly filled court gets a lime outline and "Now calling" for 20 seconds.
+- **Below the courts:**
+  - "Up next" as light tiles, with how long the oldest of them has waited.
+  - "In line" with live waiting times.
+  - A blue "Last result" strip, which shows "Tonight" before any game has finished.
+- **Danger actions** (Injury, Delete, Clear log) are solid red so they're readable on black.
+- **Print:** the theme applies on screen only, so the printed PDF report is still black on white.
+
+Checked at 390px and 1280px, and in the shared viewer: no sideways scrolling and no console errors. All 26 tests pass.

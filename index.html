@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KirQ — Kirk Orino</title>
-    <meta name="theme-color" content="#1d36ff" />
+    <meta name="theme-color" content="#0a0a0a" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1425,6 +1425,443 @@
           scroll-behavior: auto !important;
         }
       }
+      /* =========================================================
+       BOARD THEME
+       The organizer and viewer share the TV board's look: black
+       ground, blue courts drawn from above, lime for "now".
+       Screen only, so the printed report stays black on white.
+       ========================================================= */
+      @media screen {
+        :root {
+          color-scheme: dark;
+          --ink-fixed: #0a0a0a;
+          --paper-fixed: #f4f2ed;
+          --paper: #0a0a0a;
+          --ink: #f4f2ed;
+          --line: rgba(244, 242, 237, 0.22);
+          --line-strong: rgba(244, 242, 237, 0.4);
+          --muted: rgba(244, 242, 237, 0.66);
+          --tile: rgba(244, 242, 237, 0.08);
+          --field: #141414;
+        }
+        body {
+          background: var(--paper);
+          color: var(--ink);
+        }
+
+        /* Surfaces that used to be white are now quiet dark fields. */
+        .box,
+        .startbox,
+        .pm-act,
+        .tbtn,
+        .seg button,
+        .box-h button.chip,
+        .picker select,
+        select,
+        .addrow input {
+          background: var(--field);
+          color: var(--ink);
+        }
+        .share-details input {
+          background: var(--field);
+          color: var(--ink);
+          border: 1px solid var(--line-strong);
+        }
+        /* Red text is hard to read on black, so danger actions are solid red. */
+        .pm-act.injury,
+        button.danger {
+          background: var(--danger);
+          border-color: var(--danger);
+          color: var(--white);
+        }
+        .seg button[aria-pressed="true"] {
+          background: var(--paper-fixed);
+          color: var(--ink-fixed);
+        }
+        .tbtn[aria-pressed="true"] {
+          background: var(--lavender);
+          color: var(--ink-fixed);
+        }
+        .btn.primary:hover {
+          background: var(--paper-fixed);
+          border-color: var(--paper-fixed);
+          color: var(--ink-fixed);
+        }
+        .chip.warn,
+        .wait.long,
+        .lb li:first-child .rk,
+        .toast button,
+        .status-message.warning,
+        .sub-btn[aria-expanded="true"] {
+          background: var(--lime);
+          color: var(--ink-fixed);
+        }
+        .wait.long {
+          outline: 0;
+        }
+        .wait.long svg.i {
+          color: var(--ink-fixed);
+        }
+        .toast {
+          background: var(--paper-fixed);
+          color: var(--ink-fixed);
+        }
+        .viewer-banner {
+          background: var(--ink-fixed);
+          color: var(--lime);
+          border-bottom: 1px solid var(--line);
+        }
+        .panel-eyebrow,
+        .qitem.next .qinfo span {
+          color: var(--lavender);
+        }
+        .o-nav button[aria-selected="true"],
+        .rail-tabs button[aria-selected="true"] {
+          border-top-color: var(--lime);
+          color: var(--ink);
+        }
+        .o-nav button[aria-selected="true"] svg {
+          color: var(--lime);
+        }
+        .courts-pane {
+          border-right-color: var(--line);
+        }
+
+        /* Board header: meta line, wordmark, clock. */
+        .app-header .b-top,
+        .o-head .row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 16px;
+        }
+        .b-brand {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          min-width: 0;
+        }
+        .b-meta {
+          font-family: var(--mono);
+          font-size: 0.75rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--muted);
+        }
+        .app-header h1 {
+          font-size: clamp(2.6rem, 7vw, 5.5rem);
+        }
+        .app-header h1 .accent,
+        .o-head h4 .q {
+          color: var(--lavender);
+        }
+        .b-clock {
+          font-family: var(--display);
+          font-weight: 900;
+          font-size: clamp(2.2rem, 5.5vw, 4.5rem);
+          line-height: 0.84;
+          letter-spacing: -0.04em;
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+        }
+        .o-head .b-clock {
+          font-size: 1.9rem;
+        }
+        body.has-players .header-foot {
+          display: none;
+        }
+
+        /* Courts drawn from above. Each half is a team's winner button. */
+        .courts-grid {
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 18px 14px;
+        }
+        .ocourt {
+          background: none;
+          border: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          min-width: 0;
+        }
+        .ocourt-h {
+          background: none;
+          color: var(--ink);
+          padding: 0;
+          min-height: 32px;
+        }
+        .ocourt-h .n {
+          font-size: 1.35rem;
+          letter-spacing: -0.04em;
+          white-space: nowrap;
+        }
+        .sub-btn {
+          color: var(--ink);
+          border-color: var(--line-strong);
+          min-height: 32px;
+        }
+        .timer {
+          color: var(--muted);
+          font-weight: 700;
+        }
+        .surface {
+          position: relative;
+          background: var(--blue);
+          aspect-ratio: 20 / 30;
+          display: grid;
+          grid-template-rows: 1fr 1fr;
+          overflow: hidden;
+          outline: 3px solid transparent;
+        }
+        .surface .court-art {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+        }
+        .team.half,
+        .is-viewer .team.half:hover {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-height: 0;
+          padding: 10px 8px;
+          background: transparent;
+          border: 0;
+          color: var(--white);
+          text-align: center;
+        }
+        .team.half .names {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          align-items: center;
+        }
+        .team.half .names b {
+          font-weight: 900;
+          font-size: clamp(1rem, 1.6vw, 1.3rem);
+          line-height: 1.05;
+          letter-spacing: -0.03em;
+          text-transform: uppercase;
+          overflow-wrap: anywhere;
+        }
+        .team.half .won-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-family: var(--mono);
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          padding: 3px 7px;
+          border: 1px solid rgba(255, 255, 255, 0.55);
+          color: var(--white);
+        }
+        .team.half:hover {
+          background: rgba(10, 10, 10, 0.28);
+        }
+        .team.half:hover .won-cta,
+        .team.half:focus-visible .won-cta {
+          background: var(--lime);
+          border-color: var(--lime);
+          color: var(--ink-fixed);
+        }
+        .team.half:active {
+          background: rgba(10, 10, 10, 0.45);
+        }
+        .team.half:focus-visible {
+          outline: 3px solid var(--lime);
+          outline-offset: -3px;
+        }
+        .ocourt.calling .surface {
+          outline-color: var(--lime);
+        }
+        .callchip {
+          display: none;
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 2;
+          background: var(--lime);
+          color: var(--ink-fixed);
+          font-family: var(--mono);
+          font-weight: 700;
+          font-size: 0.66rem;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          padding: 5px 9px;
+          white-space: nowrap;
+          pointer-events: none;
+        }
+        .ocourt.calling .callchip {
+          display: block;
+        }
+        .ocourt.idle .surface {
+          background: var(--tile);
+        }
+        .idle-msg {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          padding: 12px;
+          font-family: var(--mono);
+          font-size: 0.72rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          text-align: center;
+          color: var(--muted);
+        }
+        /* An open SUB panel takes the full row so its buttons fit. */
+        .ocourt.subopen {
+          grid-column: 1 / -1;
+        }
+        .ocourt.subopen .surface {
+          width: min(100%, 240px);
+          align-self: center;
+        }
+        .subpanel {
+          background: var(--field);
+          border: 1px solid var(--line);
+        }
+
+        /* Up next, in line and the last result, as on the board. */
+        .b-side {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+          margin-top: 18px;
+          border: 1px solid var(--line);
+        }
+        .b-side:empty {
+          display: none;
+        }
+        .bpanel {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 14px 16px;
+          min-width: 0;
+        }
+        .bpanel + .bpanel {
+          border-left: 1px solid var(--line);
+        }
+        .bpanel .ttl {
+          display: flex;
+          justify-content: space-between;
+          font-family: var(--mono);
+          font-size: 0.72rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--lavender);
+        }
+        .upnext {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1px;
+          background: var(--line);
+          border: 1px solid var(--line);
+        }
+        .upnext div {
+          background: var(--paper-fixed);
+          color: var(--ink-fixed);
+          padding: 10px 11px;
+          font-weight: 900;
+          font-size: 1.05rem;
+          letter-spacing: -0.03em;
+          text-transform: uppercase;
+          overflow-wrap: anywhere;
+        }
+        .upnext-meta {
+          font-family: var(--mono);
+          font-size: 0.75rem;
+          line-height: 1.5;
+          color: var(--muted);
+        }
+        .upnext-meta b {
+          color: var(--lime);
+        }
+        .online {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .online li {
+          display: flex;
+          gap: 10px;
+          align-items: baseline;
+          padding: 6px 0;
+          border-top: 1px solid var(--line);
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: -0.02em;
+        }
+        .online li:first-child {
+          border-top: 0;
+        }
+        .online li > span:first-child {
+          width: 20px;
+          font-family: var(--mono);
+          font-size: 0.75rem;
+          color: var(--muted);
+        }
+        .online .w {
+          margin-left: auto;
+          font-family: var(--mono);
+          font-size: 0.75rem;
+          font-weight: 400;
+          color: var(--muted);
+        }
+        .online .w.long {
+          color: var(--lime);
+        }
+        .b-ticker {
+          display: flex;
+          gap: 14px;
+          align-items: center;
+          min-height: 44px;
+          margin-top: 18px;
+          padding: 10px 14px;
+          background: var(--blue);
+          color: var(--white);
+          font-family: var(--mono);
+          font-size: 0.78rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+        .b-ticker .tag {
+          background: var(--lime);
+          color: var(--ink-fixed);
+          padding: 2px 6px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+        .b-ticker span:last-child {
+          overflow-wrap: anywhere;
+        }
+        .b-ticker:empty {
+          display: none;
+        }
+        @media (max-width: 1023px) {
+          .courts-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          }
+          .ocourt-h .n {
+            font-size: 1.1rem;
+          }
+          .bpanel + .bpanel {
+            border-left: 0;
+            border-top: 1px solid var(--line);
+          }
+        }
+      }
+
       @media print {
         body > :not(#print-report) {
           display: none !important;
@@ -1614,7 +2051,13 @@
     </div>
 
     <header class="app-header">
-      <h1>Kir<span class="accent">Q</span></h1>
+      <div class="b-top">
+        <div class="b-brand">
+          <span class="b-meta" id="h-meta">KO&#174; &middot; Court Session Manager</span>
+          <h1>Kir<span class="accent">Q</span></h1>
+        </div>
+        <span class="b-clock" data-clock aria-label="Current time"></span>
+      </div>
 
       <div class="header-foot">
         <p>
@@ -1656,7 +2099,10 @@
         <span class="ses" id="o-sub"></span
         ><span class="ko">KO<sup>®</sup></span>
       </div>
-      <h4 id="o-title">Players</h4>
+      <div class="row">
+        <h4 id="o-title">Players</h4>
+        <span class="b-clock" data-clock aria-label="Current time"></span>
+      </div>
     </header>
     <div class="app-layout">
       <main
@@ -1672,7 +2118,8 @@
         <div id="start-controls" data-organizer class="startbox"></div>
         <div id="generation-message" class="status-message" role="status"></div>
         <div id="courts-grid" class="courts-grid"></div>
-        <div id="up-next"></div>
+        <div id="up-next" class="b-side"></div>
+        <div id="last-result" class="b-ticker"></div>
       </main>
       <aside class="rail" aria-label="Session tools">
         <nav class="rail-tabs" role="tablist" aria-label="Session tools">
@@ -4251,6 +4698,9 @@
           );
         document.body.classList.toggle("has-players", state.players.length > 0);
         byId("o-title").textContent = activeTab;
+        byId("h-meta").textContent = state.players.length
+          ? `KO® · ${state.sessionName || "Session"} · ${state.settings.courtCount} ${state.settings.courtCount === 1 ? "court" : "courts"}`
+          : "KO® · Court Session Manager";
         byId("o-sub").textContent =
           `${state.sessionName || "Session"} · ${state.players.length} players`;
         const start = byId("start-controls");
@@ -4295,6 +4745,21 @@
             })
             .join("") || '<div class="empty-state">No players added yet.</div>';
       }
+      // A court drawn from above: baseline box, kitchen band, centre lines, net.
+      const COURT_SVG =
+        '<svg class="court-art" viewBox="0 0 20 30" preserveAspectRatio="none" aria-hidden="true">' +
+        '<rect x="0" y="10.2" width="20" height="9.6" fill="rgba(10,10,10,.22)"/>' +
+        '<g stroke="rgba(255,255,255,.8)" stroke-width="1.5" fill="none">' +
+        '<rect x="1" y="1" width="18" height="28" vector-effect="non-scaling-stroke"/>' +
+        '<path d="M1 10.2H19M1 19.8H19M10 1V10.2M10 19.8V29" vector-effect="non-scaling-stroke"/></g>' +
+        '<path d="M0 15H20" stroke="#ffffff" stroke-width="3" vector-effect="non-scaling-stroke"/></svg>';
+      // A freshly filled court shows "Now calling" for this long.
+      const CALLING_MS = 20000;
+      function clockText(date = new Date()) {
+        return date
+          .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+          .replace(/\s?[AP]M$/i, "");
+      }
       function renderCourts() {
         const queue = getWaitingPlayers(),
           needed = state.settings.matchType === "singles" ? 2 : 4;
@@ -4311,21 +4776,39 @@
           .map((court) => {
             const m = state.activeMatches.find((m) => m.court === court);
             if (!m)
-              return `<article class="ocourt idle"><div class="ocourt-h"><span class="n">Court ${court}</span><span class="timer">Open</span></div><div class="ocourt-b">${esc(state.courtMessages[court] || `Needs ${needed} players in the queue.`)}</div></article>`;
+              return `<article class="ocourt idle"><div class="ocourt-h"><span class="n">Court ${court}</span><span class="timer">Open</span></div><div class="surface">${COURT_SVG}<div class="idle-msg">${esc(state.courtMessages[court] || `Needs ${needed} players in the queue.`)}</div></div></article>`;
+            // Each half of the drawn court is the winner button for that team.
             const team = (side, players) =>
-              `<${state.viewerMode ? "div" : 'button type="button"'} class="team" ${state.viewerMode ? "" : `data-winner="${side}" data-match="${esc(m.id)}" aria-label="Mark ${esc(players.map((p) => p.name).join(" and "))} as winners on court ${court}"`}><span class="names">${players.map((p) => `<span>${esc(p.name)}${pips(p)}</span>`).join("")}</span><span class="won-cta">${ic("trophy")}Won</span></${state.viewerMode ? "div" : "button"}>`;
+              `<${state.viewerMode ? "div" : 'button type="button"'} class="team half" ${state.viewerMode ? "" : `data-winner="${side}" data-match="${esc(m.id)}" aria-label="Mark ${esc(players.map((p) => p.name).join(" and "))} as winners on court ${court}"`}><span class="names">${players.map((p) => `<b>${esc(p.name)}</b>`).join("")}</span>${state.viewerMode ? "" : `<span class="won-cta">${ic("trophy")}Won</span>`}</${state.viewerMode ? "div" : "button"}>`;
             const open = subOpen === m.id;
+            const calling = Date.now() - m.startedAt < CALLING_MS;
             const sub =
               !open || state.viewerMode
                 ? ""
                 : `<div class="subpanel"><div class="h"><span>Substitutions</span><span data-window="${m.startedAt}"></span></div>${[...m.sideA, ...m.sideB].map((p) => `<div class="subrow"><span>${esc(p.name)}</span><span class="acts"><button type="button" class="pm-act" data-change="${esc(p.id)}" data-match="${esc(m.id)}" ${canChangeMatchPlayer(m) && queue.length ? "" : "disabled"}>Change</button><button type="button" class="pm-act injury" data-injury="${esc(p.id)}" data-match="${esc(m.id)}" ${queue.length ? "" : "disabled"}>Injury</button></span>${changeFor === p.id ? `<div class="picker"><select aria-label="Replacement for ${esc(p.name)}">${queue.map((x) => `<option value="${esc(x.id)}">${esc(x.name)} · ${games(x)}g</option>`).join("")}</select><button type="button" data-confirm="${esc(p.id)}" data-match="${esc(m.id)}">Confirm</button></div>` : ""}</div>`).join("")}</div>`;
-            return `<article class="ocourt" data-court="${court}"><div class="ocourt-h"><span class="n">Court ${court}${court > state.settings.courtCount ? " · Closing" : ""}</span><span class="r"><span class="timer"><span class="dot"></span><span data-start="${m.startedAt}">${fmt(Date.now() - m.startedAt)}</span></span>${state.viewerMode ? "" : `<button type="button" class="sub-btn" data-sub="${esc(m.id)}" aria-expanded="${open}">Sub</button>`}</span></div><div class="ocourt-b">${team("A", m.sideA)}<div class="net">NET</div>${team("B", m.sideB)}</div>${sub}</article>`;
+            return `<article class="ocourt${calling ? " calling" : ""}${open ? " subopen" : ""}" data-court="${court}"><div class="ocourt-h"><span class="n">Court ${court}${court > state.settings.courtCount ? " · Closing" : ""}</span><span class="r"><span class="timer"><span data-start="${m.startedAt}">${fmt(Date.now() - m.startedAt)}</span></span>${state.viewerMode ? "" : `<button type="button" class="sub-btn" data-sub="${esc(m.id)}" aria-expanded="${open}">Sub</button>`}</span></div><div class="surface">${COURT_SVG}${team("A", m.sideA)}${team("B", m.sideB)}<span class="callchip" aria-hidden="true">Now calling</span></div>${sub}</article>`;
           })
           .join("");
-        const next = queue.slice(0, needed);
+        const next = queue.slice(0, needed),
+          rest = queue.slice(needed, needed + 6);
+        const oldest = next.length
+          ? Math.min(...next.map((p) => p.since))
+          : 0;
         byId("up-next").innerHTML = next.length
-          ? `<div class="nextcard"><div class="h"><span>Up next</span><span>${next.length === needed ? "Next free court" : `Need ${needed - next.length} more`}</span></div><div class="row">${next.map((p) => `<span>${esc(p.name)}</span>`).join("")}</div><div class="foot">Sent to the first court that frees up.</div></div>`
+          ? `<div class="bpanel"><div class="ttl"><span>Up next</span><span>${queue.length} waiting</span></div>${
+              next.length === needed
+                ? `<div class="upnext">${next.map((p) => `<div>${esc(p.name)}</div>`).join("")}</div><div class="upnext-meta">To the <b>next free court</b> · waited up to <span data-start="${oldest}">${fmt(Date.now() - oldest)}</span></div>`
+                : `<div class="upnext-meta">${next.map((p) => esc(p.name)).join(", ")}. Need ${needed - next.length} more.</div>`
+            }</div>${
+              rest.length
+                ? `<div class="bpanel"><div class="ttl"><span>In line</span><span>Waited</span></div><ul class="online">${rest.map((p, i) => `<li><span>${needed + i + 1}</span><span>${esc(p.name)}</span><span class="w" data-since="${p.since}"><span>${fmt(Date.now() - p.since)}</span></span></li>`).join("")}</ul></div>`
+                : ""
+            }`
           : "";
+        const last = state.matchLog[0];
+        byId("last-result").innerHTML = last
+          ? `<span class="tag">Last result</span><span>Court ${last.court}: ${esc(last.winners.join(" & "))} def. ${esc(last.losers.join(" & "))}</span>`
+          : `<span class="tag">Tonight</span><span>${state.players.length} players · ${state.settings.courtCount} ${state.settings.courtCount === 1 ? "court" : "courts"} · ${state.settings.matchType} · ${state.mode === "family" ? "Friends & family" : "Open play"}</span>`;
       }
       function renderQueue() {
         const queue = getWaitingPlayers(),
@@ -4395,11 +4878,15 @@
           `<span>Mode</span><b>${modeName()}</b><span>Format</span><b>${state.settings.matchType}</b><span>Courts</span><b>${state.settings.courtCount}</b><span>Same teammate</span><b>${{ 1: "Max once", 2: "Max twice", 3: "Max thrice", unlimited: "No limit" }[state.settings.teammateLimit]}</b>`;
       }
       function tick(now = Date.now()) {
+        document.querySelectorAll("[data-start]").forEach((el) => {
+          const ms = now - Number(el.dataset.start);
+          el.textContent = fmt(ms);
+          el.closest(".ocourt")?.classList.toggle("calling", ms < CALLING_MS);
+        });
+        const clock = clockText(new Date(now));
         document
-          .querySelectorAll("[data-start]")
-          .forEach(
-            (el) => (el.textContent = fmt(now - Number(el.dataset.start))),
-          );
+          .querySelectorAll("[data-clock]")
+          .forEach((el) => (el.textContent = clock));
         document.querySelectorAll("[data-since]").forEach((el) => {
           const ms = now - Number(el.dataset.since);
           el.lastElementChild.textContent = fmt(ms);
