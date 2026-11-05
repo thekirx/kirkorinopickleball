@@ -74,3 +74,25 @@ The owner asked for the phone and desktop screens to look like the TV board (`03
 - **Print:** the theme applies on screen only, so the printed PDF report is still black on white.
 
 Checked at 390px and 1280px, and in the shared viewer: no sideways scrolling and no console errors. All 26 tests pass.
+
+## Queue and court editing (added after the court test)
+
+Built from the owner-approved mock:
+
+- **Queue order you can change.**
+  - Hold a player (or grab the handle) and drag them to a new spot.
+  - Or use **More**: Move to top, Up one, Down one, To the back, Swap with…, Partner with…, Timeout.
+  - A moved player is marked **Moved** and keeps that spot until they play. They move up as the people ahead of them are called, and everyone else keeps following the mode's order.
+- **Partners.** Locked partners wait together and play on the same team, even past the teammate limit. A pair never splits across the last spot on a court; the player just ahead of them waits one more game instead.
+- **Search.** The Queue tab's search finds any player.
+  - **Play next** moves a waiting player to #1.
+  - Players on court show which court; timed-out players get **Back in line**.
+  - A new name can be added to play next or added to the back.
+- **On court.**
+  - Tap a name for options: swap with someone on the other team, bring in one of the next four from the queue (inside the 2-minute change window), or an injury sub.
+  - Hold a name and drop it on a player of the other team to swap them.
+  - **Won** records the result. Swaps update the teammate history.
+- **Courts fit the screen.** As many columns as fit at 150px or more. Each court is as wide as its column and grows taller when the names need room.
+- **The shared view stays read-only**, with no drag, menus or result buttons.
+
+Tests: 33 pass, covering pins, swaps, partners, a pair at the last spot, saving and reloading, and court swaps with teammate history.

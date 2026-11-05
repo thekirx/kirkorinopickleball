@@ -1848,10 +1848,322 @@
         .b-ticker:empty {
           display: none;
         }
+        /* Courts follow the screen: as many columns as fit at 150px+,
+           each court as wide as its column and as tall as it needs. */
+        .courts-grid {
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+        }
+        .ocourt {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .ocourt .surface {
+          width: 100%;
+          min-width: 0;
+          aspect-ratio: 20 / 28;
+          /* Grow taller when names need the room, never wider. */
+          overflow: visible;
+          padding-block: 22px 6px;
+        }
+        .ocourt .callchip {
+          top: 0;
+          transform: translate(-50%, -50%);
+        }
+        .ocourt.menuopen {
+          grid-column: 1 / -1;
+        }
+        .ocourt.menuopen .surface {
+          width: min(100%, 300px);
+          justify-self: center;
+        }
+        .ocourt .half {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px 6px;
+          color: var(--white);
+          text-align: center;
+          min-width: 0;
+        }
+        .cname,
+        .vname {
+          max-width: 100%;
+          font-family: var(--display);
+          font-weight: 900;
+          font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+          line-height: 1.05;
+          letter-spacing: -0.03em;
+          text-transform: uppercase;
+          overflow-wrap: anywhere;
+        }
+        .cname {
+          min-height: 44px;
+          min-width: 96px;
+          padding: 4px 10px;
+          border: 1px solid rgba(255, 255, 255, 0.55);
+          background: rgba(10, 10, 10, 0.25);
+          color: var(--white);
+          touch-action: pan-y;
+          user-select: none;
+          -webkit-user-select: none;
+          -webkit-touch-callout: none;
+        }
+        .cname::after {
+          content: " \25BE";
+          font-size: 0.7em;
+          opacity: 0.8;
+        }
+        .cname[aria-expanded="true"],
+        .cname.lifted {
+          background: var(--lime);
+          border-color: var(--lime);
+          color: var(--ink-fixed);
+        }
+        .cname.lifted {
+          position: relative;
+          z-index: 5;
+          pointer-events: none;
+        }
+        .cname.drop {
+          outline: 3px dashed var(--lime);
+          outline-offset: 2px;
+        }
+        .wonbtn {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          min-height: 40px;
+          padding: 0 14px;
+          border: 0;
+          background: var(--paper-fixed);
+          color: var(--ink-fixed);
+          font: 700 0.66rem var(--mono);
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .wonbtn:hover,
+        .wonbtn:focus-visible {
+          background: var(--lime);
+        }
+        .ptag {
+          font: 700 0.56rem var(--mono);
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          background: rgba(255, 255, 255, 0.18);
+          padding: 1px 5px;
+        }
+        .tap-hint {
+          margin: 0 0 10px;
+          font: 700 0.7rem/1.5 var(--mono);
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--lime);
+        }
+        .tap-hint b {
+          color: var(--ink);
+        }
+        .nmenu,
+        .qsheet {
+          border: 1px solid var(--lime);
+          background: var(--field);
+          padding: 10px;
+          display: grid;
+          gap: 6px;
+        }
+        .nmenu .h,
+        .qsheet .h {
+          display: flex;
+          justify-content: space-between;
+          gap: 8px;
+          font: 700 0.66rem var(--mono);
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--lavender);
+        }
+        .nmenu .h b,
+        .qsheet .h b {
+          color: var(--ink);
+        }
+        .nmenu .t {
+          font: 700 0.62rem var(--mono);
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--muted);
+          margin-top: 4px;
+        }
+        .nmenu button,
+        .qsheet button {
+          min-height: 46px;
+          border: 1px solid var(--line);
+          background: var(--paper);
+          color: var(--ink);
+          text-align: left;
+          padding: 0 10px;
+          font: 900 0.9rem var(--display);
+          letter-spacing: -0.02em;
+          text-transform: uppercase;
+        }
+        .nmenu button.sub,
+        .qsheet button {
+          font: 700 0.68rem var(--mono);
+          letter-spacing: 0.04em;
+        }
+        .nmenu button:disabled,
+        .qsheet button:disabled {
+          opacity: 0.45;
+        }
+        .qsheet .g {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 6px;
+        }
+        .qsheet button {
+          text-align: center;
+        }
+        .qsheet button.pri {
+          background: var(--paper-fixed);
+          color: var(--ink-fixed);
+        }
+        .qsearch {
+          padding: 10px 11px;
+          border-bottom: 1px solid var(--line);
+        }
+        .qsearch input {
+          width: 100%;
+          min-height: 46px;
+          padding: 0 11px;
+          border: 1px solid var(--line-strong);
+          background: var(--field);
+          color: var(--ink);
+          font: 16px var(--display);
+        }
+        #queue-mode:empty,
+        #queue-sheet:empty {
+          display: none;
+        }
+        #queue-mode,
+        #queue-sheet {
+          padding: 10px 11px 0;
+        }
+        .mode-bar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 4px 4px 10px;
+          background: var(--lime);
+          color: var(--ink-fixed);
+          font: 700 0.7rem var(--mono);
+          text-transform: uppercase;
+        }
+        .mode-bar button {
+          min-height: 40px;
+          padding: 0 12px;
+          border: 0;
+          background: var(--ink-fixed);
+          color: var(--paper-fixed);
+          font: 700 0.66rem var(--mono);
+          text-transform: uppercase;
+        }
+        .qitem.movable {
+          cursor: grab;
+          touch-action: pan-y;
+          user-select: none;
+          -webkit-user-select: none;
+          -webkit-touch-callout: none;
+          background: var(--paper);
+        }
+        .qitem.lifted {
+          position: relative;
+          z-index: 3;
+          background: var(--field);
+          outline: 2px solid var(--lime);
+          outline-offset: -2px;
+          cursor: grabbing;
+        }
+        .qitem.self {
+          background: var(--lime);
+          color: var(--ink-fixed);
+        }
+        .grip {
+          display: grid;
+          place-items: center;
+          width: 22px;
+          margin-left: -4px;
+          color: var(--muted);
+          touch-action: none;
+        }
+        .grip svg {
+          width: 16px;
+          height: 16px;
+        }
+        .dropline {
+          height: 3px;
+          background: var(--lime);
+          list-style: none;
+        }
+        .qmore {
+          min-width: 48px;
+          min-height: 44px;
+          border: 1px solid var(--line);
+          background: none;
+          color: var(--ink);
+          font: 700 0.62rem var(--mono);
+          text-transform: uppercase;
+        }
+        .qbadge {
+          margin-left: 5px;
+          padding: 1px 4px;
+          font: 700 0.56rem var(--mono);
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          vertical-align: 2px;
+        }
+        .qitem .qinfo .qbadge.pin {
+          background: var(--lavender);
+          color: var(--ink-fixed);
+        }
+        .qitem .qinfo .qbadge.pair {
+          background: var(--blue);
+          color: var(--white);
+        }
+        .playnext {
+          min-height: 44px;
+          padding: 0 12px;
+          border: 0;
+          background: var(--lime);
+          color: var(--ink-fixed);
+          font: 700 0.66rem var(--mono);
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .qstate {
+          font: 700 0.62rem var(--mono);
+          text-transform: uppercase;
+          color: var(--lavender);
+          white-space: nowrap;
+        }
+        .qadd {
+          display: grid;
+          gap: 8px;
+        }
+        .qadd-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .qhint {
+          margin: 0;
+          padding: 8px 11px 10px;
+        }
+        .qhint:empty {
+          display: none;
+        }
         @media (max-width: 1023px) {
-          .courts-grid {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          }
           .ocourt-h .n {
             font-size: 1.1rem;
           }
@@ -2117,6 +2429,7 @@
         </div>
         <div id="start-controls" data-organizer class="startbox"></div>
         <div id="generation-message" class="status-message" role="status"></div>
+        <p class="tap-hint" data-organizer>Tap <b>Won</b> for the winning team &middot; tap a name for options &middot; hold a name to drag</p>
         <div id="courts-grid" class="courts-grid"></div>
         <div id="up-next" class="b-side"></div>
         <div id="last-result" class="b-ticker"></div>
@@ -2160,7 +2473,13 @@
             <div class="box-h">
               <b>Next up</b><span class="chip" id="queue-count"></span>
             </div>
+            <div class="qsearch" role="search">
+              <input id="queue-search" type="search" placeholder="Search a player" aria-label="Search players" autocomplete="off" enterkeyhint="go" />
+            </div>
+            <div id="queue-mode"></div>
+            <div id="queue-sheet"></div>
             <ol id="queue-list" class="qlist"></ol>
+            <p class="note qhint" id="queue-hint"></p>
           </div>
         </section>
         <section
@@ -3274,7 +3593,17 @@
             : now - (Number(player.roundsWaited) || 0) * 720000,
           lastPlayedRound: player.lastPlayedRound ?? null,
           active: player.active !== false,
+          pin:
+            player.pin && Array.isArray(player.pin.ahead)
+              ? { ahead: player.pin.ahead.map(String), at: Number(player.pin.at) || now }
+              : null,
+          partner: player.partner ? String(player.partner) : null,
         }));
+        // Drop one-sided or dangling partner links from older saves.
+        state.players.forEach((p) => {
+          const other = p.partner && state.players.find((x) => x.id === p.partner);
+          if (!other || other.partner !== p.id) p.partner = null;
+        });
 
         state.mode = saved.mode === "family" ? "family" : "open";
         state.started =
@@ -3918,6 +4247,8 @@
         state.activeMatches = state.activeMatches.filter(
           (m) => !cancelled.includes(m),
         );
+        clearPartner(playerId);
+        forgetFromPins([playerId]);
         state.players = state.players.filter((p) => p.id !== playerId);
         for (const key of state.teammateHistory.keys())
           if (key.split("|").includes(playerId))
@@ -3945,6 +4276,7 @@
           };
         const returning = player.active === false && active;
         player.active = Boolean(active);
+        forgetFromPins([player.id]);
         if (returning) player.since = now;
         if (returning && state.started) fillIdleCourts(now);
         return {
@@ -3964,8 +4296,152 @@
        This prevents a player with fewer rounds waited from jumping
        ahead of someone with a greater wait.
        ========================================================= */
+      // Queue order: the mode's rule, then manual pins, then locked partners
+      // pulled together. A pin keeps a player behind the people who were ahead
+      // of them when they were moved, so they move up as those people play.
       function getPrioritizedQueue(players = state.players) {
-        return [...players].sort((a, b) => compareQueue(a, b, state.mode));
+        const sorted = [...players].sort((a, b) =>
+          compareQueue(a, b, state.mode),
+        );
+        const present = new Set(players.map((p) => p.id));
+        const target = (p) =>
+          p.pin.ahead.filter((id) => id !== p.id && present.has(id)).length;
+        const pinned = sorted
+          .filter((p) => p.pin)
+          .map((p) => ({ p, at: target(p) }))
+          .sort((a, b) => a.at - b.at || a.p.pin.at - b.p.pin.at);
+        const order = sorted.filter((p) => !p.pin);
+        pinned.forEach(({ p, at }) =>
+          order.splice(Math.min(at, order.length), 0, p),
+        );
+        return state.settings?.matchType === "singles"
+          ? order
+          : keepPartnersTogether(order);
+      }
+
+      // Locked partners wait and play as one unit: the later partner moves up
+      // to stand right behind the first. A pair never straddles a court's
+      // last spot; the player just ahead of them waits one game instead.
+      function keepPartnersTogether(queue, needed = 4) {
+        const q = [...queue];
+        for (let i = 0; i < q.length; i += 1) {
+          const j = q.findIndex((x) => x.id === q[i].partner);
+          if (j > i + 1) q.splice(i + 1, 0, ...q.splice(j, 1));
+          if (j > i) i += 1;
+        }
+        for (let start = 0; start + needed < q.length; start += needed) {
+          const last = start + needed - 1;
+          if (q[last].partner !== q[last + 1].id) continue;
+          for (let k = last - 1; k >= start; k -= 1) {
+            const paired =
+              q[k].partner &&
+              (q[k - 1]?.id === q[k].partner || q[k + 1]?.id === q[k].partner);
+            if (paired) continue;
+            q.splice(last + 1, 0, ...q.splice(k, 1));
+            break;
+          }
+        }
+        return q;
+      }
+
+      // Manual queue edits. `desired` is the full waiting order the organizer
+      // wants; every pinned player is re-anchored to it so earlier pins hold.
+      function applyQueueOrder(desired, movedIds, now) {
+        desired.forEach((p, index) => {
+          if (!p.pin && !movedIds.includes(p.id)) return;
+          p.pin = {
+            ahead: desired.slice(0, index).map((x) => x.id),
+            at: movedIds.includes(p.id) ? now : p.pin.at,
+          };
+        });
+      }
+
+      function moveQueuedPlayer(playerId, toIndex, now = Date.now()) {
+        if (state.viewerMode) return { ok: false };
+        const queue = getWaitingPlayers();
+        const from = queue.findIndex((p) => p.id === playerId);
+        if (from < 0) return { ok: false, message: "That player isn't in line." };
+        const to = Math.max(0, Math.min(queue.length - 1, Math.trunc(toIndex)));
+        if (to === from) return { ok: false };
+        const desired = queue.filter((p) => p.id !== playerId);
+        desired.splice(to, 0, queue[from]);
+        applyQueueOrder(desired, [playerId], now);
+        return {
+          ok: true,
+          message: `${queue[from].name} moved to #${getWaitingPlayers().findIndex((p) => p.id === playerId) + 1}`,
+        };
+      }
+
+      function swapQueuedPlayers(firstId, secondId, now = Date.now()) {
+        if (state.viewerMode || firstId === secondId) return { ok: false };
+        const queue = getWaitingPlayers();
+        const a = queue.findIndex((p) => p.id === firstId);
+        const b = queue.findIndex((p) => p.id === secondId);
+        if (a < 0 || b < 0) return { ok: false, message: "Both players must be in line." };
+        const desired = [...queue];
+        [desired[a], desired[b]] = [desired[b], desired[a]];
+        applyQueueOrder(desired, [firstId, secondId], now);
+        return { ok: true, message: `${queue[a].name} and ${queue[b].name} swapped` };
+      }
+
+      function setPartners(firstId, secondId) {
+        if (state.viewerMode || firstId === secondId) return { ok: false };
+        const a = getPlayerById(firstId),
+          b = getPlayerById(secondId);
+        if (!a || !b) return { ok: false };
+        [a, b].forEach((p) => clearPartner(p.id));
+        a.partner = b.id;
+        b.partner = a.id;
+        return { ok: true, message: `${a.name} and ${b.name} play together` };
+      }
+
+      // Swap two players on opposite teams of a live court, e.g. when the
+      // players think the teams are uneven. The game clock keeps running.
+      function swapCourtPlayers(matchId, firstId, secondId) {
+        if (state.viewerMode) return { ok: false };
+        const match = state.activeMatches.find(
+          (m) => m.id === matchId && m.status !== "finished",
+        );
+        if (!match || firstId === secondId) return { ok: false };
+        const inA = (id) => match.sideA.some((p) => p.id === id);
+        const inB = (id) => match.sideB.some((p) => p.id === id);
+        const firstSide = inA(firstId) ? "A" : inB(firstId) ? "B" : null;
+        const secondSide = inA(secondId) ? "A" : inB(secondId) ? "B" : null;
+        if (!firstSide || !secondSide)
+          return { ok: false, message: "Both players must be on this court." };
+        if (firstSide === secondSide)
+          return { ok: false, message: "They're already on the same team." };
+        recordMatchTeammates(match, -1);
+        const a = firstSide === "A" ? match.sideA : match.sideB;
+        const b = firstSide === "A" ? match.sideB : match.sideA;
+        const i = a.findIndex((p) => p.id === firstId),
+          j = b.findIndex((p) => p.id === secondId);
+        [a[i], b[j]] = [b[j], a[i]];
+        recordMatchTeammates(match, 1);
+        const names = (side) => side.map((p) => p.name).join(" & ");
+        return {
+          ok: true,
+          message: `Court ${match.court}: ${names(match.sideA)} vs ${names(match.sideB)}`,
+        };
+      }
+
+      // A player who leaves the line (court, timeout, removal) stops counting
+      // in anyone's pin, so they can't push a pinned player back on return.
+      function forgetFromPins(ids) {
+        state.players.forEach((p) => {
+          if (ids.includes(p.id)) p.pin = null;
+          else if (p.pin)
+            p.pin = { ...p.pin, ahead: p.pin.ahead.filter((id) => !ids.includes(id)) };
+        });
+      }
+
+      function clearPartner(playerId) {
+        const p = getPlayerById(playerId);
+        if (!p || !p.partner) return { ok: false };
+        const other = getPlayerById(p.partner);
+        if (other && other.partner === p.id) other.partner = null;
+        p.partner = null;
+        return { ok: true, message: `${p.name} is no longer locked to a partner` };
       }
 
       function selectPriorityPlayers(
@@ -4320,6 +4796,7 @@
 
         adjustTeammateHistory(outgoingPlayer, teammate, -1);
         side[outgoingIndex] = replacementPlayer;
+        forgetFromPins([outgoingPlayer.id, replacementPlayer.id]);
         adjustTeammateHistory(replacementPlayer, teammate, 1);
 
         outgoingPlayer.since =
@@ -4463,8 +4940,23 @@
               [c, d],
             ],
           ];
-          const valid = splits.filter((teams) =>
-            teams.every((team) => isTeammatePairAllowed(team, limit)),
+          const four = [a, b, c, d];
+          const locked = (team) => team[0].partner === team[1].id;
+          const splitsPair = (teams) =>
+            teams.some((team) =>
+              team.some(
+                (p) =>
+                  p.partner &&
+                  four.some((x) => x.id === p.partner) &&
+                  !team.some((x) => x.id === p.partner),
+              ),
+            );
+          const valid = splits.filter(
+            (teams) =>
+              !splitsPair(teams) &&
+              teams.every(
+                (team) => locked(team) || isTeammatePairAllowed(team, limit),
+              ),
           );
           const score = (teams) =>
             Math.abs(
@@ -4512,6 +5004,7 @@
           generatedAt: now,
           startedAt: now,
         };
+        forgetFromPins([...match.sideA, ...match.sideB].map((p) => p.id));
         state.activeMatches.push(match);
         state.activeMatches.sort((a, b) => a.court - b.court);
         recordMatchTeammates(match, 1);
@@ -4666,8 +5159,10 @@
       let activeTab = "players",
         railTab = "queue",
         addSkill = "intermediate",
-        subOpen = null,
-        changeFor = null,
+        nameMenu = null,
+        queueMenu = null,
+        picking = null,
+        suppressClick = false,
         showAll = false;
       let toastTimer = null,
         sheetReturnFocus = null;
@@ -4777,16 +5272,26 @@
             const m = state.activeMatches.find((m) => m.court === court);
             if (!m)
               return `<article class="ocourt idle"><div class="ocourt-h"><span class="n">Court ${court}</span><span class="timer">Open</span></div><div class="surface">${COURT_SVG}<div class="idle-msg">${esc(state.courtMessages[court] || `Needs ${needed} players in the queue.`)}</div></div></article>`;
-            // Each half of the drawn court is the winner button for that team.
+            // Organizer: tap a name for options, hold a name and drop it on a
+            // player of the other team to swap them, tap WON to record.
             const team = (side, players) =>
-              `<${state.viewerMode ? "div" : 'button type="button"'} class="team half" ${state.viewerMode ? "" : `data-winner="${side}" data-match="${esc(m.id)}" aria-label="Mark ${esc(players.map((p) => p.name).join(" and "))} as winners on court ${court}"`}><span class="names">${players.map((p) => `<b>${esc(p.name)}</b>`).join("")}</span>${state.viewerMode ? "" : `<span class="won-cta">${ic("trophy")}Won</span>`}</${state.viewerMode ? "div" : "button"}>`;
-            const open = subOpen === m.id;
+              `<div class="half">${players
+                .map((p) =>
+                  state.viewerMode
+                    ? `<b class="vname">${esc(p.name)}</b>`
+                    : `<button type="button" class="cname" data-cname="${esc(m.id)}:${esc(p.id)}" data-cdrag="${esc(m.id)}:${esc(p.id)}" aria-expanded="${nameMenu?.match === m.id && nameMenu.id === p.id}" aria-label="${esc(p.name)}: options, or hold to drag">${esc(p.name)}</button>`,
+                )
+                .join("")}${players.length === 2 && players[0].partner === players[1].id ? '<span class="ptag">Partners</span>' : ""}${state.viewerMode ? "" : `<button type="button" class="wonbtn" data-winner="${side}" data-match="${esc(m.id)}" aria-label="Mark ${esc(players.map((p) => p.name).join(" and "))} as winners on court ${court}">${ic("trophy")}Won</button>`}</div>`;
+            const open = !state.viewerMode && nameMenu?.match === m.id;
             const calling = Date.now() - m.startedAt < CALLING_MS;
-            const sub =
-              !open || state.viewerMode
-                ? ""
-                : `<div class="subpanel"><div class="h"><span>Substitutions</span><span data-window="${m.startedAt}"></span></div>${[...m.sideA, ...m.sideB].map((p) => `<div class="subrow"><span>${esc(p.name)}</span><span class="acts"><button type="button" class="pm-act" data-change="${esc(p.id)}" data-match="${esc(m.id)}" ${canChangeMatchPlayer(m) && queue.length ? "" : "disabled"}>Change</button><button type="button" class="pm-act injury" data-injury="${esc(p.id)}" data-match="${esc(m.id)}" ${queue.length ? "" : "disabled"}>Injury</button></span>${changeFor === p.id ? `<div class="picker"><select aria-label="Replacement for ${esc(p.name)}">${queue.map((x) => `<option value="${esc(x.id)}">${esc(x.name)} · ${games(x)}g</option>`).join("")}</select><button type="button" data-confirm="${esc(p.id)}" data-match="${esc(m.id)}">Confirm</button></div>` : ""}</div>`).join("")}</div>`;
-            return `<article class="ocourt${calling ? " calling" : ""}${open ? " subopen" : ""}" data-court="${court}"><div class="ocourt-h"><span class="n">Court ${court}${court > state.settings.courtCount ? " · Closing" : ""}</span><span class="r"><span class="timer"><span data-start="${m.startedAt}">${fmt(Date.now() - m.startedAt)}</span></span>${state.viewerMode ? "" : `<button type="button" class="sub-btn" data-sub="${esc(m.id)}" aria-expanded="${open}">Sub</button>`}</span></div><div class="surface">${COURT_SVG}${team("A", m.sideA)}${team("B", m.sideB)}<span class="callchip" aria-hidden="true">Now calling</span></div>${sub}</article>`;
+            let menu = "";
+            if (open) {
+              const me = getPlayerById(nameMenu.id);
+              const other = m.sideA.some((p) => p.id === me.id) ? m.sideB : m.sideA;
+              const canChange = canChangeMatchPlayer(m) && queue.length;
+              menu = `<div class="nmenu" role="group" aria-label="Options for ${esc(me.name)}"><div class="h"><b>${esc(me.name)}</b><span data-window="${m.startedAt}"></span></div><span class="t">Swap with</span>${other.map((p) => `<button type="button" data-cswap="${esc(p.id)}" data-player="${esc(me.id)}" data-match="${esc(m.id)}">⇄ ${esc(p.name)}</button>`).join("")}${queue.length ? `<span class="t">Bring in from the queue</span>${queue.slice(0, 4).map((x) => `<button type="button" class="sub" data-subin="${esc(x.id)}" data-player="${esc(me.id)}" data-match="${esc(m.id)}" ${canChange ? "" : "disabled"}>${esc(x.name)} in for ${esc(me.name)}</button>`).join("")}<button type="button" class="sub injury" data-injury="${esc(me.id)}" data-match="${esc(m.id)}">Injury: closest skill in, ${esc(me.name)} timed out</button>` : ""}<button type="button" class="sub" data-nmclose>Close</button></div>`;
+            }
+            return `<article class="ocourt${calling ? " calling" : ""}${open ? " menuopen" : ""}" data-court="${court}"><div class="ocourt-h"><span class="n">Court ${court}${court > state.settings.courtCount ? " · Closing" : ""}</span><span class="r"><span class="timer"><span data-start="${m.startedAt}">${fmt(Date.now() - m.startedAt)}</span></span></span></div><div class="surface">${COURT_SVG}${team("A", m.sideA)}${team("B", m.sideB)}<span class="callchip" aria-hidden="true">Now calling</span></div>${menu}</article>`;
           })
           .join("");
         const next = queue.slice(0, needed),
@@ -4817,14 +5322,66 @@
           .querySelectorAll("[data-queue-count]")
           .forEach((b) => (b.textContent = queue.length));
         byId("queue-count").textContent = `${queue.length} waiting`;
-        elements.queueList.innerHTML =
-          queue
-            .map(
-              (p, i) =>
-                `${i === needed ? '<li class="group-sep">In line</li>' : ""}<li class="qitem${i < needed ? " next" : ""}"><span class="qpos">${i + 1}</span><div class="qinfo"><b>${esc(p.name)}${pips(p)}</b><span>${games(p)} ${games(p) === 1 ? "game" : "games"}${i < needed ? " · Up next" : ""}</span></div><span class="wait" data-since="${p.since}" aria-label="Time waiting">${ic("clock")}<span>${fmt(Date.now() - p.since)}</span></span></li>`,
-            )
-            .join("") ||
-          '<li class="empty-state">Nobody waiting. Everyone is on court or timed out.</li>';
+        const term = (byId("queue-search")?.value || "").trim();
+        const organizer = !state.viewerMode;
+        const grip = `<span class="grip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></span>`;
+        const sub = (p, i) => {
+          const partner = p.partner ? getPlayerById(p.partner) : null;
+          return `${games(p)} ${games(p) === 1 ? "game" : "games"}${i < needed ? " · Up next" : ""}${partner ? ` · with ${esc(partner.name)}` : ""}`;
+        };
+        const badges = (p) =>
+          `${p.pin ? '<span class="qbadge pin">Moved</span>' : ""}${p.partner ? '<span class="qbadge pair">Pair</span>' : ""}`;
+        byId("queue-mode").innerHTML = picking
+          ? `<div class="mode-bar" role="status"><span>${picking.kind === "swap" ? `Tap who swaps with ${esc(getPlayerById(picking.id).name)}` : `Tap ${esc(getPlayerById(picking.id).name)}'s partner`}</span><button type="button" data-qcancel>Cancel</button></div>`
+          : "";
+        if (term) {
+          const lower = term.toLowerCase();
+          const hits = state.players.filter((p) => p.name.toLowerCase().includes(lower));
+          const exact = hits.some((p) => p.name.toLowerCase() === lower);
+          const courtOf = new Map();
+          state.activeMatches.forEach((m) =>
+            [...m.sideA, ...m.sideB].forEach((p) => courtOf.set(p.id, m.court)),
+          );
+          elements.queueList.innerHTML =
+            `<li class="group-sep">${hits.length} ${hits.length === 1 ? "match" : "matches"}</li>` +
+            hits
+              .map((p) => {
+                const i = queue.indexOf(p);
+                const right = courtOf.has(p.id)
+                  ? `<span class="qstate">On court ${courtOf.get(p.id)}</span>`
+                  : p.active === false
+                    ? organizer
+                      ? `<button type="button" class="tbtn" data-out="${esc(p.id)}">Back in line</button>`
+                      : '<span class="qstate">Timed out</span>'
+                    : i === 0 || !organizer
+                      ? `<span class="qstate">${i === 0 ? "Plays next" : `#${i + 1}`}</span>`
+                      : `<button type="button" class="playnext" data-playnext="${esc(p.id)}">Play next</button>`;
+                return `<li class="qitem${i >= 0 && i < needed ? " next" : ""}"><span class="qpos">${i >= 0 ? i + 1 : "–"}</span><div class="qinfo"><b>${esc(p.name)}${pips(p)}${badges(p)}</b><span>${i >= 0 ? sub(p, i) : `${games(p)} games`}</span></div>${right}</li>`;
+              })
+              .join("") +
+            (organizer && !exact
+              ? `<li class="empty-state qadd">${hits.length ? "" : `Nobody called “${esc(term)}” yet.`}<span class="qadd-actions"><button type="button" class="playnext" data-addnext>Add ${esc(term)} &amp; play next</button><button type="button" class="tbtn" data-addback>Add to the back</button></span></li>`
+              : "");
+          byId("queue-hint").textContent = organizer ? "Play next puts them in the next game. Clear the search to drag." : "";
+        } else {
+          elements.queueList.innerHTML =
+            queue
+              .map(
+                (p, i) =>
+                  `${i === needed ? '<li class="group-sep">In line</li>' : ""}<li class="qitem${i < needed ? " next" : ""}${organizer ? " movable" : ""}${picking?.id === p.id ? " self" : ""}" data-qid="${esc(p.id)}" data-qi="${i}">${organizer ? grip : ""}<span class="qpos">${i + 1}</span><div class="qinfo"><b>${esc(p.name)}${pips(p)}${badges(p)}</b><span>${sub(p, i)}</span></div><span class="wait" data-since="${p.since}" aria-label="Time waiting">${ic("clock")}<span>${fmt(Date.now() - p.since)}</span></span>${organizer ? `<button type="button" class="qmore" data-qmore="${esc(p.id)}" aria-expanded="${queueMenu === p.id}" aria-label="More for ${esc(p.name)}">More</button>` : ""}</li>`,
+              )
+              .join("") ||
+            '<li class="empty-state">Nobody waiting. Everyone is on court or timed out.</li>';
+          byId("queue-hint").textContent = organizer && queue.length > 1 ? "Hold a player, then drag to move them. Up next goes to the next free court." : "";
+        }
+        const qi = queue.findIndex((p) => p.id === queueMenu);
+        if (qi < 0 || picking || !organizer) {
+          byId("queue-sheet").innerHTML = "";
+        } else {
+          const p = queue[qi],
+            partner = p.partner ? getPlayerById(p.partner) : null;
+          byId("queue-sheet").innerHTML = `<div class="qsheet" role="group" aria-label="Move ${esc(p.name)}"><div class="h"><b>${esc(p.name)} · #${qi + 1}</b><span>${partner ? `Partner: ${esc(partner.name)}` : "No partner"}</span></div><div class="g"><button type="button" class="pri" data-qto="0">Move to top</button><button type="button" data-qpick="swap">Swap with…</button><button type="button" data-qto="${qi - 1}" ${qi === 0 ? "disabled" : ""}>Up one</button><button type="button" data-qto="${qi + 1}" ${qi === queue.length - 1 ? "disabled" : ""}>Down one</button><button type="button" data-qto="${queue.length - 1}">To the back</button>${partner ? '<button type="button" class="danger" data-qunpair>Unlock partner</button>' : '<button type="button" data-qpick="pair">Partner with…</button>'}<button type="button" data-out="${esc(p.id)}">Timeout</button><button type="button" data-qclose>Done</button></div></div>`;
+        }
         const counts = new Map();
         state.players.forEach((p) =>
           counts.set(games(p), (counts.get(games(p)) || 0) + 1),
@@ -4899,12 +5456,10 @@
             left > 0
               ? `CHANGE OPEN ${fmt(left)}`
               : "CHANGE CLOSED · INJURY ONLY";
-          if (left <= 0) {
-            const panel = el.closest(".subpanel");
-            panel
-              .querySelectorAll("[data-change],[data-confirm]")
+          if (left <= 0)
+            el.closest(".nmenu")
+              ?.querySelectorAll("[data-subin]")
               .forEach((b) => (b.disabled = true));
-          }
         });
       }
       function renderAll() {
@@ -5004,6 +5559,23 @@
        EVENT LISTENERS
        ========================================================= */
       document.addEventListener("click", (event) => {
+        // A drag that just ended must not also count as a tap.
+        if (suppressClick) {
+          suppressClick = false;
+          event.preventDefault();
+          return;
+        }
+        const row = event.target.closest(".qitem[data-qid]");
+        if (picking && row && !event.target.closest("button")) {
+          const kind = picking.kind,
+            first = picking.id,
+            second = row.dataset.qid;
+          if (first === second) return;
+          picking = null;
+          if (kind === "swap") undoable(() => swapQueuedPlayers(first, second));
+          else undoable(() => setPartners(first, second));
+          return;
+        }
         const b = event.target.closest("button");
         if (!b) return;
         if (b.dataset.tab) {
@@ -5062,33 +5634,90 @@
             .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
           return;
         }
-        if (b.dataset.sub) {
-          subOpen = subOpen === b.dataset.sub ? null : b.dataset.sub;
-          changeFor = null;
+        if (b.dataset.cname) {
+          const [match, id] = b.dataset.cname.split(":");
+          nameMenu = nameMenu?.match === match && nameMenu.id === id ? null : { match, id };
           renderCourts();
           tick();
           return;
         }
-        if (b.dataset.change) {
-          changeFor = changeFor === b.dataset.change ? null : b.dataset.change;
+        if (b.hasAttribute("data-nmclose")) {
+          nameMenu = null;
           renderCourts();
-          tick();
+          return;
+        }
+        if (b.dataset.cswap) {
+          nameMenu = null;
+          undoable(() => swapCourtPlayers(b.dataset.match, b.dataset.player, b.dataset.cswap));
+          return;
+        }
+        if (b.dataset.subin) {
+          nameMenu = null;
+          undoable(
+            () => replaceMatchPlayer(b.dataset.match, b.dataset.player, b.dataset.subin),
+            (r) => `${r.replacement.name} in for ${r.outgoingPlayer.name}`,
+          );
           return;
         }
         if (b.dataset.winner) {
-          subOpen = null;
-          changeFor = null;
+          nameMenu = null;
           undoable(() => recordCourtResult(b.dataset.match, b.dataset.winner));
           return;
         }
-        if (b.dataset.confirm) {
-          const incoming = b.closest(".picker").querySelector("select").value;
-          undoable(
-            () =>
-              replaceMatchPlayer(b.dataset.match, b.dataset.confirm, incoming),
-            (r) => `${r.replacement.name} REPLACED ${r.outgoingPlayer.name}`,
-          );
-          changeFor = null;
+        if (b.dataset.qmore) {
+          queueMenu = queueMenu === b.dataset.qmore ? null : b.dataset.qmore;
+          renderQueue();
+          tick();
+          return;
+        }
+        if (b.hasAttribute("data-qclose")) {
+          queueMenu = null;
+          renderQueue();
+          return;
+        }
+        if (b.dataset.qto !== undefined) {
+          const id = queueMenu;
+          queueMenu = null;
+          undoable(() => moveQueuedPlayer(id, Number(b.dataset.qto)));
+          return;
+        }
+        if (b.dataset.qpick) {
+          picking = { kind: b.dataset.qpick, id: queueMenu };
+          queueMenu = null;
+          renderQueue();
+          tick();
+          return;
+        }
+        if (b.hasAttribute("data-qcancel")) {
+          picking = null;
+          renderQueue();
+          tick();
+          return;
+        }
+        if (b.hasAttribute("data-qunpair")) {
+          const id = queueMenu;
+          queueMenu = null;
+          undoable(() => clearPartner(id));
+          return;
+        }
+        if (b.dataset.playnext) {
+          const id = b.dataset.playnext;
+          byId("queue-search").value = "";
+          undoable(() => moveQueuedPlayer(id, 0), () => `${getPlayerById(id).name} plays next`);
+          return;
+        }
+        if (b.hasAttribute("data-addnext") || b.hasAttribute("data-addback")) {
+          const name = byId("queue-search").value,
+            next = b.hasAttribute("data-addnext");
+          undoable(() => {
+            const added = addPlayer(name, addSkill);
+            if (!added.ok || !next) return added;
+            moveQueuedPlayer(added.player.id, 0);
+            return { ok: true, message: `${added.player.name} added and plays next` };
+          });
+          byId("queue-search").value = "";
+          renderQueue();
+          tick();
           return;
         }
         if (b.dataset.injury) {
@@ -5100,6 +5729,7 @@
           return;
         }
         if (b.dataset.out) {
+          queueMenu = null;
           const p = getPlayerById(b.dataset.out);
           undoable(
             () => setPlayerActive(p.id, p.active === false),
@@ -5344,6 +5974,142 @@
         await refreshSharedView();
         window.setInterval(refreshSharedView, VIEWER_POLL_MS);
       }
+      byId("queue-search").addEventListener("input", () => {
+        queueMenu = null;
+        renderQueue();
+        tick();
+      });
+      byId("queue-search").addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        byId("queue-list").querySelector("[data-playnext],[data-addnext]")?.click();
+      });
+
+      /* Drag. Touch: hold ~0.2s, then move. Mouse: just drag. The page
+         keeps scrolling normally until a hold starts. */
+      const HOLD_MS = 220;
+      let drag = null;
+      const scroller = () => {
+        const el = document.querySelector(".app-layout");
+        return el && el.scrollHeight > el.clientHeight && getComputedStyle(el).overflowY !== "visible" ? el : null;
+      };
+      function startDrag(kind, el, event, data) {
+        drag = { kind, el, data, pid: event.pointerId, x0: event.clientX, y0: event.clientY, y: event.clientY, live: false, timer: null, target: null };
+        if (event.pointerType !== "mouse")
+          drag.timer = window.setTimeout(() => {
+            liftDrag();
+            try { navigator.vibrate?.(15); } catch (error) { /* optional */ }
+          }, HOLD_MS);
+      }
+      function liftDrag() {
+        if (!drag || drag.live) return;
+        drag.live = true;
+        try { drag.el.setPointerCapture(drag.pid); } catch (error) { /* ignore */ }
+        drag.el.classList.add("lifted");
+        if (drag.kind === "queue") {
+          drag.line = document.createElement("li");
+          drag.line.className = "dropline";
+          drag.line.setAttribute("aria-hidden", "true");
+          drag.rows = [...elements.queueList.querySelectorAll(".qitem[data-qid]")];
+          placeDropLine();
+        }
+      }
+      function dropIndex(d = drag) {
+        const others = d.rows.filter((r) => r !== d.el);
+        let to = others.length;
+        for (let k = 0; k < others.length; k += 1) {
+          const r = others[k].getBoundingClientRect();
+          if (d.y < r.top + r.height / 2) { to = k; break; }
+        }
+        return { to, others };
+      }
+      function placeDropLine() {
+        const { to, others } = dropIndex();
+        if (to < others.length) others[to].before(drag.line);
+        else (others.at(-1) || drag.el).after(drag.line);
+      }
+      function endDrag(event, cancelled) {
+        if (!drag || (event && event.pointerId !== drag.pid)) return;
+        const d = drag;
+        drag = null;
+        window.clearTimeout(d.timer);
+        if (!d.live) return;
+        d.el.classList.remove("lifted");
+        d.el.style.transform = "";
+        d.line?.remove();
+        d.target?.classList.remove("drop");
+        suppressClick = true;
+        window.setTimeout(() => (suppressClick = false), 60);
+        if (cancelled) return;
+        if (d.kind === "queue") {
+          const to = dropIndex(d).to;
+          undoable(() => moveQueuedPlayer(d.data.id, to));
+        } else if (d.target) {
+          const [match, other] = d.target.dataset.cdrag.split(":");
+          if (match === d.data.match) undoable(() => swapCourtPlayers(match, d.data.id, other));
+        }
+      }
+      elements.queueList.addEventListener("pointerdown", (event) => {
+        const row = event.target.closest(".qitem.movable");
+        if (!row || picking || state.viewerMode || event.target.closest("button")) return;
+        startDrag("queue", row, event, { id: row.dataset.qid });
+        if (event.target.closest(".grip")) liftDrag();
+      });
+      elements.courtsGrid.addEventListener("pointerdown", (event) => {
+        const el = event.target.closest("[data-cdrag]");
+        if (!el || state.viewerMode) return;
+        const [match, id] = el.dataset.cdrag.split(":");
+        startDrag("court", el, event, { match, id });
+      });
+      window.addEventListener(
+        "pointermove",
+        (event) => {
+          if (!drag || event.pointerId !== drag.pid) return;
+          drag.y = event.clientY;
+          const dx = event.clientX - drag.x0,
+            dy = event.clientY - drag.y0;
+          if (!drag.live) {
+            if (event.pointerType === "mouse" && Math.hypot(dx, dy) > 6) liftDrag();
+            else if (event.pointerType !== "mouse" && Math.hypot(dx, dy) > 10) {
+              window.clearTimeout(drag.timer);
+              drag = null;
+            }
+            if (!drag?.live) return;
+          }
+          event.preventDefault();
+          if (drag.kind === "queue") {
+            drag.el.style.transform = `translateY(${dy}px)`;
+            placeDropLine();
+            const sc = scroller(),
+              edge = 70;
+            const step = event.clientY < edge ? -12 : event.clientY > window.innerHeight - edge ? 12 : 0;
+            if (step) (sc || window).scrollBy(0, step);
+          } else {
+            drag.el.style.transform = `translate(${dx}px, ${dy}px)`;
+            const under = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-cdrag]");
+            const target = under && under !== drag.el && under.dataset.cdrag.split(":")[0] === drag.data.match ? under : null;
+            if (drag.target !== target) {
+              drag.target?.classList.remove("drop");
+              target?.classList.add("drop");
+              drag.target = target;
+            }
+          }
+        },
+        { passive: false },
+      );
+      window.addEventListener("pointerup", (event) => endDrag(event, false));
+      window.addEventListener("pointercancel", (event) => endDrag(event, true));
+      // While a drag is live, stop the page scrolling under the finger.
+      document.addEventListener(
+        "touchmove",
+        (event) => {
+          if (drag?.live) event.preventDefault();
+        },
+        { passive: false },
+      );
+      document.addEventListener("contextmenu", (event) => {
+        if (event.target.closest(".qitem.movable, [data-cdrag]")) event.preventDefault();
+      });
       window.addEventListener("resize", syncView);
       window.addEventListener("online", () => {
         if (!state.viewerMode)

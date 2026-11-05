@@ -42,7 +42,7 @@ function app() {
   vm.createContext(ctx);
   vm.runInContext(
     script +
-      "\nglobalThis.app={state, compareQueue, getWaitingPlayers, setMode, addPlayer, fillIdleCourts, recordCourtResult, captureUndo, undoLastAction, serializeState, applySnapshot, setPlayerActive, replaceMatchPlayer, substituteInjuredPlayer, updateSettings, removePlayer, updatePlayerRecord, writeJson, readJson, restoreState};",
+      "\nglobalThis.app={state, compareQueue, getWaitingPlayers, setMode, addPlayer, fillIdleCourts, recordCourtResult, captureUndo, undoLastAction, serializeState, applySnapshot, setPlayerActive, replaceMatchPlayer, substituteInjuredPlayer, updateSettings, removePlayer, updatePlayerRecord, writeJson, readJson, restoreState, moveQueuedPlayer, swapQueuedPlayers, setPartners, clearPartner, swapCourtPlayers};",
     ctx,
   );
   return ctx.app;
@@ -303,4 +303,89 @@ test("organizer restore resumes finished legacy courts without adding duplicate 
   const firstDraw = a.state.activeMatches.map(m => [m.id, m.startedAt]);
   a.restoreState();
   assert.deepEqual(a.state.activeMatches.map(m => [m.id, m.startedAt]), firstDraw);
+});
+
+test("moving a player pins their spot; others keep the mode order", () => {
+  const a = app();
+  a.state.players = Array.from({ length: 6 }, (_, i) => p(String(i), 0, i));
+  assert.equal(a.moveQueuedPlayer("5", 1, 100).ok, true);
+  assert.deepEqual(ids(a), ["0", "5", "1", "2", "3", "4"]);
+  a.addPlayer("Late", "pro", 50);
+  assert.equal(ids(a)[1], "5");
+  assert.equal(a.moveQueuedPlayer("4", 0, 200).ok, true);
+  assert.deepEqual(ids(a).slice(0, 3), ["4", "0", "5"]);
+});
+
+test("a pinned player moves up as people ahead play and is not pushed back when they return", () => {
+  const a = setup(4, "open", 1);
+  a.state.activeMatches = [];
+  a.state.players.push(...["4", "5", "6", "7", "8"].map((id, i) => p(id, 0, 10 + i)));
+  assert.equal(a.moveQueuedPlayer("8", 4, 100).ok, true);
+  assert.equal(ids(a)[4], "8");
+  a.fillIdleCourts(200);
+  assert.equal(ids(a)[0], "8");
+  a.recordCourtResult(a.state.activeMatches[0].id, "A", 300);
+  // 8 played next, so its pin is gone and the four who just played are behind.
+  assert.ok(!a.state.players.find((x) => x.id === "8").pin);
+});
+
+test("swapping two queued players exchanges their spots and undo restores them", () => {
+  const a = app();
+  a.state.players = Array.from({ length: 6 }, (_, i) => p(String(i), 0, i));
+  a.captureUndo(1);
+  assert.equal(a.swapQueuedPlayers("1", "5", 2).ok, true);
+  assert.deepEqual(ids(a), ["0", "5", "2", "3", "4", "1"]);
+  assert.equal(a.undoLastAction(3).ok, true);
+  assert.deepEqual(ids(a), ["0", "1", "2", "3", "4", "5"]);
+});
+
+test("locked partners wait together and play on the same team, past the teammate limit", () => {
+  const a = app();
+  a.state.settings = { matchType: "doubles", courtCount: 1, teammateLimit: "1" };
+  a.state.players = Array.from({ length: 8 }, (_, i) => p(String(i), 0, i, i % 2 ? "pro" : "beginner"));
+  a.setPartners("0", "6");
+  a.state.teammateHistory.set("0|6", 1);
+  assert.deepEqual(ids(a).slice(0, 4), ["0", "6", "1", "2"]);
+  a.state.started = true;
+  a.fillIdleCourts(100);
+  const m = a.state.activeMatches[0];
+  const team = [m.sideA, m.sideB].find((t) => t.some((x) => x.id === "0"));
+  assert.deepEqual(Array.from(team, (x) => x.id).sort(), ["0", "6"]);
+});
+
+test("a pair never straddles the last spot; the player ahead waits instead", () => {
+  const a = app();
+  a.state.players = Array.from({ length: 6 }, (_, i) => p(String(i), 0, i));
+  a.setPartners("3", "4");
+  assert.deepEqual(ids(a).slice(0, 4), ["0", "1", "3", "4"]);
+  assert.equal(ids(a)[4], "2");
+  assert.equal(a.clearPartner("4").ok, true);
+  assert.deepEqual(ids(a), ["0", "1", "2", "3", "4", "5"]);
+});
+
+test("pins and partners survive save and reload", () => {
+  const a = app();
+  a.state.players = Array.from({ length: 6 }, (_, i) => p(String(i), 0, i));
+  a.moveQueuedPlayer("5", 0, 10);
+  a.setPartners("1", "2");
+  const b = app();
+  b.applySnapshot(JSON.parse(JSON.stringify(a.serializeState())));
+  assert.deepEqual(ids(b), ids(a));
+  assert.equal(b.state.players.find((x) => x.id === "1").partner, "2");
+});
+
+test("swapping players across teams on court updates teams and teammate history", () => {
+  const a = setup(4, "open", 1);
+  const m = a.state.activeMatches[0];
+  const [x] = m.sideA, [y] = m.sideB;
+  const keepA = m.sideA[1], keepB = m.sideB[1];
+  a.captureUndo(1);
+  assert.equal(a.swapCourtPlayers(m.id, x.id, y.id).ok, true);
+  assert.ok(m.sideA.includes(y) && m.sideB.includes(x));
+  const key = (p, q) => [p.id, q.id].sort().join("|");
+  assert.equal(a.state.teammateHistory.get(key(y, keepA)), 1);
+  assert.ok(!a.state.teammateHistory.get(key(x, keepA)));
+  assert.equal(a.swapCourtPlayers(m.id, x.id, keepB.id).ok, false);
+  assert.equal(a.undoLastAction(2).ok, true);
+  assert.ok(a.state.activeMatches[0].sideA.some((p) => p.id === x.id));
 });
