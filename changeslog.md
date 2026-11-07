@@ -6,6 +6,10 @@ This is the shared, repository-tracked handoff for switching between AI assistan
 
 ## Current handoff
 
+## COMMITTED AND PUSHED (2026-11-07, later)
+
+Owner approved. Release code committed on `prototype/play-mode` as `6d9348d` and pushed (`df549d0..6d9348d`); scanned before commit: no `.vercel`, `.env*`, `node_modules`, `dist`, or secret patterns. The push created only a Preview deployment (`kirkorinopickleball-6656m3lrj`); kirq.vercel.app still serves `index-DMfx7vsn.js`. Remote `kirkorino` is still `8b39e95` (legacy). **Remaining risk:** if `kirkorino` is the Vercel Production Branch, a push to it would redeploy legacy; merging `prototype/play-mode` into it (or changing the Production Branch) needs owner approval.
+
 ## PRODUCTION RELEASED — kirq.vercel.app now serves the v3 reader (2026-11-07, later)
 
 Owner approved ("Yes, switch it now"). Ran `vercel promote https://kirkorinopickleball-7c09g1ak1-thekirxs-projects.vercel.app --yes` from the prototype folder. New Production deployment `kirkorinopickleball-61msqrjvw-thekirxs-projects.vercel.app` (Ready). **Rollback target:** previous legacy production `kirkorinopickleball-s775c28pe-thekirxs-projects.vercel.app` (`vercel rollback` or promote it).
