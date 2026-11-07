@@ -19,7 +19,7 @@ it('quotes names and exports a share-safe versioned backup', () => {
     ],
   });
   expect(buildHistoryCsv(state)).toContain('"A, ""B"""');
-  expect(JSON.parse(buildBackupJson(state)).schemaVersion).toBe(2);
+  expect(JSON.parse(buildBackupJson(state)).schemaVersion).toBe(3);
 });
 it('renders both printable sections and empty-state explanations', () => {
   render(<PrintReport state={migrate(null)} />);

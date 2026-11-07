@@ -1,3 +1,4 @@
+import { winStreak } from '../../domain/strength';
 import { useState } from 'react';
 import type { Skill } from '../../domain/types';
 import { SKILL_LABELS } from '../../domain/engine';
@@ -5,27 +6,53 @@ import { useApplication } from '../common';
 import { useRoundControls } from '../play/RoundControls';
 import { AddPlayerForm, playerStatus, useRemovePlayer } from './players';
 import { Icon } from './ui';
+import { NextPlayers } from './NextPlayers';
 
 // PROTOTYPE (easy mode) — Option C, Players tab. Late arrivals are added here
 // any time; breaks are one tap; rarer controls sit behind "More".
 
 export function PlayersTab() {
-  const { data, run, notify } = useApplication();
+  const { data, store, run, notify } = useApplication();
   const { lateArrivals } = useRoundControls();
   const remove = useRemovePlayer();
   const [open, setOpen] = useState<string | null>(null);
-  const players = [...data.players].sort((a, b) => a.name.localeCompare(b.name));
+  const [search, setSearch] = useState('');
+  const query = search.trim().toLocaleLowerCase();
+  const players = data.players
+    .filter((p) => p.name.toLocaleLowerCase().includes(query))
+    .sort((a, b) => a.name.localeCompare(b.name));
   return (
     <div className="ez-pad">
       <h2>Who's here?</h2>
       <p className="ez-lead">
         Someone arrived? Add them here.{' '}
         {lateArrivals === 'next'
-          ? 'Late arrivals play in the next round.'
+          ? 'Late arrivals get the next available game.'
           : 'Late arrivals join the back of the line.'}{' '}
         <b>Break</b> skips someone until they tap <b>I'm back</b>.
       </p>
       <AddPlayerForm id="players-name" compact />
+      <NextPlayers />
+      <div className="ez-search">
+        <label htmlFor="player-search">Search players</label>
+        <div className="ez-search-row">
+          <input
+            id="player-search"
+            type="search"
+            value={search}
+            placeholder="Find a name"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          {search ? (
+            <button className="ez-pill" onClick={() => setSearch('')}>
+              Clear search
+            </button>
+          ) : null}
+        </div>
+        <p className="ez-hint" role="status">
+          {players.length} of {data.players.length} players
+        </p>
+      </div>
       {players.length ? (
         <ul className="ez-list ez-player-grid" aria-label="Players">
           {players.map((p) => {
@@ -33,11 +60,13 @@ export function PlayersTab() {
             const where =
               status.kind === 'court'
                 ? `Playing on Court ${status.court}`
-                : status.kind === 'break'
-                  ? 'On a break'
-                  : status.kind === 'sitting'
-                    ? 'Sitting out this round'
-                    : 'Ready';
+                : status.kind === 'queued'
+                  ? `Upcoming game ${status.game}`
+                  : status.kind === 'break'
+                    ? 'On a break'
+                    : status.kind === 'sitting'
+                      ? 'Waiting to play'
+                      : 'Ready';
             const expanded = open === p.id;
             return (
               <li key={p.id} className={`ez-player${status.kind === 'break' ? ' resting' : ''}`}>
@@ -45,9 +74,25 @@ export function PlayersTab() {
                   <div className="ez-player-text">
                     <span className="ez-who">{p.name}</span>
                     <span className="ez-hint">
-                      {where} · {p.wins} won, {p.losses} lost
+                      {where} · {SKILL_LABELS[p.skill]} · {p.wins} won, {p.losses} lost
+                      {winStreak(p, data.matchLog) > 1
+                        ? ` · ${winStreak(p, data.matchLog)}-win streak`
+                        : ''}
                     </span>
                   </div>
+                  <button
+                    className="ez-pill ez-play-next"
+                    aria-label={`Play next: ${p.name}`}
+                    disabled={
+                      !p.active ||
+                      status.kind === 'court' ||
+                      status.kind === 'queued' ||
+                      store.gameDay.nextPlayerIds.includes(p.id)
+                    }
+                    onClick={() => notify(store.queuePlayer(p.id).message)}
+                  >
+                    {store.gameDay.nextPlayerIds.includes(p.id) ? 'Queued' : 'Play next'}
+                  </button>
                   <button
                     className="ez-pill"
                     aria-pressed={!p.active}
@@ -60,7 +105,7 @@ export function PlayersTab() {
                           ? status.kind === 'court'
                             ? `${p.name} will sit out after this game.`
                             : `${p.name} is on a break.`
-                          : `${p.name} is back and joins the next round.`,
+                          : `${p.name} is back in the queue.`,
                       );
                     }}
                   >
@@ -134,7 +179,11 @@ export function PlayersTab() {
           })}
         </ul>
       ) : (
-        <p className="ez-hint">No one yet. Add the people who are here.</p>
+        <p className="ez-hint">
+          {query
+            ? `No players match “${search.trim()}”.`
+            : 'No one yet. Add the people who are here.'}
+        </p>
       )}
     </div>
   );

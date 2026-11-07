@@ -168,7 +168,7 @@ export function EasyApp({
       ) : (
         <span className="ez-spacer" />
       )}
-      {data.currentRound ? <span className="ez-tag live">Round {data.currentRound}</span> : null}
+      {data.currentRound ? <span className="ez-tag live">Open play</span> : null}
     </header>
   );
 

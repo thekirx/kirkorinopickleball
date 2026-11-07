@@ -1,8 +1,8 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { SessionStore } from '../state/sessionStore';
-import type { TournamentStateV2 } from '../domain/types';
+import type { SessionState } from '../domain/types';
 export interface Application {
-  data: TournamentStateV2;
+  data: SessionState;
   store: SessionStore;
   viewer: boolean;
   run: SessionStore['act'];

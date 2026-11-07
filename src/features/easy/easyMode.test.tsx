@@ -34,6 +34,7 @@ it('guides a first-timer from an empty screen to the first round', async () => {
   expect(screen.getByRole('button', { name: 'Next: courts' })).toBeDisabled();
   for (const n of ['Ana', 'Ben', 'Cy', 'Dee', 'Eve']) {
     await user.type(screen.getByLabelText('Player name'), n);
+    await user.selectOptions(screen.getByLabelText('Skill level for new player'), 'intermediate');
     await user.click(screen.getByRole('button', { name: 'Add' }));
   }
   expect(screen.getByLabelText('Player name')).toHaveFocus();
@@ -73,22 +74,26 @@ it('records, changes and clears a winner from the court card', async () => {
   expect(store.getState().session.players.reduce((n, p) => n + p.wins + p.losses, 0)).toBe(0);
 });
 
-it('explains instead of silently discarding games that are still being played', async () => {
-  const { user, store } = await inPlay();
-  await user.click(screen.getByRole('button', { name: 'Start next round' }));
-  const dialog = screen.getByRole('dialog');
-  expect(within(dialog).getByText(/no result/)).toBeInTheDocument();
-  await user.click(within(dialog).getByRole('button', { name: 'Keep playing' }));
-  expect(store.getState().session.currentRound).toBe(1);
-  await user.click(screen.getByRole('button', { name: 'Start next round' }));
-  await user.click(screen.getByRole('button', { name: 'Start new round anyway' }));
-  expect(store.getState().session.currentRound).toBe(2);
+it('starts a finished court while another game keeps playing unchanged', async () => {
+  const { user, store } = await inPlayTwoCourts();
+  const other = structuredClone(store.getState().session.activeMatches[1]);
+  expect(
+    within(court(1)).queryByRole('button', { name: 'Start next game' }),
+  ).not.toBeInTheDocument();
+  await user.click(within(court(1)).getAllByRole('button', { name: /Tap if they won/ })[0]);
+  await user.click(within(court(1)).getByRole('button', { name: 'Start next game' }));
+  expect(store.getState().session.activeMatches.find((m) => m.courtId === 'court-2')).toEqual(
+    other,
+  );
+  expect(within(court(2)).getByText('Playing')).toBeInTheDocument();
+  expect(store.getState().session.matchLog).toHaveLength(1);
+  expect(screen.queryByRole('button', { name: 'Start next round' })).not.toBeInTheDocument();
 });
 
-it('starts the next round without asking once every game is done', async () => {
+it('starts the finished court’s next game without a global confirmation', async () => {
   const { user, store } = await inPlay();
   await user.click(within(court(1)).getAllByRole('button', { name: /Tap if they won/ })[0]);
-  await user.click(screen.getByRole('button', { name: 'Start next round' }));
+  await user.click(screen.getByRole('button', { name: 'Start next game' }));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(store.getState().session.currentRound).toBe(2);
 });
@@ -97,6 +102,7 @@ it('lets late arrivals join during play and handles breaks', async () => {
   const { user, store } = await inPlay();
   await user.click(screen.getByRole('button', { name: 'Players' }));
   await user.type(screen.getByLabelText('Player name'), 'Gus');
+  await user.selectOptions(screen.getByLabelText('Skill level for new player'), 'intermediate');
   await user.click(screen.getByRole('button', { name: 'Add' }));
   expect(store.getState().session.players.map((p) => p.name)).toContain('Gus');
   await user.click(screen.getByRole('button', { name: 'Gus is taking a break' }));
@@ -205,7 +211,7 @@ it('gives spectators a read-only view without touching organizer storage', async
   render(<App sharedCode="spectator" rpc={rpc} />);
   expect((await screen.findAllByText('Viewer A')).length).toBeGreaterThan(0);
   expect(screen.queryByRole('button', { name: /Tap if they won/ })).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Start next round' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Start next game' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Players' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Results' }));
   expect(localStorage.length).toBe(before);
@@ -216,6 +222,7 @@ it('puts late arrivals at the back of the line by default (fair open play)', asy
   await user.click(screen.getByRole('button', { name: 'Players' }));
   expect(screen.getByText(/Late arrivals join the back of the line/)).toBeInTheDocument();
   await user.type(screen.getByLabelText('Player name'), 'Gus');
+  await user.selectOptions(screen.getByLabelText('Skill level for new player'), 'intermediate');
   await user.click(screen.getByRole('button', { name: 'Add' }));
   expect(screen.getByText(/Gus added\. They join the back of the line\./)).toBeInTheDocument();
   expect(store.getState().session.players.find((p) => p.name === 'Gus')!.roundsWaited).toBe(0);
@@ -225,13 +232,14 @@ it('lets the organizer give late arrivals the next round (family and friends)', 
   const { user, store } = await inPlay();
   await user.click(screen.getByRole('button', { name: 'Change' }));
   await user.click(screen.getByRole('button', { name: 'More options' }));
-  await user.click(screen.getByRole('radio', { name: /They play in the next round/ }));
+  await user.click(screen.getByRole('radio', { name: /They get the next available game/ }));
   await user.click(screen.getByRole('button', { name: 'Done' }));
   await user.click(screen.getByRole('button', { name: 'Players' }));
-  expect(screen.getByText(/Late arrivals play in the next round/)).toBeInTheDocument();
+  expect(screen.getByText(/Late arrivals get the next available game/)).toBeInTheDocument();
   await user.type(screen.getByLabelText('Player name'), 'Gus');
+  await user.selectOptions(screen.getByLabelText('Skill level for new player'), 'intermediate');
   await user.click(screen.getByRole('button', { name: 'Add' }));
-  expect(screen.getByText(/Gus added\. They'll play in the next round\./)).toBeInTheDocument();
+  expect(screen.getByText(/Gus added\. They'll get the next available game\./)).toBeInTheDocument();
   // Deterministic: Gus must outrank everyone already waiting, not just get lucky.
   const players = store.getState().session.players;
   const gusWait = players.find((p) => p.name === 'Gus')!.roundsWaited;
@@ -240,8 +248,8 @@ it('lets the organizer give late arrivals the next round (family and friends)', 
   );
 
   await user.click(screen.getByRole('button', { name: 'Courts' }));
-  await user.click(screen.getByRole('button', { name: 'Start next round' }));
-  await user.click(screen.getByRole('button', { name: 'Start new round anyway' }));
+  await user.click(within(court(1)).getAllByRole('button', { name: /Tap if they won/ })[0]);
+  await user.click(within(court(1)).getByRole('button', { name: 'Start next game' }));
   const gus = store.getState().session.players.find((p) => p.name === 'Gus')!.id;
   const onCourt = store
     .getState()
@@ -267,7 +275,7 @@ it('moves players between courts with tap-then-tap (no dragging needed)', async 
   const { user, store } = await inPlayTwoCourts();
   const a = sideIds(store, 0)[0];
   const b = sideIds(store, 1)[0];
-  await user.click(screen.getByRole('button', { name: 'Move players' }));
+  await user.click(screen.getByRole('button', { name: /Move players/ }));
   expect(screen.queryByRole('button', { name: /Tap if they won/ })).not.toBeInTheDocument();
   await user.click(within(court(1)).getByRole('button', { name: a }));
   expect(within(court(1)).getByRole('button', { name: a })).toHaveAttribute('aria-pressed', 'true');
@@ -281,8 +289,8 @@ it('moves players between courts with tap-then-tap (no dragging needed)', async 
 
 it('brings someone in from the sitting-out list by tapping', async () => {
   const { user, store } = await inPlayTwoCourts();
-  await user.click(screen.getByRole('button', { name: 'Move players' }));
-  const bench = screen.getByRole('region', { name: 'Sitting out' });
+  await user.click(screen.getByRole('button', { name: /Move players/ }));
+  const bench = screen.getByRole('region', { name: 'Waiting players' });
   const benchName = within(bench).getAllByRole('button')[0].textContent!;
   const out = sideIds(store, 0)[0];
   await user.click(within(bench).getByRole('button', { name: benchName }));
@@ -291,15 +299,17 @@ it('brings someone in from the sitting-out list by tapping', async () => {
   expect(screen.getByText(`${benchName} is in for ${out}.`)).toBeInTheDocument();
 });
 
-it('locks a finished court and says why', async () => {
+it('returns finished players to the movement bench and can bring one onto another court', async () => {
   const { user, store } = await inPlayTwoCourts();
+  const name = store.getState().session.activeMatches[0].sideA[0].name;
+  const outgoing = store.getState().session.activeMatches[1].sideA[0].name;
   await user.click(within(court(1)).getAllByRole('button', { name: /Tap if they won/ })[0]);
-  await user.click(screen.getByRole('button', { name: 'Move players' }));
-  expect(within(court(1)).getByText(/Locked · Finished/)).toBeInTheDocument();
-  const name = sideIds(store, 0)[0];
-  await user.click(within(court(1)).getByRole('button', { name }));
-  expect(screen.getByText(new RegExp(`${name}'s court is locked`))).toBeInTheDocument();
-  expect(within(court(1)).getByRole('button', { name })).toHaveAttribute('aria-pressed', 'false');
+  await user.click(screen.getByRole('button', { name: /Move players/ }));
+  const bench = screen.getByRole('region', { name: 'Waiting players' });
+  await user.click(within(bench).getByRole('button', { name }));
+  await user.click(within(court(2)).getByRole('button', { name: outgoing }));
+  expect(within(court(2)).getByRole('button', { name })).toBeInTheDocument();
+  expect(store.getState().session.matchLog).toHaveLength(1);
 });
 
 it('offers other-court players in the Swap panel too', async () => {
@@ -313,4 +323,94 @@ it('offers other-court players in the Swap panel too', async () => {
   await user.click(within(row).getByRole('button', { name: b }));
   expect(sideIds(store, 0)).toContain(b);
   expect(sideIds(store, 1)).toContain(a);
+});
+
+it('finds players by partial name regardless of case and clears an empty search', async () => {
+  const { user } = await inPlay();
+  await user.click(screen.getByRole('button', { name: 'Players' }));
+  const search = screen.getByRole('searchbox', { name: 'Search players' });
+  await user.type(search, ' aN ');
+  expect(
+    within(screen.getByRole('list', { name: 'Players' })).getAllByRole('listitem'),
+  ).toHaveLength(1);
+  expect(
+    within(screen.getByRole('list', { name: 'Players' })).getByText('Ana'),
+  ).toBeInTheDocument();
+  await user.clear(search);
+  await user.type(search, 'nobody');
+  expect(screen.getByText(/No players match/)).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Clear search' }));
+  expect(
+    within(screen.getByRole('list', { name: 'Players' })).getAllByRole('listitem'),
+  ).toHaveLength(6);
+});
+
+it('queues a searched waiting player without changing current games, allows cancellation, then includes them next round', async () => {
+  const { user, store } = await inPlay();
+  const initial = store
+    .getState()
+    .session.activeMatches.map((m) => [...m.sideA, ...m.sideB].map((p) => p.id));
+  const waiting = store.getState().session.players.find((p) => !initial.flat().includes(p.id))!;
+  const playing = store.getState().session.activeMatches[0].sideA[0];
+  await user.click(screen.getByRole('button', { name: 'Players' }));
+  expect(screen.getByRole('button', { name: `Play next: ${playing.name}` })).toBeDisabled();
+  await user.type(screen.getByRole('searchbox', { name: 'Search players' }), waiting.name);
+  await user.click(screen.getByRole('button', { name: `Play next: ${waiting.name}` }));
+  expect(store.getState().gameDay.nextPlayerIds).toEqual([waiting.id]);
+  expect(
+    store.getState().session.activeMatches.map((m) => [...m.sideA, ...m.sideB].map((p) => p.id)),
+  ).toEqual(initial);
+  await user.click(screen.getByRole('button', { name: `Cancel play next for ${waiting.name}` }));
+  expect(store.getState().gameDay.nextPlayerIds).toEqual([]);
+  await user.click(screen.getByRole('button', { name: `Play next: ${waiting.name}` }));
+  await user.click(screen.getByRole('button', { name: 'Courts' }));
+  expect(screen.getByRole('list', { name: 'Play next selections' })).toHaveTextContent(
+    waiting.name,
+  );
+  await user.click(within(court(1)).getAllByRole('button', { name: /Tap if they won/ })[0]);
+  await user.click(screen.getByRole('button', { name: 'Start next game' }));
+  expect(
+    store
+      .getState()
+      .session.activeMatches.flatMap((m) => [...m.sideA, ...m.sideB].map((p) => p.id)),
+  ).toContain(waiting.id);
+  expect(store.getState().gameDay.nextPlayerIds).toEqual([]);
+});
+
+it('asks a skill level for each new player and stores Advanced compatibly', async () => {
+  const user = userEvent.setup(),
+    store = createSessionStore(localStorage);
+  render(<App store={store} />);
+  await user.type(screen.getByLabelText('Player name'), 'New player');
+  expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+  await user.selectOptions(screen.getByLabelText('Skill level for new player'), 'pro');
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+  expect(store.getState().session.players[0].skill).toBe('pro');
+  expect(screen.getByLabelText('Skill level for new player')).toHaveValue('');
+});
+
+it('preserves a finished court after reducing court count but disables starting it again', async () => {
+  const { user, store } = await inPlayTwoCourts();
+  const first = structuredClone(store.getState().session.activeMatches[0]);
+  await user.click(within(court(2)).getAllByRole('button', { name: /Tap if they won/ })[0]);
+  await user.click(screen.getByRole('button', { name: 'Change' }));
+  await user.click(screen.getByRole('button', { name: 'One fewer court' }));
+  await user.click(screen.getByRole('button', { name: 'Done' }));
+  expect(within(court(2)).getByRole('button', { name: 'Start next game' })).toBeDisabled();
+  expect(store.getState().session.activeMatches.find((m) => m.courtId === 'court-1')).toEqual(
+    first,
+  );
+  expect(store.getState().session.matchLog[0].court).toBe(2);
+});
+
+it('lets the queue master draft upcoming games and shows fixed teams after reload', async () => {
+  const { user, store } = await inPlay(Array.from({ length: 16 }, (_, i) => `Draft ${i}`));
+  await user.selectOptions(screen.getByLabelText('Games to draft'), '3');
+  await user.click(screen.getByRole('button', { name: 'Draft next games' }));
+  expect(store.getState().session.queuedGames).toHaveLength(3);
+  expect(screen.getByRole('region', { name: 'Next in queue' })).toBeInTheDocument();
+  const restored = createSessionStore(localStorage);
+  expect(restored.getState().session.queuedGames).toEqual(store.getState().session.queuedGames);
+  await user.click(screen.getByRole('button', { name: 'Clear upcoming games' }));
+  expect(store.getState().session.queuedGames).toEqual([]);
 });

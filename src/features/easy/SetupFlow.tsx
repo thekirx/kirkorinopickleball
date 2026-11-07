@@ -95,7 +95,7 @@ function WhoIsHere({ onNext }: { onNext: () => void }) {
               aria-expanded={showSkills}
               onClick={() => setShowSkills(!showSkills)}
             >
-              {showSkills ? 'Hide skill levels' : 'Set skill levels (optional, makes teams fairer)'}
+              {showSkills ? 'Hide skill levels' : 'Review skill levels'}
             </button>
             {showSkills ? (
               <div className="ez-skill-list">
@@ -176,8 +176,7 @@ export function CourtSettings() {
           `You need at least ${per} people here for ${type}. You have ${here}.`
         ) : (
           <>
-            <strong>Each round:</strong> {playing} people play on{' '}
-            {plural(usable, 'court', 'courts')}
+            <strong>To start:</strong> {playing} people play on {plural(usable, 'court', 'courts')}
             {usable < courts ? ` (only enough people for ${usable})` : ''}.{' '}
             {here - playing === 0
               ? 'Nobody sits out.'
@@ -219,7 +218,7 @@ export function CourtSettings() {
                   onChange={() => setLateArrivals('next')}
                 />
                 <span>
-                  <strong>They play in the next round</strong>
+                  <strong>They get the next available game</strong>
                   <span className="ez-hint">
                     Nice for family and friends, so latecomers get a game right away.
                   </span>
@@ -275,7 +274,13 @@ export function SetupFlow({
         </button>
         <h2>{editing ? 'Courts and game type' : 'Set up the courts'}</h2>
         <p className="ez-lead">
-          {editing ? 'Changes apply from the next round.' : 'You can change this later.'}
+          {editing
+            ? 'Changes apply to the next game started on each court.'
+            : 'You can change this later.'}
+        </p>
+        <p className="ez-hint">
+          Teams balance skill level, win/loss record and recent win streaks. Queue priority comes
+          first.
         </p>
         <CourtSettings />
       </div>

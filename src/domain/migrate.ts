@@ -1,13 +1,19 @@
-import type { ActiveMatch, Player, TournamentStateV2, MatchLogEntry, Skill } from './types';
-export const SCHEMA_VERSION = 2;
+import { reconcileQueue } from './queue';
+import type { ActiveMatch, Player, SessionState, MatchLogEntry, Skill } from './types';
+export const SCHEMA_VERSION = 3;
 const object = (x: unknown): Record<string, unknown> =>
   x && typeof x === 'object' && !Array.isArray(x) ? (x as Record<string, unknown>) : {};
 const array = (x: unknown): unknown[] => (Array.isArray(x) ? x : []);
 const count = (x: unknown) =>
   typeof x === 'number' && Number.isFinite(x) ? Math.max(0, Math.floor(x)) : 0;
-export function migrate(payload: unknown): TournamentStateV2 {
+export function migrate(payload: unknown): SessionState {
   const raw = object(payload);
-  if (raw.schemaVersion !== undefined && raw.schemaVersion !== 2)
+  if (
+    raw.schemaVersion !== undefined &&
+    raw.schemaVersion !== 1 &&
+    raw.schemaVersion !== 2 &&
+    raw.schemaVersion !== 3
+  )
     throw new Error('Unsupported session schema version. Export a backup and update KirQ.');
   const ids = new Set<string>();
   const players: Player[] = array(raw.players).flatMap((value) => {
@@ -94,8 +100,16 @@ export function migrate(payload: unknown): TournamentStateV2 {
       },
     ];
   });
-  return {
-    schemaVersion: 2,
+  const state: SessionState = {
+    schemaVersion: 3,
+    queuedGames:
+      raw.schemaVersion === 3 && Array.isArray(raw.queuedGames)
+        ? (raw.queuedGames as SessionState['queuedGames'])
+        : [],
+    waitingPlayerIds:
+      raw.schemaVersion === 3 && Array.isArray(raw.waitingPlayerIds)
+        ? raw.waitingPlayerIds.filter((id): id is string => typeof id === 'string')
+        : [],
     players,
     currentRound: count(raw.currentRound),
     activeMatches,
@@ -103,4 +117,6 @@ export function migrate(payload: unknown): TournamentStateV2 {
     teammateHistory,
     events: [{ code: 'open', label: 'Open Play', format: { id: 'openRotation' } }],
   };
+  reconcileQueue(state, [], true);
+  return state;
 }

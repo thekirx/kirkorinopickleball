@@ -1168,3 +1168,120 @@ div.ez-team {
     margin: 14px 28px 0;
   }
 }
+
+/* Event-day player lookup and explicit organizer selections. */
+.ez-search {
+  margin: 20px 0 12px;
+}
+.ez-search label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.ez-search-row {
+  display: flex;
+  gap: 8px;
+}
+.ez-search-row input {
+  min-width: 0;
+  flex: 1;
+}
+.ez-next-picks {
+  margin-bottom: 16px;
+}
+.ez-next-picks .ez-next li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ez-next-picks .ez-who {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ez-player-main {
+  flex-wrap: wrap;
+}
+.ez-play-next {
+  margin-left: auto;
+}
+@media (max-width: 480px) {
+  .ez-player-main .ez-player-text {
+    flex-basis: 100%;
+  }
+}
+.ez-search-row input {
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 2px solid var(--ez-ink);
+  border-radius: 12px;
+  background: var(--ez-white);
+  color: var(--ez-ink);
+  font: inherit;
+}
+.easy .ez-play-next:disabled {
+  opacity: 1;
+  color: var(--ez-muted);
+  background: var(--ez-paper);
+}
+
+.ez-next-game {
+  margin-top: 16px;
+  border-top: 1px solid var(--ez-line);
+  padding-top: 12px;
+}
+.easy .ez-add-player {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.ez-add-player > input {
+  grid-column: 1;
+  grid-row: 1;
+}
+.ez-add-player > button {
+  grid-column: 2;
+  grid-row: 1;
+}
+.ez-add-skill-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ez-add-skill-row label {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.easy .ez-add-skill-row .ez-select {
+  margin: 0;
+  width: auto;
+  flex: 1;
+  min-width: 120px;
+}
+
+.ez-draft-section {
+  padding-bottom: 0;
+}
+.ez-draft-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.ez-draft-controls label {
+  font-weight: 700;
+}
+.easy .ez-draft-controls .ez-select {
+  width: 72px;
+  margin: 0;
+}
+.ez-draft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 12px;
+}
+.ez-draft-grid .ez-names {
+  margin: 10px 0;
+}

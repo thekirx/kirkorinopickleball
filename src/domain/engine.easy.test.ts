@@ -94,3 +94,18 @@ it('leaves a late arrival at the back of the line by default', () => {
   e.addPlayer('Late', 'intermediate');
   expect(state.players.find((p) => p.name === 'Late')!.roundsWaited).toBe(0);
 });
+
+it('selects FIFO organizer choices before fair rotation, ignoring duplicate and unavailable ids', () => {
+  const { state, e } = playing(['Ana', 'Ben', 'Cy', 'Dee', 'Eve', 'Fin']);
+  const [a, b, c, d] = state.players;
+  e.setPlayerActive(b.id, false);
+  const plan = e.createRoundPlan({
+    matchType: 'singles',
+    courtCount: 1,
+    teammateLimit: Infinity,
+    priorityPlayerIds: [c.id, c.id, b.id, 'missing', a.id, d.id],
+  });
+  if (!plan.ok) throw Error(plan.message);
+  expect(plan.selectedPlayers.map((p) => p.id)).toEqual([c.id, a.id]);
+  expect(state.currentRound).toBe(1);
+});

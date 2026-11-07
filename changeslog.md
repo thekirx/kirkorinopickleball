@@ -1,133 +1,139 @@
 # KirQ changes log and AI handoff
 
-Last updated: 2026-10-19 (Asia/Manila).
+Last updated: 2026-11-07 (Asia/Manila).
 
 This is the shared, repository-tracked handoff for switching between AI assistants. Read `AGENTS.md` before making changes. Update this handoff and add a history entry in the same task as every change; this is an instruction to contributors, not an automatic watcher.
 
 ## Current handoff
 
-> **Canonical handoff:** `/Users/kiro/Desktop/kirkorinopickleball/changeslog.md` (the main folder). Start there, then `docs/superpowers/plans/2026-10-21-next-stages.md`. Identical copies of that plan and of the revised design doc (§R) are in this folder. This file keeps the prototype's detailed history; when Stage 1 merges this branch, carry its history entries into the main log.
+## PRODUCTION RELEASED — kirq.vercel.app now serves the v3 reader (2026-11-07, later)
 
-> **This is the PROTOTYPE worktree** (`/Users/kiro/Desktop/kirkorinopickleball-prototype`, branch `prototype/play-mode`, uncommitted). It is the Phase 1 tree plus **easy mode**, a redesign the owner approved on 2026-10-20: Option A (guided setup) for setup and Option C (phone tabs) for play, with players addable any time. It has not been merged. Preview: `npm run dev:lan` (port 5177, all interfaces). The earlier courts-first prototype in this worktree has been replaced.
->
-> **Easy mode at a glance (`src/features/easy/`):**
-> - `EasyApp.tsx`: setup until the first round, then the Courts / Players / Results / Share tabs. Spectators get a read-only Courts / Results / Share. The "Today's games" sheet covers new, rename, switch and delete. It replaces the old browser prompt/confirm dialogs, and new day names are made unique.
-> - `SetupFlow.tsx` (Option A): "Who's here today?", then courts stepper and doubles/singles with a plain-language preview, then start. Skill levels and the partner limit are optional, under links. "Try it with 10 sample players" creates a separate practice session, so the real one stays clean.
-> - `CourtsTab.tsx`: tap the winning team; tap the other team to change it, or the same one to clear it (engine `clearResult`). "Swap a player" keeps the 2-minute swap window and injury replacement. "Start next round" opens a sheet before discarding unfinished games.
-> - `PlayersTab.tsx`: add late arrivals any time; Break / I'm back; under More: skill (engine `setPlayerSkill`), record fixes, Remove. Remove has Undo (store `restoreSession`) and is blocked for anyone on a court, because removing deletes their court.
-> - `ResultsTab.tsx`, `ShareTab.tsx`: standings, recent games, PDF/CSV/backup, clear (behind a sheet); the QR uses the same publish/sync, including expired-share recovery.
-> - `ui.tsx`, `players.tsx`, `easy.css` (scoped under `.easy`; neutralises the old global label/select styles; hidden in print, so the PDF report still prints).
-> - Removed (replaced): the eight old panels under `src/features/{roster,setup,courts,queue,standings,history,sessions}` and `share/SharePanel.tsx` (`QrCode` moved to `share/QrCode.tsx`); the old UI tests `App.test.tsx`, `App.integration.test.tsx` and `features/play/playMode.test.tsx`. `features/play/RoundControls.tsx` now returns `needs-confirm` instead of calling `window.confirm`.
-> - Tests: `src/features/easy/easyMode.test.tsx` (12, replacing the old UI tests' coverage plus the new behaviour); `src/domain/engine.easy.test.ts` (4).
->
-> **Late arrivals (owner decision 2026-10-20):** an organizer setting under Courts → Change → More options. **"They join the back of the line"** (default, fair for open play) leaves a newcomer at waited 0. **"They play in the next round"** (family and friends) calls engine `prioritizeForNextRound`, which sets them one above the longest current wait. Late arrivals within the same round share that level and are shuffled, so a later arrival can't leapfrog an earlier one. The toast and the Players tab say which rule applies. Limitation: like the court count and game type, the choice lives in memory (`RoundControls`) and resets to the fair default on reload.
->
-> **Not done:** not tried on a real phone by the owner; the `src/test/fixtures/v1-session.json` Prettier warning is pre-existing (identical in the main tree) and was left alone.
+Owner approved ("Yes, switch it now"). Ran `vercel promote https://kirkorinopickleball-7c09g1ak1-thekirxs-projects.vercel.app --yes` from the prototype folder. New Production deployment `kirkorinopickleball-61msqrjvw-thekirxs-projects.vercel.app` (Ready). **Rollback target:** previous legacy production `kirkorinopickleball-s775c28pe-thekirxs-projects.vercel.app` (`vercel rollback` or promote it).
 
-### Repository and scope
+- Verified on kirq.vercel.app: bundle `index-DMfx7vsn.js` (same as tested build); v3 share `?s=c391ec843b39472897` shows drafts/courts/waiting read-only; legacy-published share `?s=c0152060c309440bb3` opens; a legacy-site session saved in the browser migrated into the new organizer with its in-progress game; no console errors.
+- **Risk: the code is still uncommitted.** Production was deployed from the local working tree of `prototype/play-mode`. Any future Git push to the Vercel Production Branch (unconfirmed; last production ref was `kirkorino` 8b39e95, legacy) would replace this release with the legacy app. Commit/push of `prototype/play-mode` still needs owner approval.
+- Still open: real-phone touch/camera feedback after tonight; the brief stale "not started" viewer state right after QR creation.
 
-- Working directory: `/Users/kiro/Desktop/kirkorinopickleball`.
-- Active branch at this handoff: `codex/react-phase-1`.
-- GitHub repository: `thekirx/kirkorinopickleball`.
-- Last committed revision checked: `3efbb25` (Phase 1 execution plan). Legacy behavior baseline: `8b39e95` (player timeouts and substitutions).
-- The React implementation and this handoff documentation are currently **uncommitted and unpublished**. Inspect `git status --short`; preserve the existing changes. Do not switch to the stale `kirkorinopickleball-main` folder or replace this implementation with old `main`.
-- Current scope is **Phase 1**, not the whole tournament redesign. Local preview was started at `http://localhost:5176`; check availability or restart it rather than assuming it is still running.
+## PREVIEW DEPLOYED for tonight (2026-11-07, later)
 
-### Authoritative plans and phase status
+Owner skipped their own phone test ("if it passes for you it is good for me"), then asked to deploy to Vercel. **Preview** deployment only; production `kirq.vercel.app` is unchanged (still legacy). No commit or push.
 
-- Full design: `docs/superpowers/specs/2026-10-18-kirq-tournament-design.md`.
-- Phase 1 implementation plan: `docs/superpowers/plans/2026-10-18-react-phase-1.md`.
-- Phase 1 — React migration: **acceptance criteria met locally on 2026-10-19.** The consolidated review is done; its two findings are fixed with regression tests. Live sharing passed against the restored backend, and the sync criterion now reads about 17 s, which the owner accepted. All of this is **uncommitted, unpushed and undeployed**, so Phase 1 is not shipped.
-- Phase 2 — Court objects, minimap, focused court pane: not implemented.
-- Phase 3 — Accessible drag and drop, keyboard controls, Move dialog: not implemented.
-- Phase 4 — Per-event formats, round robin/open rotation and organizer setup: not implemented.
-- Phase 5 — Conflict-safe tournament scheduler: not implemented.
-- Phase 6 — Finish projections and bottleneck warnings: not implemented.
-- Phase 7 — Additional tournament formats: not implemented.
+- Simulated phone check (375×812 mobile emulation, built-in browser, LAN origin): 10 sample players → 2 doubles courts → Share → QR. macOS CoreImage decoded the on-screen QR to the exact share link. Viewer (separate tab) read-only (only Courts/Results/Share tabs, no inputs), no horizontal overflow; scoring Court 1 + Start next game reached the viewer with Court 2 unchanged. Clicks were mouse events, not real touch; no physical camera.
+- Minor finding (not fixed): a viewer opened right after "Create a QR code" briefly showed "The organizer has not started games yet" although courts were running; it corrected itself on the next 15 s poll. Likely the first published snapshot lagged the current state.
+- Deploy: `vercel link --yes --project kirkorinopickleball` (created local `.vercel/`, `.env.local`, and appended 2 lines to `.gitignore`), `npm run test:deployment` passed, `vercel deploy --yes` → Preview Ready: https://kirkorinopickleball-7c09g1ak1-thekirxs-projects.vercel.app — HTTP 200 without login, bundle `index-DMfx7vsn.js` matches the tested local build, share link opened read-only on that origin with no console errors.
+- Still needed for a real release: commit/push authorization, Production Branch confirmation, production promotion of the v3 reader, post-deploy checks.
 
-Each phase must meet its acceptance criteria before the next begins. Do not treat the existing open-play queue as the new tournament scheduler.
+## RESUMED — release checks (2026-11-07, later)
 
-### Implemented locally
+Resumed after owner instruction with 28% five-hour usage remaining (22% at last check). No code changed; no commit, push, deploy, dependency or backend/hosting setting changes.
 
-- React 18 + TypeScript + Vite + Zustand replace the monolithic HTML application. Existing styling and eight-panel order are preserved, rather than redesigned in Phase 1.
-- Typed domain engine preserves queue priority, round generation, scoring, player timeouts/reactivation, single-player changes during the first two minutes from round generation, and injury substitutions after that window. There is no separate Start Match action.
-- Schema v2 migration handles legacy browser sessions, retains existing storage keys and share codes, relinks match participants to player records, and protects unsupported future schemas from overwrite.
-- Multi-session creation, switching, renaming and deletion; browser-storage failure warning with usable in-memory state.
-- Existing handwritten QR encoder, CSV, safe JSON backup, and printable report ported to modules/components.
-- Existing Supabase RPC boundaries retained; viewer polling every 15 seconds, debounced writes, reconnect retry, and per-share-code pending queues. Public/shared payloads exclude private edit tokens.
+- Re-verified on `prototype/play-mode` (44 uncommitted paths preserved): `npx vitest run` → **173/173, 17 files**; `npm run build` passed; `git diff --check` passed. Preview still listening on port 5177; LAN address still `http://172.20.10.2:5177`.
+- **Fresh live legacy-link recheck: passed.** Legacy production `kirq.vercel.app` published a new synthetic 4-player session (QA Alpha–Delta, one generated doubles round) → `?s=` link opened in the updated local viewer at the LAN origin: Court 1 lineup correct, empty Next in queue and Waiting sections shown, only Courts/Results/Share view tabs (no edit controls), no console errors. One new synthetic shared row expires in 7 days.
+- Still needed: physical-phone camera/touch test (owner), explicit Git/release authorization, Production Branch tracking confirmation, updated reader deployment and production verification.
 
-### Important implementation decisions
 
-- Port the existing generation/scoring algorithm into a typed state-scoped engine; do not introduce tournament scheduling behavior during the parity migration.
-- Serialize participant IDs and map entries explicitly; migration relinks references for each state snapshot. Credentials belong only in local per-session storage, never the public payload.
-- The implicit open-rotation event and stable match `courtId` metadata are present in v2. First-class `Court[]` and court UI belong to Phase 2.
-- Event formats are configured per event, not per tournament. Pools feeding playoffs are optional per event and off by default; implement the appropriate readiness barrier when that option is enabled in the relevant later phase.
-- Delayed publish responses save credentials to their original session even if the organizer switched sessions while waiting.
-- Offline jobs are coalesced separately by share code so switching sessions cannot discard another session's pending update.
-- Browser `localStorage` property access is deferred inside the safe storage adapter, covering getter-level `SecurityError` as well as failed reads/writes.
-- `.npmrc` uses `legacy-peer-deps=true` because npm's optional-peer resolution crashed during setup; required Testing Library DOM dependency is explicitly declared.
 
-### Verification already performed
+## STOPPED — owner usage threshold reached (2026-11-07)
 
-These results were observed during the 2026-10-18 implementation session, not rerun merely to create this documentation:
+Final five-hour usage check returned **10% remaining**, so implementation, checks and release work stopped immediately. Only handoff writing followed. No commit, merge, push, deploy, dependency or backend/hosting setting changes.
 
-- `npm test -- --maxWorkers=2`: **9 test files, 108 tests passed** after the offline-queue and storage-getter regression fixes.
-- `npm run build`: strict TypeScript and Vite production build passed.
-- `npm run test:deployment`: local Vite SPA deployment configuration passed; this does not verify an actual Vercel deployment.
-- `git diff --check`: passed before this documentation task; rerun for subsequent changes.
-- QR checks include 41 comparisons with the legacy implementation and 41 independent libqrencode matrix comparisons. The independent oracle skips explicitly if its native library is unavailable.
-- Browser checks at desktop 1440px and mobile 375px: same section order and visual styling, no horizontal overflow. Add players, pause, generate round, replace player, enforce two-minute deadline, injury substitute, declare result, export backup and reload history passed without console errors.
-- Print-media browser check reproduced session controls leaking into the report; CSS was corrected and the check then passed.
-- Supabase RPC contract, viewer polling, safe payload and offline retry are covered with injected HTTP responses. These are not evidence of live backend availability.
-- **Consolidated review fixes, 2026-10-19.** (1) `src/state/sessionLibrary.ts` called `crypto.randomUUID()` with no fallback, so creating a session threw `TypeError` on browsers without it (Safari < 15.4 is still inside Vite's default build target; also insecure http origins). Added the same fallback the engine uses. Regression test: `src/state/sessionLibrary.test.ts`. (2) `src/services/useSharing.ts` memoized the sync manager but disposed it in an effect cleanup. Under React StrictMode's mount/cleanup/mount cycle, the same disposed manager was reused and every later write was silently dropped. The app is not currently wrapped in StrictMode, so this was latent, not live. The manager is now created inside the effect and held in a ref. Regression test: `src/services/useSharing.strictmode.test.tsx`. Both tests failed before the fixes (`TypeError: crypto.randomUUID is not a function`; `expected 0 to be greater than 0`) and pass after. Then: `npx vitest run --maxWorkers=2` → **11 files, 110 tests passed**; `npm run build` passed; `npm run test:deployment` passed; `npx prettier --check` passed on the four touched files. A live React-to-React run with the fixed code still synced in **11.3 s**.
-- **Live sharing, 2026-10-19, against the restored backend** (built-in browser, two tabs acting as two devices). Production `https://kirq.vercel.app` (legacy `8b39e95`): publish succeeded; the read-only viewer showed the roster with no scoring controls; a recorded result reached the viewer in **10.8 s**. React dev build (`http://localhost:5176`, branch `codex/react-phase-1`): a share link **published by the legacy production app** opened in the React viewer with the correct roster, finished court, standings and match log, which covers the "existing v1 share link opens" criterion. A further legacy-published result reached that React viewer in **16.0 s**. React publishing worked, the React viewer hid the scoring and roster controls, and a React-published result reached the React viewer in **11.3 s**. Direct `kirq_sessions` table reads with the publishable key were still refused (`42501`). The test sessions were deleted from both browser origins afterwards; their three server rows expire automatically after 30 days.
+Exact stopping point: final formatting check completed successfully (all matched files use Prettier style). It initially flagged src/state/gameDay.test.ts; that file was formatted and the broad check then passed. git diff --check passed. The next usage check returned10%. An initial handoff-update script had an indentation error before executing; this corrected handoff save is the only retry, not resumed feature work.
 
-### Blockers and unfinished work
+Finished locally: Next in queue supports1–3 additional fixed waiting-only drafted games, maximum3 pending, FIFO consumption on the next available court, public waiting/current/upcoming views and reservation safety. **173 tests/17 files, build, deployment configuration, formatting/diff passed**. LAN-origin QR rendered; actual read-only network viewer showed3 identical drafts/current/waiting and draft→Court1 in14.025s, Court2 unchanged, four widths no overflow. Source review found no blocking issue. Public schema3 reader accepts legacy v1/v2; old production/preview readers are unchanged and cannot show v3 drafts.
 
-- **Resolved 2026-10-19:** the Supabase project `qagqtdctkcvqfxkysoqx` was down (DNS failed from 2026-10-18), which broke production sharing for real users as well as testing. The owner restored it in the Supabase dashboard. It now resolves, and the URL, publishable key and schema are unchanged. Keep in mind:
-  - The project is **not** in the Supabase org the AI connector uses (`thekirx's Org`); the connector gets "permission denied". Only the owner, signed in with the account that created it on 2026-08-31, can see its status or restore it.
-  - Free-tier projects can be paused again after inactivity. If DNS fails again, ask the owner to check the dashboard first; do not provision a replacement.
-  - **Done 2026-10-21:** shared sessions now expire **7 days after their last update**. The owner ran `supabase-expiry-7d.sql` in the Supabase SQL Editor and confirmed the check query returned a `7 days` column default and `true` for the update function. Each score update pushes the expiry forward again, so a session in use never expires mid-play. Sessions created before the change keep their earlier expiry (at most 30 days) until their next update.
-- **Decided 2026-10-19:** the sync criterion is now "within about 17 s" in `docs/superpowers/specs/2026-10-18-kirq-tournament-design.md`. Worst case is the 0.9 s write debounce, plus network time, plus one 15 s poll. The owner accepted it; poll interval and debounce are unchanged.
-- **Fixed 2026-10-19 (owner approved): an expired share can now be re-published.** Before, a share that expired made `src/services/syncManager.ts` report "Offline — will retry" forever and kept Publish disabled. Now the server's "session not found, expired, or edit token rejected" error counts as permanent. The job is dropped (not retried), status becomes `expired`, and `clearShare(sessionId, code)` in `src/state/sessionStore.ts` clears exactly that session's credentials, only if they still match the rejected code. The share panel shows "Share expired — publish again for a new QR code", and Publish works again for the same session with its data intact. The old printed code stays dead by design.
-- **Prototype, not merged: courts-first play mode** in a separate git worktree, `../kirkorinopickleball-prototype`, on branch `prototype/play-mode`, uncommitted. That copy starts from this tree including the fixes above; this tree does not contain the prototype. Details are in that worktree's own `changeslog.md`. Do not merge it without the owner's decision.
-- **Pre-existing, kept for parity:** "Generate Next Round" replaces the current round even if its matches are unfinished, and those matches are discarded without a result. The legacy app did the same. Raise it with the owner before Phase 2, which reworks courts.
-- Initial independent review reported cross-session offline update loss and blocked-storage startup failure. Both were reproduced with failing regression tests, fixed, and included in the passing suite. The final consolidated review (Claude, 2026-10-19) covered domain, migration, storage, session store, Supabase client, sync manager, the sharing hook and the court/share panels against legacy `8b39e95`. It found and fixed two defects, recorded under Verification; it found no further defects in the Phase 1 scope.
-- Nothing from this implementation has been pushed or deployed. No Vercel Production Branch setting was changed. The plan's warning about production pointing at the wrong branch remains unresolved and requires inspection before any authorized deployment.
-  - Observed 2026-10-18: production serves the legacy single-file build at exactly `8b39e95` (latest `kirkorino` commit), not the earlier manually promoted `e73a1c7`. So `8b39e95` reached production after that promotion, either because Production Branch is now `kirkorino` or through a later manual promote — **which one is unknown**. If it is the branch setting, merging this React work into `kirkorino` would auto-deploy unfinished Phase 1 to production. Check Vercel → Settings → Git before any merge into `kirkorino`.
-  - 2026-10-19: the owner shared a screenshot of Vercel's **Git → Connected Git Repository** page (repository `thekirx/kirkorinopickleball`, connected Jun 25). That page does not show the production branch, so it is **still unknown**. In current Vercel it is under **Settings → Environments → Production → Branch Tracking**.
+Still needed (legacy-link recheck since passed, see RESUMED above): physical-phone camera/touch test, explicit Git/release authorization, Production Branch tracking confirmation, updated reader deployment and production verification. No further feature implementation is known to be required. Current preview remains local on port5177 (LAN address was172.20.10.2; recheck later).
 
-### Next steps for the incoming AI
+Next actions: **wait for owner instruction to resume**, then check usage again, read AGENTS.md/changeslog.md and docs/superpowers/specs/2026-11-07-drafted-games-design.md plus its plan. Preserve both worktrees and existing uncommitted changes; do not redo implementation. Implementation: /Users/kiro/Desktop/kirkorinopickleball-prototype on prototype/play-mode. Canonical docs: /Users/kiro/Desktop/kirkorinopickleball on codex/react-phase-1. Additional handoff is LOCAL ONLY outside Git: /Users/kiro/Desktop/kirq-local-usage-handoff.md; never commit/upload/push it.
 
-1. Phase 1 acceptance is met locally. Commit and push only when the owner asks; as of 2026-10-19 that has not been authorized. Before any merge into `kirkorino`, find out the Vercel Production Branch (see Blockers).
-2. The 7-day expiry is live (2026-10-21). If the backend becomes unreachable again, the owner must check the Supabase dashboard.
-3. Rerun the checks below after code changes; inspect the rendered app and print output when relevant. Update this log with actual results.
-4. Keep the preview available for the user. Commit/push/deploy only in accordance with the user's current request; distinguish those actions from local completion.
-5. Start Phase 2 only after Phase 1 acceptance is satisfied and within the authorized scope. Update this handoff at each phase boundary.
 
-### Useful commands and code map
+### Drafted queue — locally verified, release pending (2026-11-07)
+
+- Owner approved 1–3 fixed waiting-only drafts, maximum three pending, FIFO to the next available court; fewer if insufficient eligible people. Preserves independent courts/all-four rotation, skill/record/streak matching, manual priority, search and per-day settings. Active design/plan: `docs/superpowers/specs/2026-11-07-drafted-games-design.md`, `docs/superpowers/plans/2026-11-07-drafted-games.md`.
+- Implementation is local/uncommitted in `/Users/kiro/Desktop/kirkorinopickleball-prototype`, branch `prototype/play-mode`, baseline `df549d0`. Canonical main folder `/Users/kiro/Desktop/kirkorinopickleball`, `codex/react-phase-1`, has docs/handoff only. Preserve all existing changes. No merge, commit, push, deploy, dependencies or backend/hosting settings changes.
+- Public domain schema is **v3** with `queuedGames` (fixed ID teams/type) and `waitingPlayerIds` (actual public order). Internal types are SessionState/SerializedSessionState. Migration accepts unversioned/v1/v2/v3, validates max3 disjoint active waiting reservations after preserving ongoing matches, retains IDs/records/timers/shares/local keys, and rejects future versions. Existing local organizer metadata stays private. Public queues/drafts persist, export and sync through existing JSON RPCs. **Older React viewers reject v3:** production release must include new reader at the sharing origin; older live/preview builds are unchanged. Existing legacy links open in this reader.
+- Drafting reserves but changes no wins/waits/start times/teammate history. Pending games append without reshuffling, count capped at3. Start next game consumes the first fixed draft on any available court and records its actual type/teammates then. Busy/reserved players are excluded from fallback selection, replacements and movement; whole-board initialization is refused while drafts exist. Failed/partial generation preserves prior drafts and explains the result. Manual picks feed drafting and are consumed when reserved.
+- Store reconciliation publishes new session references on manual queue edits, not merely settings references. Shared waiting order is preserved by viewer migration and used for actual upcoming selection. Break/removal/result reopening invalidates affected drafts atomically with an owner notice; game type/partner-limit changes clear drafts. Reserved players show Upcoming game N. Fixed lineups are not silently redrawn on skill/record edits. Changing court count still preserves ongoing games and disables refills above configured count.
+- New `DraftGames.tsx` displays Next in queue to organizer and viewer; only organizer sees count/draft/clear controls. Waiting list uses published order. Shared viewer has no roster/start/draft/cancel controls. Share copy includes upcoming/current/waiting; loopback-address notice explains phone limitation. Use network-origin preview for same-Wi-Fi phones; current Vite address was `http://172.20.10.2:5177/` (recheck IP).
+- Verification: **173 tests in17 files passed**, production TypeScript/Vite build and `npm run test:deployment` passed; `git diff --check` passed. New queue unit tests cover three disjoint drafts/no play effects, partial/cap/append/cancel, fixed FIFO start preserving other court, reservation swap protection, unavailability and v2→v3/public-order validation. Store test covers reload/private priority publication/settings invalidation. UI test covers count3/fixed reload/clear. Earlier166 tests and two200-session invariant suites remain passing.
+- Browser/live: isolated synthetic28-player v2 fixture migrates; creates3 drafts, teams survive reload, 375/768/1024/1440 widths have no overflow; network-origin QR rendered with LAN URL; read-only viewer shows all three identical drafts/waiting/current courts without editing controls. First draft transitioned to Court1 in **14.025 s**, Court2 lineup unchanged, no page errors. One new synthetic shared row expires after7 days. QR encoder baseline/independent-oracle tests pass; physical-camera scan remains untested. Prior v1 link compatibility passed before this v3 change; v2 fixture migration is verified now, fresh live legacy-link recheck still advisable before release.
+- Focused builder-check and fresh code review found no blocking draft-queue defects. Review was source-only, no independent test rerun for this addition. README/schema comments updated per minor feedback. Remaining known limits: name-based streak inheritance, real-phone touch/scroll/physical camera, production deployment/reader compatibility. Venue map/Court[]/tournament scheduler remain unimplemented separate phases.
+- Usage: owner requires stopping at<=10% five-hour remaining and writing additional local-only handoff outside Git. Initial27%, then19/17/13%; final observed10%; stopped at owner threshold. Wait for owner resume instruction. `/Users/kiro/Desktop/kirq-local-usage-handoff.md` must never be committed/pushed.
+
+### Resume and release safely
+
+Read AGENTS.md, README, active design/plan and `docs/superpowers/specs/2026-10-18-kirq-tournament-design.md` §R. Prior plans describe previous versions; do not reimplement done work. Do not use stale `kirkorinopickleball-main`. Supabase `qagqtdctkcvqfxkysoqx` is responding via real RPC tests; no backend settings changed. If paused/DNS fails, owner restores this existing project (outside AI connector’s accessible org), never provision replacement. Shares expire seven days after updates; viewer polling15s + write debounce≈0.9s, accepted about17s.
+
+Local preview port5177 remains running; restart with `npm run dev:lan`. Commit/push/deploy requires current authorization; Vercel Production Branch tracking remains unconfirmed. Last production inspection was legacy8b39e95 on kirq.vercel.app, ref kirkorino/source redeploy, not proof of branch tracking. No production release in this task.
+
+Exact checks in prototype:
 
 ```sh
 git status --short
-git branch --show-current
-npm ci
-npm run dev -- --port 5176
 npm test -- --run --maxWorkers=2
 npm run build
 npm run test:deployment
+npx prettier --check src/domain/*.ts src/state/*.ts src/features/easy/*.tsx src/features/easy/easy.css src/features/play/RoundControls.tsx src/features/reports/PrintReport.tsx src/lib/exports.ts
 git diff --check
+npm run dev:lan
 ```
 
-- `src/domain/`: types, legacy/v2 migration, serialization, match/queue engine and tests.
-- `src/state/`: safe storage, session library, Zustand store and tests.
-- `src/services/`: Supabase RPC client, shared-session reader, sync manager, React sharing hook and tests.
-- `src/features/`: scorekeeper panels, session controls, report and shared UI.
-- `src/lib/`: QR encoder, exports and regression tests.
-- `src/App.tsx`, `src/main.tsx`, `src/styles.css`: React composition, entry point and ported styling.
-- `src/test/fixtures/v1-session.json`: synthetic captured legacy session fixture; no real player data.
-- `vercel.json`, `scripts/check-deployment.mjs`: local deployment configuration and its check.
+Code: `src/domain/queue.ts`, `queue.test.ts`, `types.ts`, `migrate.ts`, `serialize.ts`, `engine.ts`; `src/state/sessionStore.ts`, `sessionLibrary.ts`, `gameDay.ts`/tests; `src/features/easy/DraftGames.tsx`, CourtsTab/NextGame/PlayersTab/players/Arrange/ShareTab; existing `src/services/useSharing.ts` reacts to changed session reference. Older type imports were mechanically renamed throughout source. No edit tokens/private payloads/player data in logs.
 
 ## Change history
+
+### 2026-11-07 — Upcoming draft games and shared queue implemented locally
+
+- Changed: new domain queue validation/reconciliation and public schema3 drafts/waiting order, v1/v2 migration, reservation-safe drafting/FIFO per-court consumption; store/library reconcile on load/act/settings/manual edits for persistence and sync. New DraftGames UI (choose1–3, append max3, clear), queued player status, reserved movement protection, shared waiting list and viewer read-only controls. Share copy/loopback notice, README and both plans/logs updated. Internal types renamed SessionState/SerializedSessionState; intended schema expectations updated. No backend/dependency changes.
+- Verified: `npm test -- --run --maxWorkers=2` →173 passed/17 files; `npm run build`, `npm run test:deployment`, `git diff --check` passed. Tests were first RED for missing queue module, queue edits not changing public-session reference and missing draft controls; GREEN after implementation. One roundtrip test exposed missing engine waiting reconciliation; fixed at successful initial/per-court starts. Existing166 tests remain passing.
+- Live/browser: isolated synthetic28-player fixture,3 fixed drafts/reload/four widths/no errors; actual LAN-origin QR rendered, read-only viewer shows drafts/waiting/current games, first draft→Court1 in14.025s and Court2 unchanged. One new synthetic Supabase row expires in7 days. Physical camera/real-phone touch not tested; automated QR encoder tests pass. Fresh source review had no blocking findings; documentation minors fixed. Final broad formatting/diff checks passed after formatting gameDay.test.ts. Subsequent usage check reached10%; work stopped.
+- Remaining: final formatting/diff/handoff completion, physical-phone checks, fresh legacy live-link recheck before release, explicit Git/release authorization and deployed v3 reader. Usage latest13% remaining; stop at10% and update additional local-only handoff.
+- Delivery: local/uncommitted prototype; canonical docs only; no commit/merge/push/deploy or backend/hosting settings changes. Older production/viewers do not supportv3 drafts.
+
+
+### 2026-11-07 — Drafted queue scope recorded
+
+- Changed: design/plan and handoff for owner-approved waiting-only fixed upcoming games (1–3) and public QR queue visibility.
+- Verified: actual prototype uncommitted state inspected;166-test prior baseline retained. Five-hour usage27% remaining; no new runtime checks yet.
+- Remaining: schema/migration/reservation engine, UI/shared queue, live QR checks/review. No release authorization.
+- Delivery: local/uncommitted documentation only at this step; no commit/push/deploy or settings changes.
+
+### 2026-11-07 — Independent court games, skill intake and fair teams verified locally
+
+- Changed in prototype: `src/domain/engine.ts` adds atomic `startCourtGame`, stable court-number helper, finished-entry retirement across every reuse path, busy-player exclusion/wait preservation and guarded removal; pairing uses `src/domain/strength.ts` (new) with skill-dominant record/streak estimates and exact three-pairing selection for a single doubles game. Existing pro storage displays Advanced. New `engine.courts.test.ts` / `strength.test.ts` cover scheduling, reload/invariants and strength decisions. Updated prior swap tests for finished-player reuse.
+- Changed UI: new `src/features/easy/NextGame.tsx`, per-court actions and last-result cards in `CourtsTab.tsx`; remove global next-round action/badge, retain initial setup only through `RoundControls.tsx`. `players.tsx` asks each new player’s skill; PlayersTab displays skill/streak, Arrange exposes eligible waiting players and stable court labels, Move players (drag or tap) is explicit. Results/report/CSV use games instead of rounds. README explains the revised flow. Existing search/FIFO/persistence work remains. Both worktrees contain updated design/plan/handoff; main folder has documentation only.
+- Verified: full `npm test -- --run --maxWorkers=2` → **166 tests, 16 files passed**; `npm run build`, `npm run test:deployment`, exact Prettier glob command in Current handoff and `git diff --check` passed. 200 independent-court randomized sessions include starts/swaps/injuries/reload without losing ongoing games or double-booking; prior 200-session suite remains. Domain/UI score/history/skill/queue/court-count checks pass.
+- Browser verification: isolated synthetic players only, Playwright/cached Chromium because Browser plugin absent. All tabs at 375×812, 768×1024, 1024×768, 1440×900: explicit skills, search, Court 1 restart with Court 2 id/lineup/timer unchanged, five FIFO picks with overflow, reload, queued swap-in, tap/drag/Escape and report-only print passed. No page errors/overflow/overlays. Real-phone touch not tested.
+- Live: Supabase synthetic-session read succeeded; publish → read-only viewer independent game update **14.347 s**, sparse-court label/result update **14.959 s**, safe disjoint v2 payloads. Fresh v1 link published by legacy production opened in the updated viewer. Two new synthetic QA rows in this follow-up expire in seven days. No backend settings changed.
+- Failed checks honestly resolved: new APIs/strength tests first failed before implementation; UI tests failed on missing controls. A temporary JSX closing-block error prevented UI transform/build and was corrected. One UI preservation assertion initially compared JSON key order instead of values; corrected to deep value equality. Obsolete finished-court swap refusal expectation was revised for the approved all-four reuse flow. New paused-player removal regression failed before guard fix. Reviewer reproduced count-reduction bug; domain/UI tests both failed before the bound/disabled-control fix, then the full suite/build/browser checks passed. No external blocker remains for local verification.
+- Decisions/limitations: schema stays v2 with existing courtId fields and disjoint board references; histories are retained, archive becomes read-only after participant reuse. Requested count reductions retain games/results but stop refills above the count. Name-only streak identity remains a documented minor limitation; prior queued-swap/reload gap now tested. No venue map built; no Court[]/tournament-phase completion claim.
+- Usage: owner added stop-at-10%-remaining five-hour-window instruction. Checked through account usage tool: initially 31%, finally 29% remaining, so work continued; additional local-only handoff is outside Git at `/Users/kiro/Desktop/kirq-local-usage-handoff.md`. Never push that file.
+- Remaining: owner real-phone feedback, explicit commit/push/release authorization, Production Branch tracking confirmation, actual deployment and post-deploy checks. Delivery: **local/uncommitted prototype**, canonical documentation updated; no merge/commit/push/deploy, dependencies or hosting/backend configuration changes.
+
+
+### 2026-11-07 — Per-court flow and fair-team requirements recorded
+
+- Changed: added independent-courts design/plan; owner approved all-four rotation and requested explicit skill intake plus form-informed team balance. The previous local readiness statement is superseded pending implementation and fresh checks. No product code changed in this planning step.
+- Verified: inspected actual uncommitted prototype state, engine/migration/UI; fresh read of synthetic Supabase QA session succeeded. No test rerun for this documentation-only step.
+- Remaining: independent court scheduling, team-strength/skill intake, per-court UI, tests/review/browser/sharing checks. Venue map is still open; existing drag mode is retained.
+- Delivery: local/uncommitted; no commit, merge, push, deploy or backend settings changes.
+
+### 2026-11-07 — Friends-and-family open play finished locally
+
+- Changed in prototype: `src/features/easy/PlayersTab.tsx` (search/Play next), new `NextPlayers.tsx` (ordered/cancellable picks), `CourtsTab.tsx` (picks and rotation explanation), `easy.css` (responsive accessible search/controls); `src/features/play/RoundControls.tsx` (persisted settings and priority IDs); `src/state/gameDay.ts` (validated organizer metadata/pruning), `sessionLibrary.ts` / `sessionStore.ts` (per-day persistence, queue/cancel actions); `src/domain/types.ts` / `engine.ts` (optional FIFO priority IDs before fair rotation). Added/extended `src/state/gameDay.test.ts`, `src/domain/engine.easy.test.ts`, `engine.swap.test.ts`, and `src/features/easy/easyMode.test.tsx`. Updated README with tonight’s usage. Both worktrees record the approved design, implementation plan and this handoff; main folder has documentation only.
+- Verified: full prototype `npm test -- --run --maxWorkers=2` → **149/149**, 14 files; independent reviewer also passed 149. `npm run build`, `npm run test:deployment`, Prettier on all touched source/test files, `git diff --check` passed. Browser procedure: setup one court + family late arrivals → Players/search → select five waiting players → reload → score court → next round → assert first four played and fifth retained → Move players drag/Escape and tap swap → inspect all four tabs at 375×812, 768×1024, 1024×768, 1440×900 → print media. No overflow/runtime errors/overlays. Live publish/read-only viewer/polling passed at 14.435 s; legacy-published v1 link opened correctly in the new viewer. Three synthetic QA rows expire automatically. No backend settings changed.
+- RED→GREEN: five new domain/store tests failed on missing queue/settings behavior, then passed; two new UI tests failed on absent search/Play next, then passed. Initial TypeScript build failed on six unsupported `exact` options in new Testing Library queries; removed those options and build passed. Browser harness initially queried `.ez-who` instead of court `.ez-names` (assertion corrected, app unchanged); sharing harness had an ambiguous Share link label (scoped to textbox, retry passed). Final formatting check flagged `gameDay.test.ts`, then formatting was corrected and check passed. These were resolved check failures, not external blockers.
+- Decisions: metadata is local beside the session, keeping public schema v2 and existing viewers unchanged. Manual picks precede normal/late-arrival priority, retain overflow and cancel on breaks/removal/court entry; existing team-repeat constraints remain. No new dependencies. Fresh code review had no blocking findings; explicit queued swap/injury → reload test remains a deferred minor.
+- Remaining: real-phone touch/scroll feedback; release authorization and Production Branch confirmation; merge/adoption and post-deploy verification. Existing production/preview URLs still serve their previous versions. No tournament completion claim.
+- Delivery: **local/uncommitted in `prototype/play-mode`**, canonical handoff/docs updated on `codex/react-phase-1`; nothing committed, merged, pushed or deployed by this task.
+
+
+### 2026-11-07 — Tonight’s open-play preparation started
+
+- Changed: handoff records tonight’s requested scope and current baseline. Canonical main folder adds `docs/superpowers/specs/2026-11-07-open-play-tonight-design.md`; design approved by owner 2026-11-07.
+- Verified: both working trees initially clean; prototype `npm test -- --run --maxWorkers=2` passed 141 tests in 13 files. HTTP GET of production and easy-mode preview returned 200; production HTML is legacy and preview has React module assets.
+- Browser baseline: Browser plugin not available, so used existing Playwright with cached Chromium 1248 (no dependency changes). At `http://localhost:5177`, 375×812: sample session → courts setup → start → Players rendered 10 players, no horizontal overflow, and no page errors. Initial default Chromium launch failed because Playwright expected absent revision 1234; Chrome channel also absent; explicit cached Chromium 1248 launch worked.
+- Remaining: implementation, fresh checks and post-change browser verification. Current live app lacks requested search and manual Play next controls. Local dev server started on port 5177; this is not a published update.
+- Delivery: documentation only, local/uncommitted; nothing pushed or deployed.
 
 ### 2026-10-21 — Stage 0: both branches committed and pushed
 

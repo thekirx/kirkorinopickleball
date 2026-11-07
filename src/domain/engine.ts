@@ -1,18 +1,20 @@
+import { reservedPlayerIds, draftPlayerIds, reconcileQueue } from './queue';
+import { playerStrength } from './strength';
 import type {
   Player,
   Skill,
   ActiveMatch,
-  TournamentStateV2,
+  SessionState,
   RoundConfig,
   RoundPlan,
   SuccessfulRoundPlan,
   MatchType,
 } from './types';
 export const SKILL_VALUES = { beginner: 1, intermediate: 2, pro: 3 };
-export const SKILL_LABELS = { beginner: 'Beginner', intermediate: 'Intermediate', pro: 'Pro' };
+export const SKILL_LABELS = { beginner: 'Beginner', intermediate: 'Intermediate', pro: 'Advanced' };
 export const PLAYER_CHANGE_WINDOW_MS = 120000;
 // State-scoped direct port: each store mutation passes a fresh, relinked draft.
-export function createEngine(state: TournamentStateV2, random = Math.random) {
+export function createEngine(state: SessionState, random = Math.random) {
   function createId(prefix = 'item') {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') {
       return `${prefix}-${window.crypto.randomUUID()}`;
@@ -51,9 +53,9 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
 
   function getAssignedPlayerIds() {
     return new Set(
-      state.activeMatches.flatMap((match) =>
-        [...match.sideA, ...match.sideB].map((player) => player.id),
-      ),
+      state.activeMatches
+        .filter((match) => match.status !== 'finished')
+        .flatMap((match) => [...match.sideA, ...match.sideB].map((player) => player.id)),
     );
   }
 
@@ -86,10 +88,38 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     return { ok: true, message: `${cleanName} was added to the roster.` };
   }
 
+  function getCourtNumber(match: ActiveMatch) {
+    const number = /^court-(\d+)$/.exec(match.courtId);
+    return number && Number(number[1]) > 0
+      ? Number(number[1])
+      : state.activeMatches.indexOf(match) + 1;
+  }
+  function normalizeCourtIds() {
+    const numbered = state.activeMatches.map((match) => [match, getCourtNumber(match)] as const);
+    numbered.forEach(([match, court]) => {
+      match.courtId = `court-${court}`;
+    });
+  }
+  function retireFinishedMatches(playerIds: string[]) {
+    const used = new Set(playerIds);
+    normalizeCourtIds();
+    state.activeMatches = state.activeMatches.filter(
+      (match) =>
+        match.status !== 'finished' ||
+        ![...match.sideA, ...match.sideB].some((player) => used.has(player.id)),
+    );
+  }
+
   function removePlayer(playerId: string) {
     const player = getPlayerById(playerId);
     if (!player) return;
+    if (getAssignedPlayerIds().has(playerId))
+      return {
+        ok: false,
+        message: 'Swap this player out or finish their game before removing them.',
+      };
 
+    normalizeCourtIds();
     state.players = state.players.filter((item) => item.id !== playerId);
 
     // Remove any displayed court containing this player.
@@ -149,7 +179,11 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
   function scoreSinglesLayout(matches: ActiveMatch[]) {
     return matches.reduce((score, match) => {
       return (
-        score + Math.abs(SKILL_VALUES[match.sideA[0].skill] - SKILL_VALUES[match.sideB[0].skill])
+        score +
+        Math.abs(
+          playerStrength(match.sideA[0], state.matchLog) -
+            playerStrength(match.sideB[0], state.matchLog),
+        )
       );
     }, 0);
   }
@@ -182,8 +216,10 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     }
 
     candidates.sort((a, b) => a.score - b.score);
-    const preferredPoolSize = Math.max(1, Math.ceil(candidates.length * 0.15));
-    return candidates[Math.floor(random() * preferredPoolSize)].matches;
+    const best = candidates.filter(
+      (candidate) => Math.abs(candidate.score - candidates[0].score) < 0.001,
+    );
+    return best[Math.floor(random() * best.length)].matches;
   }
 
   function isTeammatePairAllowed(team: Player[], teammateLimit: number) {
@@ -194,11 +230,11 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
   function scoreDoublesLayout(matches: ActiveMatch[]) {
     return matches.reduce((score, match) => {
       const teamASkill = match.sideA.reduce(
-        (total, player) => total + SKILL_VALUES[player.skill],
+        (total, player) => total + playerStrength(player, state.matchLog),
         0,
       );
       const teamBSkill = match.sideB.reduce(
-        (total, player) => total + SKILL_VALUES[player.skill],
+        (total, player) => total + playerStrength(player, state.matchLog),
         0,
       );
       const allSkills = [...match.sideA, ...match.sideB].map(
@@ -210,9 +246,9 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
 
       return (
         score +
-        Math.abs(teamASkill - teamBSkill) * 5 +
+        Math.abs(teamASkill - teamBSkill) +
         (Math.max(...allSkills) - Math.min(...allSkills)) +
-        teammateRepeatCost * 2
+        teammateRepeatCost * 25
       );
     }, 0);
   }
@@ -247,6 +283,23 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
 
   function buildRandomizedDoublesMatches(selectedPlayers: Player[], teammateLimit: number) {
     const validCandidates: { matches: ActiveMatch[]; score: number }[] = [];
+    if (selectedPlayers.length === 4) {
+      const [a, b, c, d] = selectedPlayers;
+      for (const order of [
+        [a, b, c, d],
+        [a, c, b, d],
+        [a, d, b, c],
+      ]) {
+        const matches = buildDoublesLayoutFromOrder(order, teammateLimit);
+        if (matches) validCandidates.push({ matches, score: scoreDoublesLayout(matches) });
+      }
+      if (!validCandidates.length) return null;
+      const minimum = Math.min(...validCandidates.map((candidate) => candidate.score));
+      const best = validCandidates.filter(
+        (candidate) => Math.abs(candidate.score - minimum) < 0.001,
+      );
+      return best[Math.floor(random() * best.length)].matches;
+    }
     const attemptCount = Math.min(6000, Math.max(1200, selectedPlayers.length * 260));
 
     for (let attempt = 0; attempt < attemptCount; attempt += 1) {
@@ -265,13 +318,23 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     if (validCandidates.length === 0) return null;
 
     validCandidates.sort((a, b) => a.score - b.score);
-    const preferredPoolSize = Math.max(1, Math.ceil(validCandidates.length * 0.2));
-    return validCandidates[Math.floor(random() * preferredPoolSize)].matches;
+    const best = validCandidates.filter(
+      (candidate) => Math.abs(candidate.score - validCandidates[0].score) < 0.001,
+    );
+    return best[Math.floor(random() * best.length)].matches;
   }
 
-  function createRoundPlan(config: RoundConfig): RoundPlan {
+  function createRoundPlan(
+    config: RoundConfig,
+    excluded: ReadonlySet<string> = new Set(),
+  ): RoundPlan {
     const playersPerCourt = config.matchType === 'singles' ? 2 : 4;
-    const availablePlayers = state.players.filter((player) => player.active !== false);
+    const availablePlayers = state.players.filter(
+      (player) =>
+        player.active !== false &&
+        !excluded.has(player.id) &&
+        !reservedPlayerIds(state).has(player.id),
+    );
     const maximumPossibleCourts = Math.floor(availablePlayers.length / playersPerCourt);
     const activeCourtCount = Math.min(config.courtCount, maximumPossibleCourts);
 
@@ -283,7 +346,18 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     }
 
     const requiredPlayerCount = activeCourtCount * playersPerCourt;
-    const selectedPlayers = selectPriorityPlayers(requiredPlayerCount, availablePlayers);
+    const availableById = new Map(availablePlayers.map((player) => [player.id, player]));
+    const priority = [...new Set(config.priorityPlayerIds ?? [])].flatMap((id) =>
+      availableById.has(id) ? [availableById.get(id)!] : [],
+    );
+    const priorityIds = new Set(priority.map((player) => player.id));
+    const selectedPlayers = [
+      ...priority,
+      ...selectPriorityPlayers(
+        requiredPlayerCount,
+        availablePlayers.filter((player) => !priorityIds.has(player.id)),
+      ),
+    ].slice(0, requiredPlayerCount);
     const matches =
       config.matchType === 'singles'
         ? buildRandomizedSinglesMatches(selectedPlayers)
@@ -323,13 +397,15 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     matchType: MatchType,
     generatedAt = Date.now(),
   ) {
+    if (state.queuedGames.length)
+      return { ok: false, message: 'Clear upcoming games before whole-board initialization.' };
     const selectedIds = new Set(roundPlan.selectedPlayers.map((player) => player.id));
 
     state.currentRound += 1;
     state.activeMatches = roundPlan.matches;
-    state.activeMatches.forEach((match) => {
+    state.activeMatches.forEach((match, index) => {
       match.generatedAt = generatedAt;
-      match.courtId = `court-${match.id}`;
+      match.courtId = `court-${index + 1}`;
     });
 
     state.players.forEach((player) => {
@@ -344,6 +420,141 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     });
 
     recordGeneratedTeammates(roundPlan.matches, matchType);
+    reconcileQueue(state, []);
+  }
+
+  function draftNextGames(count: number, config: RoundConfig) {
+    if (!Number.isInteger(count) || count < 1 || count > 3)
+      return { ok: false, created: 0, message: 'Choose 1 to 3 games.' };
+    const capacity = 3 - state.queuedGames.length;
+    if (capacity <= 0)
+      return { ok: false, created: 0, message: 'Three upcoming games are already drafted.' };
+    let created = 0,
+      reason = '';
+    for (let index = 0; index < Math.min(count, capacity); index++) {
+      const excluded = new Set([...getAssignedPlayerIds(), ...reservedPlayerIds(state)]);
+      const plan = createRoundPlan(
+        {
+          ...config,
+          courtCount: 1,
+          priorityPlayerIds: [...(config.priorityPlayerIds ?? []), ...state.waitingPlayerIds],
+        },
+        excluded,
+      );
+      if (!plan.ok) {
+        reason = plan.message;
+        break;
+      }
+      const match = plan.matches[0];
+      state.queuedGames.push({
+        id: match.id,
+        matchType: config.matchType,
+        sideA: match.sideA.map((p) => p.id),
+        sideB: match.sideB.map((p) => p.id),
+      });
+      const selected = new Set(plan.selectedPlayers.map((p) => p.id));
+      state.waitingPlayerIds = state.waitingPlayerIds.filter((id) => !selected.has(id));
+      created++;
+    }
+    return {
+      ok: created > 0,
+      created,
+      message: created
+        ? `Drafted ${created} of ${count} requested game${count === 1 ? '' : 's'}.${reason ? ` ${reason}` : created < count ? ' The upcoming queue holds at most 3 games.' : ''}`
+        : reason,
+    };
+  }
+  function clearQueuedGames() {
+    state.queuedGames = [];
+    reconcileQueue(state, []);
+    return { clearedQueue: true };
+  }
+
+  function startCourtGame(court: number, config: RoundConfig, generatedAt = Date.now()) {
+    if (!Number.isInteger(court) || court < 1 || court > config.courtCount)
+      return {
+        ok: false,
+        message:
+          'This court is outside the available court count. Increase courts in Change to use it again.',
+      };
+    const previous = state.activeMatches.find((match) => getCourtNumber(match) === court);
+    if (previous && previous.status !== 'finished')
+      return { ok: false, message: `Court ${court} is still playing. Record its winner first.` };
+    const busy = getAssignedPlayerIds();
+    const queued = state.queuedGames[0];
+    if (queued && draftPlayerIds(queued).some((id) => !getPlayerById(id)?.active || busy.has(id)))
+      return {
+        ok: false,
+        message:
+          'The first drafted game has an unavailable player. Clear or update upcoming games.',
+      };
+    if (
+      queued &&
+      queued.matchType === 'doubles' &&
+      ![queued.sideA, queued.sideB].every((side) =>
+        isTeammatePairAllowed(
+          side.map((id) => getPlayerById(id)!),
+          config.teammateLimit,
+        ),
+      )
+    )
+      return {
+        ok: false,
+        message: 'The drafted teams exceed the partner limit. Clear drafts or adjust the limit.',
+      };
+    const plan: RoundPlan = queued
+      ? {
+          ok: true,
+          matches: [
+            {
+              id: queued.id,
+              courtId: '',
+              sideA: queued.sideA.map((id) => getPlayerById(id)!),
+              sideB: queued.sideB.map((id) => getPlayerById(id)!),
+              status: 'active',
+              winnerSide: null,
+              generatedAt: 0,
+            },
+          ],
+          selectedPlayers: draftPlayerIds(queued).map((id) => getPlayerById(id)!),
+          courtCount: 1,
+          reducedCourts: false,
+          requestedCourtCount: 1,
+        }
+      : createRoundPlan(
+          {
+            ...config,
+            courtCount: 1,
+            priorityPlayerIds: [...(config.priorityPlayerIds ?? []), ...state.waitingPlayerIds],
+          },
+          new Set([...busy, ...reservedPlayerIds(state)]),
+        );
+    if (!plan.ok)
+      return {
+        ok: false,
+        message: `Not enough eligible players, or teams cannot be arranged: ${plan.message}`,
+      };
+    const selected = new Set(plan.selectedPlayers.map((player) => player.id));
+    // Nothing changes until scheduling has succeeded.
+    if (queued) state.queuedGames.shift();
+    retireFinishedMatches([...selected]);
+    state.activeMatches = state.activeMatches.filter((match) => getCourtNumber(match) !== court);
+    const match = plan.matches[0];
+    match.courtId = `court-${court}`;
+    match.generatedAt = generatedAt;
+    state.activeMatches.push(match);
+    state.activeMatches.sort((a, b) => getCourtNumber(a) - getCourtNumber(b));
+    state.currentRound++;
+    state.players.forEach((player) => {
+      if (!player.active) return;
+      if (selected.has(player.id)) {
+        player.roundsWaited = 0;
+        player.lastPlayedRound = state.currentRound;
+      } else if (!busy.has(player.id)) player.roundsWaited++;
+    });
+    recordGeneratedTeammates([match], queued?.matchType ?? config.matchType);
+    reconcileQueue(state, config.priorityPlayerIds ?? []);
+    return { ok: true, message: `Court ${court}: next game started.`, match };
   }
 
   function matchChangeTimeRemaining(match: ActiveMatch, now = Date.now()) {
@@ -355,7 +566,7 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
   }
 
   function getReplacementCandidates(excludedPlayerId: string | null = null) {
-    const assignedIds = getAssignedPlayerIds();
+    const assignedIds = new Set([...getAssignedPlayerIds(), ...reservedPlayerIds(state)]);
 
     return state.players
       .filter(
@@ -435,6 +646,7 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     const teammate = side.length === 2 ? side[1 - outgoingIndex] : null;
 
     adjustTeammateHistory(outgoingPlayer, teammate, -1);
+    retireFinishedMatches([replacementPlayer.id]);
     side[outgoingIndex] = replacementPlayer;
     adjustTeammateHistory(replacementPlayer, teammate, 1);
 
@@ -502,7 +714,7 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     state.matchLog.unshift({
       id: match.id,
       round: state.currentRound,
-      court: state.activeMatches.indexOf(match) + 1,
+      court: getCourtNumber(match),
       matchType: match.sideA.length === 2 ? 'Doubles' : 'Singles',
       winners: winners.map((player) => player.name),
       losers: losers.map((player) => player.name),
@@ -512,7 +724,7 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
 
     return {
       ok: true,
-      message: `Court ${state.activeMatches.indexOf(match) + 1} finished. Results and leaderboard updated.`,
+      message: `Court ${getCourtNumber(match)} finished. Results and leaderboard updated.`,
     };
   }
 
@@ -529,9 +741,10 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
   function locatePlayer(playerId: string) {
     for (let court = 0; court < state.activeMatches.length; court += 1) {
       const match = state.activeMatches[court];
+      if (match.status === 'finished') continue;
       for (const side of [match.sideA, match.sideB]) {
         const index = side.findIndex((p) => p.id === playerId);
-        if (index >= 0) return { match, side, index, court: court + 1 };
+        if (index >= 0) return { match, side, index, court: getCourtNumber(match) };
       }
     }
     return null;
@@ -543,6 +756,9 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     const b = getPlayerById(bId);
     if (!a || !b) return 'Player not found.';
     if (aId === bId) return 'Pick someone else to swap with.';
+    const reserved = reservedPlayerIds(state);
+    if (reserved.has(aId) || reserved.has(bId))
+      return 'This player is reserved for an upcoming game. Clear that draft first.';
     const la = locatePlayer(aId);
     const lb = locatePlayer(bId);
     if (!la && !lb) return 'Both are sitting out, so there is nothing to swap.';
@@ -575,6 +791,7 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
         if (side.length === 2) adjustTeammateHistory(side[0], side[1], delta);
       });
     pairs(-1);
+    retireFinishedMatches([aId, bId]);
     if (la) la.side[la.index] = b;
     if (lb) lb.side[lb.index] = a;
     pairs(1);
@@ -626,7 +843,11 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     state.matchLog = state.matchLog.filter((entry) => entry.id !== match.id);
     match.status = 'active';
     match.winnerSide = null;
-    return { ok: true, message: `Court ${state.activeMatches.indexOf(match) + 1} result cleared.` };
+    const returning = new Set([...match.sideA, ...match.sideB].map((p) => p.id));
+    state.queuedGames = state.queuedGames.filter(
+      (game) => !draftPlayerIds(game).some((id) => returning.has(id)),
+    );
+    return { ok: true, message: `Court ${getCourtNumber(match)} result cleared.` };
   }
 
   function getRankedPlayers() {
@@ -665,6 +886,10 @@ export function createEngine(state: TournamentStateV2, random = Math.random) {
     buildDoublesLayoutFromOrder,
     buildRandomizedDoublesMatches,
     createRoundPlan,
+    getCourtNumber,
+    startCourtGame,
+    draftNextGames,
+    clearQueuedGames,
     recordGeneratedTeammates,
     applyRoundPlan,
     matchChangeTimeRemaining,

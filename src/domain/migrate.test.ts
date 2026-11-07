@@ -27,7 +27,7 @@ describe('v1 migration', () => {
   });
   it('preserves records and availability while dropping only broken courts', () => {
     const result = migrate(legacy);
-    expect(result.schemaVersion).toBe(2);
+    expect(result.schemaVersion).toBe(3);
     expect(result.events[0].format.id).toBe('openRotation');
     expect(result.players[0]).toMatchObject({ name: 'Alice', wins: 3, active: false });
     expect(result.activeMatches).toHaveLength(1);

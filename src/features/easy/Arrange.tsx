@@ -130,9 +130,14 @@ export function ArrangeBoard({ onDone }: { onDone: () => void }) {
   const fromKey = (key: string | number) => String(key).replace(/^p:/, '');
 
   const inRound = new Set(
-    data.activeMatches.flatMap((m) => [...m.sideA, ...m.sideB].map((p) => p.id)),
+    data.activeMatches
+      .filter((m) => m.status !== 'finished')
+      .flatMap((m) => [...m.sideA, ...m.sideB].map((p) => p.id)),
   );
-  const sitting = data.players.filter((p) => p.active && !inRound.has(p.id));
+  const sitting = data.waitingPlayerIds.flatMap((id) => {
+    const p = data.players.find((p) => p.id === id);
+    return p ? [p] : [];
+  });
 
   function swap(a: string, b: string) {
     const result = run((e) => e.swapPlayers(a, b));
@@ -146,7 +151,8 @@ export function ArrangeBoard({ onDone }: { onDone: () => void }) {
       const onLockedCourt = data.activeMatches.some(
         (m) =>
           [...m.sideA, ...m.sideB].some((p) => p.id === id) &&
-          (m.status === 'finished' || !createEngine(data).canChangeMatchPlayer(m)),
+          m.status !== 'finished' &&
+          !createEngine(data).canChangeMatchPlayer(m),
       );
       if (onLockedCourt) {
         notify(`${byId(id)?.name}'s court is locked. Pick someone on an open court.`);
@@ -216,21 +222,23 @@ export function ArrangeBoard({ onDone }: { onDone: () => void }) {
       </div>
       <div className="ez-pad ez-courts-body">
         <div className="ez-courts-grid">
-          {data.activeMatches.map((m, i) => (
-            <CourtBox
-              key={m.id}
-              match={m}
-              index={i}
-              selectedId={selectedId}
-              activeId={activeId}
-              onTap={onTap}
-            />
-          ))}
+          {data.activeMatches
+            .filter((m) => m.status !== 'finished')
+            .map((m) => (
+              <CourtBox
+                key={m.id}
+                match={m}
+                index={createEngine(data).getCourtNumber(m) - 1}
+                selectedId={selectedId}
+                activeId={activeId}
+                onTap={onTap}
+              />
+            ))}
         </div>
         <aside className="ez-courts-side">
           <section className="ez-card" aria-labelledby="bench-title">
             <h3 id="bench-title" className="ez-card-title">
-              Sitting out
+              Waiting players
             </h3>
             <p className="ez-hint">Drag one onto a court to bring them in.</p>
             {sitting.length ? (
@@ -248,7 +256,7 @@ export function ArrangeBoard({ onDone }: { onDone: () => void }) {
                 ))}
               </div>
             ) : (
-              <p className="ez-hint">Nobody is sitting out.</p>
+              <p className="ez-hint">Nobody is waiting.</p>
             )}
           </section>
         </aside>

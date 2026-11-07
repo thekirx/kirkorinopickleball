@@ -1,4 +1,4 @@
-import type { TournamentStateV2 } from '../../domain/types';
+import type { SessionState } from '../../domain/types';
 import { createEngine, SKILL_LABELS } from '../../domain/engine';
 function Table({
   headers,
@@ -34,7 +34,7 @@ function Table({
     </table>
   );
 }
-export function PrintReport({ state }: { state: TournamentStateV2 }) {
+export function PrintReport({ state }: { state: SessionState }) {
   const engine = createEngine(state),
     ranked = engine.getRankedPlayers();
   return (
@@ -43,9 +43,7 @@ export function PrintReport({ state }: { state: TournamentStateV2 }) {
       <p className="report-subtitle">Generated {new Date().toLocaleString()}</p>
       <p className="report-meta">
         <span>{state.players.length} player(s)</span>
-        <span>
-          {Math.max(state.currentRound, ...state.matchLog.map((e) => e.round), 0)} round(s)
-        </span>
+
         <span>{state.matchLog.length} match(es) logged</span>
       </p>
       <h2 className="report-section-title">Final Standings</h2>
@@ -68,12 +66,12 @@ export function PrintReport({ state }: { state: TournamentStateV2 }) {
       <h2 className="report-section-title">Match Results</h2>
       {state.matchLog.length ? (
         <Table
-          headers={['Round', 'Court', 'Type', 'Winners', 'Losers', 'Time']}
+          headers={['Game', 'Court', 'Type', 'Winners', 'Losers', 'Time']}
           numeric={5}
           rows={[...state.matchLog]
             .reverse()
-            .map((e) => [
-              e.round,
+            .map((e, index) => [
+              index + 1,
               e.court,
               e.matchType,
               e.winners.join(' & '),

@@ -48,7 +48,7 @@ export function ResultsTab() {
                 {data.matchLog.map((e) => (
                   <li key={e.id}>
                     <span className="ez-hint">
-                      Round {e.round}, Court {e.court}
+                      Court {e.court} · {new Date(e.finishedAt).toLocaleTimeString()}
                     </span>
                     <span>
                       <b>{e.winners.join(' & ')}</b> beat {e.losers.join(' & ')}

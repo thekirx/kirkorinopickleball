@@ -1,12 +1,10 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import type { MatchType } from '../../domain/types';
 import { useApplication } from '../common';
 
-// PROTOTYPE: round settings are shared by setup and play, and starting a round
-// reports whether it needs the organizer's confirmation instead of using
-// window.confirm, so the interface can explain what would be lost.
+// Setup initializes courts together; subsequent games start independently on each court.
 
-export type GenerateOutcome = 'started' | 'needs-confirm' | 'failed';
+export type GenerateOutcome = 'started' | 'failed';
 /** 'back' = fair open play (default); 'next' = family and friends: late arrivals play next round. */
 export type LateArrivals = 'back' | 'next';
 
@@ -18,7 +16,8 @@ interface RoundControls {
   limit: string;
   setLimit: (limit: string) => void;
   unfinished: number;
-  generate: (force?: boolean) => GenerateOutcome;
+  generate: () => GenerateOutcome;
+  startGame: (court: number) => boolean;
   lateArrivals: LateArrivals;
   setLateArrivals: (value: LateArrivals) => void;
   /** Applies the late-arrival rule to someone just added. Returns a sentence for the organizer. */
@@ -34,23 +33,24 @@ export function useRoundControls() {
 }
 
 export function RoundControlsProvider({ children }: { children: ReactNode }) {
-  const { data, run, notify } = useApplication();
-  const [type, setType] = useState<MatchType>('doubles'),
-    [courts, setCourtsRaw] = useState(2),
-    [limit, setLimit] = useState('2'),
-    [lateArrivals, setLateArrivals] = useState<LateArrivals>('back'),
-    // Who has been prioritized during the current round, so a second late
-    // arrival shares their level rather than jumping ahead of them.
-    [arrivals, setArrivals] = useState<{ round: number; ids: string[] }>({ round: 0, ids: [] });
+  const { data, store, run, notify } = useApplication();
+  const { type, courts, limit, lateArrivals, arrivals } = store.gameDay;
+  const setType = (type: MatchType) => store.setGameDaySettings({ type });
+  const setCourts = (courts: number) => store.setGameDaySettings({ courts });
+  const setLimit = (limit: string) => store.setGameDaySettings({ limit });
+  const setLateArrivals = (lateArrivals: LateArrivals) =>
+    store.setGameDaySettings({ lateArrivals });
   const unfinished = data.activeMatches.filter((m) => m.status !== 'finished').length;
-  const setCourts = (n: number) => setCourtsRaw(Math.max(1, Math.min(20, Math.round(n) || 1)));
 
-  function generate(force = false): GenerateOutcome {
-    // Starting a round replaces the current one; unfinished games would be
-    // discarded with no result, which the original app did silently.
-    if (unfinished && !force) return 'needs-confirm';
+  function generate(): GenerateOutcome {
+    // Never expose the legacy whole-board replacement during ongoing play.
+    if (data.currentRound > 0 || data.activeMatches.length) {
+      notify('Use Start next game on a finished court.');
+      return 'failed';
+    }
     const result = run((e) => {
       const plan = e.createRoundPlan({
+        priorityPlayerIds: store.gameDay.nextPlayerIds,
         matchType: type,
         courtCount: courts,
         teammateLimit: limit === 'unlimited' ? Infinity : Number(limit),
@@ -65,10 +65,23 @@ export function RoundControlsProvider({ children }: { children: ReactNode }) {
     }
     notify(
       result.reducedCourts
-        ? `Round ${data.currentRound + 1} started on ${result.courtCount} of your ${result.requestedCourtCount} courts. There weren't enough people for all of them.`
-        : `Round ${data.currentRound + 1} started. Teams are on the courts.`,
+        ? `Games started on ${result.courtCount} of your ${result.requestedCourtCount} courts. There weren't enough people for all of them.`
+        : 'Games started. Each court can finish and start its next game independently.',
     );
     return 'started';
+  }
+
+  function startGame(court: number) {
+    const result = run((engine) =>
+      engine.startCourtGame(court, {
+        matchType: type,
+        courtCount: courts,
+        teammateLimit: limit === 'unlimited' ? Infinity : Number(limit),
+        priorityPlayerIds: store.gameDay.nextPlayerIds,
+      }),
+    );
+    if (result) notify(result.message);
+    return result?.ok ?? false;
   }
 
   function placeNewPlayer(playerId: string) {
@@ -77,8 +90,10 @@ export function RoundControlsProvider({ children }: { children: ReactNode }) {
     if (lateArrivals === 'back') return 'They join the back of the line.';
     const sameRound = arrivals.round === data.currentRound ? arrivals.ids : [];
     run((e) => e.prioritizeForNextRound(playerId, sameRound));
-    setArrivals({ round: data.currentRound, ids: [...sameRound, playerId] });
-    return "They'll play in the next round.";
+    store.setGameDaySettings({
+      arrivals: { round: data.currentRound, ids: [...sameRound, playerId] },
+    });
+    return "They'll get the next available game.";
   }
 
   return (
@@ -92,6 +107,7 @@ export function RoundControlsProvider({ children }: { children: ReactNode }) {
         setLimit,
         unfinished,
         generate,
+        startGame,
         lateArrivals,
         setLateArrivals,
         placeNewPlayer,

@@ -66,7 +66,7 @@ it('publishes only safe state and retries the latest offline update on the onlin
   });
   expect(writes).toHaveLength(1);
   const payload = writes[0].p_payload as { schemaVersion: number; players: { name: string }[] };
-  expect(payload.schemaVersion).toBe(2);
+  expect(payload.schemaVersion).toBe(3);
   expect(payload.players[0].name).toBe('Offline Player');
   expect(JSON.stringify(payload)).not.toContain('private-edit');
 });

@@ -1,12 +1,12 @@
-import type { TournamentStateV2 } from '../domain/types';
+import type { SessionState } from '../domain/types';
 import { serializeState } from '../domain/serialize';
 export const fileStamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
 const csv = (value: unknown) => `"${String(value).replace(/"/g, '""')}"`;
-export function buildHistoryCsv(state: TournamentStateV2) {
+export function buildHistoryCsv(state: SessionState) {
   const rows: unknown[][] = [
-    ['Round', 'Court', 'Match Type', 'Winners', 'Losers', 'Finished At'],
-    ...state.matchLog.map((e) => [
-      e.round,
+    ['Game', 'Court', 'Match Type', 'Winners', 'Losers', 'Finished At'],
+    ...state.matchLog.map((e, index) => [
+      state.matchLog.length - index,
       e.court,
       e.matchType,
       e.winners.join(' & '),
@@ -16,7 +16,7 @@ export function buildHistoryCsv(state: TournamentStateV2) {
   ];
   return rows.map((row) => row.map(csv).join(',')).join('\r\n');
 }
-export const buildBackupJson = (state: TournamentStateV2) =>
+export const buildBackupJson = (state: SessionState) =>
   JSON.stringify(serializeState(state), null, 2);
 export function downloadFile(name: string, type: string, contents: string) {
   const url = URL.createObjectURL(new Blob([contents], { type }));

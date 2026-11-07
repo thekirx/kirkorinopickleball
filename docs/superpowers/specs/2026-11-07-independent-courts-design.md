@@ -1,0 +1,29 @@
+# Independent court games and fair teams — 2026-11-07
+
+## Owner requests and approved behavior
+The owner corrected the event flow: each finished court must start its next game without waiting for or replacing other courts. Owner explicitly chose all four players returning to the queue (not winners-stay). They additionally requested Beginner/Intermediate/Advanced skill intake and team balancing informed by skill, standings and win streaks, asked where dragging is, and asked for Supabase availability. Current live server health read succeeded on 2026-11-07. No deployment authorization was supplied.
+
+## Approach and boundaries
+Replace global-round turnover in easy mode with a Start next game control on each finished/ready court. Keep the initial setup action to populate available courts. Refuse to replace any ongoing game. Eligible players exclude every unfinished match, honor manual FIFO Play next first, then existing fair waiting priority. Four finished players become eligible; no winner stays automatically. Increment wait opportunities only for waiting active players, never people busy on another court. Failed scheduling leaves session, picks, scores and timers untouched.
+
+Use existing public v2 match/courtId/history fields, without introducing Court[] or a schema bump. Normalize legacy random court IDs to stable numbered court IDs before any operation removes a finished card, preserving actual teams/timers. Remove finished board entries only when their participants are reassigned; retain immutable match-log results and render a read-only last-result/ready card for such a court. This keeps roster references disjoint for existing v2 migration, avoids reserving finished players, and avoids re-opening an archived game with now-busy players. A retained finished game remains correctable until its players are reused; this matches the previous limit that past-round results are archived. Court labels in the new viewer use courtId rather than array index. Old cached viewers can mislabel sparse arrays; viewers should reload the updated app on release. Existing v1 links must open in the new viewer.
+
+A mere one-court call to applyRoundPlan is rejected because it discards unrelated games. Full first-class courts/schema v3 is deferred: this task does not add labels, closing courts or a venue map, and is not completion of tournament Phase 2.
+
+## Fairness implementation choices (implementer’s bounded defaults)
+Keep existing persisted skill keys beginner/intermediate/pro for compatibility; show pro as Advanced. Ask explicitly for skill when adding each player. Existing players retain their records/skills and can be edited.
+
+Use a strength estimate with skill as the dominant factor: skill level ×1000, plus a smoothed win-rate adjustment capped within ±200, plus 35 per recent consecutive win capped at 5. Compute streaks from retained match history, not a new backend field. With little history the estimate stays close to the stated skill. Minimize opposing strength difference; discourage repeated teammates and respect the existing hard teammate limit. For four selected doubles players enumerate all three pairings and select the best valid score, randomizing exact ties. For larger initial groups use the existing bounded candidate search, choosing minimum-cost candidates rather than the best random fifth. Queue selection remains independent of rating. These are heuristics, not a promised objective player rating.
+
+## User interface
+Court cards show ongoing games or the most recent finished result with Start next game. No shared Start next round control, Round badge, or rounds-waited wording in easy mode. Use Waiting to play, queue turns and next available game. Make Move players (drag or tap) explicit; retain separate movement mode so dragging cannot score a game. No new venue map is implied by the owner’s question.
+
+## Verification
+Domain tests: Court 1 cycles while Court 2 remains byte-for-byte unchanged; no double bookings after per-court starts, swaps, injuries, score corrections and reload; stable sparse court labels, history preservation, finished-player reuse, failed-plan atomicity and priority overflow. Seeded 200-session invariant check. Fairness tests require strong players on opposite teams when possible; changing only records/streaks affects equal-skill pairings; no queue bypass. UI tests cover per-court flow, skill intake, movement visibility, reload, archived results and unavailable players. Full suite, build, deployment check, formatting, responsive browser QA, live sharing and legacy links before local completion. Keep both handoffs accurate. Do not modify the owner’s active browser session or record personal player names in docs/tests/logs.
+
+## Builder-check decisions
+- All board-label consumers use stable courtId; legacy normalization is a one-time metadata rewrite only after successful scheduling/reuse, not on failure. Existing log court numbers stay untouched.
+- Finished-player reuse applies to regular swaps, standard replacements, injury replacements and removals as well as game starts; retirement happens before the next serialize/migrate. Domain removal refuses anyone still in an unfinished match, even while paused.
+- Changing type affects the next game only. Existing courts/results are kept when requested count is reduced, but new starts above the configured count are refused and disabled; increasing the count re-enables them. First-class court closing/renaming stays deferred.
+- Streak calculation uses retained history and names; clearing history clears form, and a removed/re-added name can inherit a bounded old streak. Records are not rewritten. Score correction is tested.
+- Initial multicourt bounded search is heuristic and can fail to find a feasible arrangement; errors do not consume picks. Single-court four-player selection enumerates all three pairings.

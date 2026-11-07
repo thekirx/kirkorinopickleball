@@ -3,3 +3,5 @@ dist/
 .superpowers/
 .env*.local
 test-results/
+.vercel
+.env*

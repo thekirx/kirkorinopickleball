@@ -29,7 +29,7 @@ it('adopts legacy storage, persists v2, and isolates sessions and credentials', 
   expect(store.getState().session.players[0].name).toBe('Alice');
   expect(store.getState().share?.code).toBe('public');
   store.getState().act((e) => e.addPlayer('Bea', 'pro'));
-  expect(JSON.parse(localStorage.getItem(`kirq-session-${id}`)!).schemaVersion).toBe(2);
+  expect(JSON.parse(localStorage.getItem(`kirq-session-${id}`)!).schemaVersion).toBe(3);
   store.getState().createSession('Second');
   expect(store.getState().session.players).toHaveLength(0);
   expect(store.getState().share).toBe(null);

@@ -34,8 +34,16 @@ export interface RotationEvent {
   label: string;
   format: { id: 'openRotation' };
 }
-export interface TournamentStateV2 {
-  schemaVersion: 2;
+export interface QueuedGame {
+  id: string;
+  matchType: MatchType;
+  sideA: string[];
+  sideB: string[];
+}
+export interface SessionState {
+  schemaVersion: 3;
+  queuedGames: QueuedGame[];
+  waitingPlayerIds: string[];
   players: Player[];
   currentRound: number;
   activeMatches: ActiveMatch[];
@@ -43,12 +51,14 @@ export interface TournamentStateV2 {
   teammateHistory: Map<string, number>;
   events: RotationEvent[];
 }
-export interface SerializedTournamentStateV2
-  extends Omit<TournamentStateV2, 'activeMatches' | 'teammateHistory'> {
+export interface SerializedSessionState
+  extends Omit<SessionState, 'activeMatches' | 'teammateHistory'> {
   activeMatches: (Omit<ActiveMatch, 'sideA' | 'sideB'> & { sideA: string[]; sideB: string[] })[];
   teammateHistory: [string, number][];
 }
 export interface RoundConfig {
+  /** Organizer-selected FIFO ids, supplied locally rather than shared. */
+  priorityPlayerIds?: string[];
   matchType: MatchType;
   courtCount: number;
   teammateLimit: number;

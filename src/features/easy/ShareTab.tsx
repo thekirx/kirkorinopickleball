@@ -36,8 +36,14 @@ export function ShareTab({
       <p className="ez-lead">
         {viewer
           ? 'Share this code so others can watch too.'
-          : "Anyone who scans the code sees the courts and results live on their own phone. They can't change anything. Your phone keeps working even without signal."}
+          : "Anyone who scans the code sees upcoming games, their waiting queue, current courts and results live on their own phone. They can't change anything. Your phone keeps working even without signal."}
       </p>
+      {!viewer && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) ? (
+        <p className="ez-warn">
+          This address works only on this computer. For other phones, open the app using its shared
+          network address or published site before creating the QR.
+        </p>
+      ) : null}
       <div className="ez-two-col ez-share-cols">
         <div>
           {url ? (

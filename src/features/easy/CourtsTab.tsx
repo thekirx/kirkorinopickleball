@@ -1,9 +1,12 @@
+import { DraftGames } from './DraftGames';
+import { NextPlayers } from './NextPlayers';
 import { useEffect, useState } from 'react';
 import type { ActiveMatch, Player } from '../../domain/types';
 import { createEngine, PLAYER_CHANGE_WINDOW_MS } from '../../domain/engine';
 import { useApplication } from '../common';
 import { useRoundControls } from '../play/RoundControls';
-import { Icon, Sheet, plural } from './ui';
+import { Icon, plural } from './ui';
+import { NextGameButton, ReadyCourt } from './NextGame';
 import { AddPlayerForm } from './players';
 import { ArrangeBoard } from './Arrange';
 
@@ -49,6 +52,7 @@ function SwapPanel({ match }: { match: ActiveMatch }) {
                   !data.activeMatches.some(
                     (m) =>
                       m.id !== match.id &&
+                      m.status !== 'finished' &&
                       [...m.sideA, ...m.sideB].some(
                         (o) => !engine.swapBlockReason(p.id, o.id, now),
                       ),
@@ -94,7 +98,7 @@ function SwapPanel({ match }: { match: ActiveMatch }) {
                 {(() => {
                   // Same swap as dragging between courts, for people who'd rather tap.
                   const others = data.activeMatches.flatMap((m) =>
-                    m.id === match.id ? [] : [...m.sideA, ...m.sideB],
+                    m.id === match.id || m.status === 'finished' ? [] : [...m.sideA, ...m.sideB],
                   );
                   const open = others.filter((o) => !engine.swapBlockReason(p.id, o.id, now));
                   return open.length ? (
@@ -208,6 +212,7 @@ export function CourtCard({ match, index }: { match: ActiveMatch; index: number 
             : 'When the game ends, tap the team that won.'}
         </p>
       ) : null}
+      {finished ? <NextGameButton court={court} /> : null}
       {!viewer && !finished ? (
         <>
           <button
@@ -227,19 +232,23 @@ export function CourtCard({ match, index }: { match: ActiveMatch; index: number 
 export function SittingOut() {
   const { data } = useApplication();
   const inRound = new Set(
-    data.activeMatches.flatMap((m) => [...m.sideA, ...m.sideB].map((p) => p.id)),
+    data.activeMatches
+      .filter((m) => m.status !== 'finished')
+      .flatMap((m) => [...m.sideA, ...m.sideB].map((p) => p.id)),
   );
-  const sitting = data.players
-    .filter((p) => p.active && !inRound.has(p.id))
-    .sort((a, b) => b.roundsWaited - a.roundsWaited || a.name.localeCompare(b.name));
+  const sitting = data.waitingPlayerIds.flatMap((id) => {
+    const player = data.players.find((p) => p.id === id);
+    return player ? [player] : [];
+  });
   const resting = data.players.filter((p) => !p.active);
   return (
     <section className="ez-card" aria-labelledby="sitting-title">
       <h3 id="sitting-title" className="ez-card-title">
-        Sitting out this round
+        Waiting to play
       </h3>
       <p className="ez-hint">
-        Whoever has waited longest goes first next round, so everyone gets fair court time.
+        Organizer Play next picks go first. Everyone else rotates by who has waited longest; equal
+        waits are shuffled.
       </p>
       {sitting.length ? (
         <ol className="ez-next">
@@ -249,14 +258,16 @@ export function SittingOut() {
               <span className="ez-who">{p.name}</span>
               <span className="ez-hint">
                 {p.roundsWaited
-                  ? `waited ${plural(p.roundsWaited, 'round', 'rounds')}`
-                  : 'just arrived'}
+                  ? `waited ${plural(p.roundsWaited, 'turn', 'turns')}`
+                  : p.lastPlayedRound === null
+                    ? 'just arrived'
+                    : 'ready again'}
               </span>
             </li>
           ))}
         </ol>
       ) : (
-        <p className="ez-hint">Nobody is sitting out. Everyone is on a court.</p>
+        <p className="ez-hint">Nobody is waiting. Everyone is playing or on a break.</p>
       )}
       {resting.length ? (
         <p className="ez-hint">On a break: {resting.map((p) => p.name).join(', ')}</p>
@@ -267,13 +278,15 @@ export function SittingOut() {
 
 export function CourtsTab({ onEditSettings }: { onEditSettings: () => void }) {
   const { data, viewer } = useApplication();
-  const { type, courts, unfinished, generate } = useRoundControls();
-  const [confirming, setConfirming] = useState(false);
+  const { type, courts } = useRoundControls();
   const [arranging, setArranging] = useState(false);
-  const openCourts = data.activeMatches
-    .map((m, i) => (m.status !== 'finished' ? `Court ${i + 1}` : null))
-    .filter(Boolean)
-    .join(' and ');
+  const engine = createEngine(data);
+  const maximum = Math.max(
+    viewer ? 0 : courts,
+    ...data.activeMatches.map(engine.getCourtNumber),
+    ...data.matchLog.map((entry) => entry.court),
+  );
+  const courtNumbers = Array.from({ length: maximum }, (_, index) => index + 1);
   return (
     <div className="ez-courts-layout">
       {!viewer ? (
@@ -282,9 +295,9 @@ export function CourtsTab({ onEditSettings }: { onEditSettings: () => void }) {
             {plural(courts, 'court', 'courts')} · {type === 'doubles' ? 'Doubles' : 'Singles'}
           </span>
           <span className="ez-settings-actions">
-            {data.activeMatches.length && !arranging ? (
+            {data.activeMatches.some((m) => m.status !== 'finished') && !arranging ? (
               <button className="ez-link" onClick={() => setArranging(true)}>
-                Move players
+                Move players (drag or tap)
               </button>
             ) : null}
             <button className="ez-link" onClick={onEditSettings}>
@@ -293,21 +306,32 @@ export function CourtsTab({ onEditSettings }: { onEditSettings: () => void }) {
           </span>
         </div>
       ) : null}
+      {!arranging ? <DraftGames /> : null}
       {arranging && !viewer ? <ArrangeBoard onDone={() => setArranging(false)} /> : null}
       {arranging && !viewer ? null : (
         <div className="ez-pad ez-courts-body">
           <div className="ez-courts-grid">
-            {data.activeMatches.length ? (
-              data.activeMatches.map((m, i) => <CourtCard key={m.id} match={m} index={i} />)
+            {courtNumbers.length ? (
+              courtNumbers.map((court) => {
+                const match = data.activeMatches.find((m) => engine.getCourtNumber(m) === court);
+                return match ? (
+                  <CourtCard key={match.id} match={match} index={court - 1} />
+                ) : (
+                  <ReadyCourt
+                    key={`ready-${court}`}
+                    court={court}
+                    last={data.matchLog.find((entry) => entry.court === court)}
+                  />
+                );
+              })
             ) : (
               <div className="ez-card">
-                <p className="ez-hint">
-                  {viewer ? 'The organizer has not started a round yet.' : 'No round right now.'}
-                </p>
+                <p className="ez-hint">The organizer has not started games yet.</p>
               </div>
             )}
           </div>
           <aside className="ez-courts-side" aria-label="Waiting and arrivals">
+            <NextPlayers />
             <SittingOut />
             {!viewer ? (
               // Desktop only: on phones the Players tab is one tap away.
@@ -321,50 +345,6 @@ export function CourtsTab({ onEditSettings }: { onEditSettings: () => void }) {
           </aside>
         </div>
       )}
-      {!viewer && !arranging ? (
-        <div className="ez-footer above-tabs">
-          {data.activeMatches.length ? (
-            <p className="ez-why">
-              {unfinished
-                ? `${plural(unfinished, 'court is', 'courts are')} still playing. Tap who won first.`
-                : 'All games are done. Ready when you are.'}
-            </p>
-          ) : null}
-          <button
-            className="ez-btn primary block"
-            onClick={() => {
-              if (generate() === 'needs-confirm') setConfirming(true);
-            }}
-          >
-            Start next round
-          </button>
-        </div>
-      ) : null}
-      {confirming ? (
-        <Sheet
-          title={`${openCourts} ${unfinished === 1 ? 'is' : 'are'} still playing`}
-          onClose={() => setConfirming(false)}
-        >
-          <p className="ez-warn">
-            Starting a new round now ends {unfinished === 1 ? 'that game' : 'those games'} with{' '}
-            <b>no result</b>.
-          </p>
-          <div className="ez-stack">
-            <button className="ez-btn primary block" onClick={() => setConfirming(false)}>
-              Keep playing
-            </button>
-            <button
-              className="ez-btn block"
-              onClick={() => {
-                setConfirming(false);
-                generate(true);
-              }}
-            >
-              Start new round anyway
-            </button>
-          </div>
-        </Sheet>
-      ) : null}
     </div>
   );
 }

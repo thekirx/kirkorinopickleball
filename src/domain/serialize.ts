@@ -1,7 +1,13 @@
-import type { TournamentStateV2, SerializedTournamentStateV2 } from './types';
-export function serializeState(state: TournamentStateV2): SerializedTournamentStateV2 {
+import type { SessionState, SerializedSessionState } from './types';
+export function serializeState(state: SessionState): SerializedSessionState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
+    queuedGames: state.queuedGames.map((game) => ({
+      ...game,
+      sideA: [...game.sideA],
+      sideB: [...game.sideB],
+    })),
+    waitingPlayerIds: [...state.waitingPlayerIds],
     players: state.players.map((p) => ({ ...p })),
     currentRound: state.currentRound,
     activeMatches: state.activeMatches.map((m) => ({

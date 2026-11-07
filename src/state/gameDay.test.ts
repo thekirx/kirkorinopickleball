@@ -1,0 +1,183 @@
+import { beforeEach, expect, it } from 'vitest';
+import { createSessionStore } from './sessionStore';
+import { serializeState } from '../domain/serialize';
+
+beforeEach(() => localStorage.clear());
+function seeded() {
+  const store = createSessionStore(localStorage);
+  for (const name of ['Ana', 'Ben', 'Cy', 'Dee', 'Eve', 'Fin'])
+    store.getState().act((e) => e.addPlayer(name, 'intermediate'));
+  return store;
+}
+it('saves settings and FIFO selections across reload, independently for each day', () => {
+  const store = seeded();
+  const first = store.getState().sessionId;
+  const [ana, ben] = store.getState().session.players;
+  store
+    .getState()
+    .setGameDaySettings({ courts: 1, type: 'singles', limit: 'unlimited', lateArrivals: 'next' });
+  expect(store.getState().queuePlayer(ben.id).ok).toBe(true);
+  expect(store.getState().queuePlayer(ana.id).ok).toBe(true);
+  store.getState().queuePlayer(ben.id);
+  const reloaded = createSessionStore(localStorage);
+  expect(reloaded.getState().gameDay).toMatchObject({
+    courts: 1,
+    type: 'singles',
+    limit: 'unlimited',
+    lateArrivals: 'next',
+    nextPlayerIds: [ben.id, ana.id],
+  });
+  reloaded.getState().createSession('Other group');
+  expect(reloaded.getState().gameDay).toMatchObject({
+    courts: 2,
+    type: 'doubles',
+    limit: '2',
+    lateArrivals: 'back',
+    nextPlayerIds: [],
+  });
+  reloaded.getState().switchSession(first);
+  expect(reloaded.getState().gameDay.nextPlayerIds).toEqual([ben.id, ana.id]);
+  reloaded.getState().cancelQueuedPlayer(ben.id);
+  expect(reloaded.getState().gameDay.nextPlayerIds).toEqual([ana.id]);
+});
+it('clears selections for breaks, removals and players who actually enter a court', () => {
+  const store = seeded();
+  const [a, b, c, d, e, f] = store.getState().session.players;
+  for (const p of [a, b, c, d, e, f]) store.getState().queuePlayer(p.id);
+  store.getState().act((engine) => engine.setPlayerActive(b.id, false));
+  store.getState().act((engine) => engine.removePlayer(c.id));
+  expect(store.getState().queuePlayer(b.id).ok).toBe(false);
+  store.getState().act((engine) => {
+    const plan = engine.createRoundPlan({
+      matchType: 'singles',
+      courtCount: 1,
+      teammateLimit: Infinity,
+      priorityPlayerIds: store.getState().gameDay.nextPlayerIds,
+    });
+    if (!plan.ok) throw Error(plan.message);
+    engine.applyRoundPlan(plan, 'singles');
+  });
+  expect(store.getState().gameDay.nextPlayerIds).toEqual([e.id, f.id]);
+  expect(store.getState().queuePlayer(a.id).ok).toBe(false);
+  expect(
+    store
+      .getState()
+      .session.activeMatches[0].sideA.concat(store.getState().session.activeMatches[0].sideB)
+      .map((p) => p.id)
+      .sort(),
+  ).toEqual([a.id, d.id].sort());
+});
+it('retains pending selections when generation fails and keeps organizer metadata out of public payloads', () => {
+  const store = seeded();
+  const first = store.getState().sessionId;
+  const a = store.getState().session.players[0];
+  store.getState().queuePlayer(a.id);
+  store.getState().act((e) => {
+    for (const p of store.getState().session.players.slice(1)) e.setPlayerActive(p.id, false);
+  });
+  const result = store.getState().act((e) =>
+    e.createRoundPlan({
+      matchType: 'doubles',
+      courtCount: 1,
+      teammateLimit: 2,
+      priorityPlayerIds: store.getState().gameDay.nextPlayerIds,
+    }),
+  );
+  expect(result?.ok).toBe(false);
+  expect(store.getState().gameDay.nextPlayerIds).toEqual([a.id]);
+  expect(serializeState(store.getState().session)).not.toHaveProperty('gameDay');
+  expect(serializeState(store.getState().session)).not.toHaveProperty('nextPlayerIds');
+  store.getState().createSession('Second');
+  store.getState().setShare({ code: 'test', editToken: 'synthetic' }, first);
+  store.getState().switchSession(first);
+  expect(store.getState().gameDay.nextPlayerIds).toEqual([a.id]);
+});
+it('recovers from malformed local settings without blocking the saved session', () => {
+  const store = seeded(),
+    id = store.getState().sessionId;
+  const raw = JSON.parse(localStorage.getItem(`kirq-session-${id}`)!);
+  localStorage.setItem(
+    `kirq-session-${id}`,
+    JSON.stringify({
+      ...raw,
+      gameDay: {
+        courts: NaN,
+        type: 'bad',
+        limit: 'oops',
+        lateArrivals: 'bad',
+        nextPlayerIds: ['missing', 'missing', 4],
+      },
+    }),
+  );
+  const restored = createSessionStore(localStorage);
+  expect(restored.getState().gameDay).toMatchObject({
+    courts: 2,
+    type: 'doubles',
+    limit: '2',
+    lateArrivals: 'back',
+    nextPlayerIds: [],
+  });
+  expect(restored.getState().session.players).toHaveLength(6);
+});
+
+it('consumes a queued finished-player swap-in and preserves the other court across reload', () => {
+  const store = seeded();
+  for (const name of ['Gil', 'Hal', 'Ida', 'Jo'])
+    store.getState().act((e) => e.addPlayer(name, 'intermediate'));
+  store.getState().act((e) => {
+    const plan = e.createRoundPlan({
+      matchType: 'doubles',
+      courtCount: 2,
+      teammateLimit: Infinity,
+    });
+    if (!plan.ok) throw Error(plan.message);
+    e.applyRoundPlan(plan, 'doubles');
+  });
+  const [first, other] = store.getState().session.activeMatches;
+  store.getState().act((e) => e.declareWinner(first.id, 'A'));
+  store.getState().queuePlayer(first.sideA[0].id);
+  store.getState().act((e) => e.swapPlayers(first.sideA[0].id, other.sideA[0].id));
+  expect(store.getState().gameDay.nextPlayerIds).toEqual([]);
+  const restored = createSessionStore(localStorage).getState();
+  expect(restored.session.activeMatches).toHaveLength(1);
+  expect(restored.session.activeMatches[0].courtId).toBe('court-2');
+  expect(restored.session.activeMatches[0].id).toBe(other.id);
+  expect(restored.session.matchLog[0].id).toBe(first.id);
+});
+
+it('persists drafts and shared waiting order, publishes manual queue edits, and invalidates on breaks', () => {
+  const store = seeded();
+  for (let i = 0; i < 14; i++)
+    store.getState().act((e) => e.addPlayer(`Extra ${i}`, 'intermediate'));
+  store.getState().act((e) => {
+    const p = e.createRoundPlan({ matchType: 'doubles', courtCount: 2, teammateLimit: Infinity });
+    if (!p.ok) throw Error(p.message);
+    e.applyRoundPlan(p, 'doubles');
+  });
+  const chosen = store.getState().session.waitingPlayerIds.at(-1)!;
+  const before = store.getState().session;
+  store.getState().queuePlayer(chosen);
+  expect(store.getState().session).not.toBe(before);
+  expect(store.getState().session.waitingPlayerIds[0]).toBe(chosen);
+  store.getState().act((e) =>
+    e.draftNextGames(2, {
+      matchType: 'doubles',
+      courtCount: 2,
+      teammateLimit: Infinity,
+      priorityPlayerIds: store.getState().gameDay.nextPlayerIds,
+    }),
+  );
+  const reloaded = createSessionStore(localStorage);
+  expect(reloaded.getState().session.queuedGames).toEqual(store.getState().session.queuedGames);
+  expect(reloaded.getState().session.waitingPlayerIds).toEqual(
+    store.getState().session.waitingPlayerIds,
+  );
+  const reserved = reloaded.getState().session.queuedGames[0].sideA[0];
+  expect(reloaded.getState().queuePlayer(reserved).ok).toBe(false);
+  reloaded.getState().act((e) => e.setPlayerActive(reserved, false));
+  expect(reloaded.getState().session.queuedGames).toHaveLength(1);
+  expect(reloaded.getState().queueNotice).toMatch(/removed/);
+  reloaded.getState().setGameDaySettings({ type: 'singles' });
+  expect(reloaded.getState().session.queuedGames).toEqual([]);
+  expect(reloaded.getState().queueNotice).toMatch(/settings/);
+});

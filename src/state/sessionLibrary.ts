@@ -1,7 +1,9 @@
+import { reconcileQueue } from '../domain/queue';
 import { SafeStorage } from './storage';
+import { normalizeGameDaySettings, pruneGameDay, type GameDaySettings } from './gameDay';
 import { migrate } from '../domain/migrate';
 import { serializeState } from '../domain/serialize';
-import type { TournamentStateV2, ShareCredentials } from '../domain/types';
+import type { SessionState, ShareCredentials } from '../domain/types';
 export const INDEX_KEY = 'kirq-index-v1';
 export const sessionKey = (id: string) => `kirq-session-${id}`;
 export const defaultSessionName = () =>
@@ -62,17 +64,31 @@ export class SessionLibrary {
   load(id: string) {
     const raw = this.storage.read(sessionKey(id)) as Record<string, unknown> | null;
     const share = raw?.share as ShareCredentials | null;
+    const session = migrate(raw);
+    const gameDay = pruneGameDay(normalizeGameDaySettings(raw?.gameDay), session);
+    reconcileQueue(session, gameDay.nextPlayerIds);
     return {
-      session: migrate(raw),
+      session,
+      gameDay,
       share:
         share && typeof share.code === 'string' && typeof share.editToken === 'string'
           ? share
           : null,
     };
   }
-  save(id: string, session: TournamentStateV2, share: ShareCredentials | null) {
+  save(
+    id: string,
+    session: SessionState,
+    share: ShareCredentials | null,
+    gameDay?: GameDaySettings,
+  ) {
     this.storage.write(sessionKey(id), {
       ...serializeState(session),
+      gameDay:
+        gameDay ??
+        normalizeGameDaySettings(
+          (this.storage.read(sessionKey(id)) as Record<string, unknown> | null)?.gameDay,
+        ),
       savedAt: new Date().toISOString(),
       share,
     });
