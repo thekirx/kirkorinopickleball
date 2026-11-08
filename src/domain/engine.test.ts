@@ -29,7 +29,7 @@ describe('rotation and substitutions', () => {
     app.setPlayerActive('f', true);
     expect(state.players[5].active).toBe(true);
   });
-  it('changes one doubles player and corrects teammate history, then locks exactly at two minutes', () => {
+  it('changes one doubles player and corrects teammate history, allows another substitution after two minutes', () => {
     const { state, app } = setup();
     const plan = app.createRoundPlan({
       matchType: 'doubles',
@@ -53,12 +53,9 @@ describe('rotation and substitutions', () => {
           .join('|'),
       ),
     ).toBe(1);
-    const before = JSON.stringify(m);
-    expect(app.replaceMatchPlayer(m.id, 'a', 'b', 121000, 'standard')).toMatchObject({
-      ok: false,
-      reason: 'change-window-expired',
-    });
-    expect(JSON.stringify(m)).toBe(before);
+    expect(app.replaceMatchPlayer(m.id, 'a', 'b', 121000, 'standard').ok).toBe(true);
+    expect(m.sideA[0].id).toBe('b');
+    expect(m.generatedAt).toBe(1000);
   });
   it('allows an injury replacement after expiry and chooses closest skill before wait', () => {
     const { state, app } = setup();

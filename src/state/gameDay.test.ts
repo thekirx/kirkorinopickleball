@@ -5,6 +5,7 @@ import { serializeState } from '../domain/serialize';
 beforeEach(() => localStorage.clear());
 function seeded() {
   const store = createSessionStore(localStorage);
+  store.getState().setGameDaySettings({ autoPrepare: false });
   for (const name of ['Ana', 'Ben', 'Cy', 'Dee', 'Eve', 'Fin'])
     store.getState().act((e) => e.addPlayer(name, 'intermediate'));
   return store;
@@ -180,4 +181,119 @@ it('persists drafts and shared waiting order, publishes manual queue edits, and 
   reloaded.getState().setGameDaySettings({ type: 'singles' });
   expect(reloaded.getState().session.queuedGames).toEqual([]);
   expect(reloaded.getState().queueNotice).toMatch(/settings/);
+});
+
+it('automatically prepares and refills fixed upcoming games without starting a court, and persists preferences', () => {
+  const store = createSessionStore(localStorage);
+  expect(store.getState().gameDay.autoPrepare).toBe(true);
+  store.getState().setGameDaySettings({ courts: 1, draftCount: 2, limit: 'unlimited' });
+  for (let i = 0; i < 20; i++)
+    store.getState().act((e) => e.addPlayer(`Auto ${i}`, 'intermediate'));
+  expect(store.getState().session.queuedGames).toHaveLength(0); // no drafting before setup
+  store.getState().act((e) => {
+    const plan = e.createRoundPlan({
+      matchType: 'doubles',
+      courtCount: 1,
+      teammateLimit: Infinity,
+    });
+    if (!plan.ok) throw Error(plan.message);
+    e.applyRoundPlan(plan, 'doubles');
+  });
+  const before = structuredClone(store.getState().session.queuedGames);
+  expect(before).toHaveLength(2);
+  store.getState().act((e) => e.addPlayer('Late', 'beginner'));
+  expect(store.getState().session.queuedGames).toEqual(before);
+  const match = store.getState().session.activeMatches[0];
+  store.getState().act((e) => e.declareWinner(match.id, 'A'));
+  expect(store.getState().session.activeMatches[0].status).toBe('finished');
+  store
+    .getState()
+    .act((e) =>
+      e.startCourtGame(1, { matchType: 'doubles', courtCount: 1, teammateLimit: Infinity }),
+    );
+  expect(store.getState().session.activeMatches[0].id).toBe(before[0].id);
+  expect(store.getState().session.queuedGames).toHaveLength(2);
+  expect(store.getState().session.queuedGames[0]).toEqual(before[1]);
+  const reloaded = createSessionStore(localStorage);
+  expect(reloaded.getState().gameDay.autoPrepare).toBe(true);
+  expect(reloaded.getState().session.queuedGames).toEqual(store.getState().session.queuedGames);
+  reloaded.getState().clearUpcomingGames();
+  expect(reloaded.getState().gameDay.autoPrepare).toBe(false);
+  expect(reloaded.getState().session.queuedGames).toEqual([]);
+  reloaded.getState().act((e) => e.addPlayer('Another', 'intermediate'));
+  expect(reloaded.getState().session.queuedGames).toEqual([]);
+});
+
+it('keeps legacy days manual and reports automatic preparation shortages without changing games', () => {
+  const store = seeded();
+  const id = store.getState().sessionId;
+  const raw = JSON.parse(localStorage.getItem(`kirq-session-${id}`)!);
+  delete raw.gameDay.autoPrepare;
+  localStorage.setItem(`kirq-session-${id}`, JSON.stringify(raw));
+  const legacy = createSessionStore(localStorage);
+  expect(legacy.getState().gameDay.autoPrepare).toBe(false);
+  legacy.getState().setGameDaySettings({ autoPrepare: true, courts: 1 });
+  legacy.getState().act((e) => {
+    const p = e.createRoundPlan({ matchType: 'doubles', courtCount: 1, teammateLimit: Infinity });
+    if (!p.ok) throw Error(p.message);
+    e.applyRoundPlan(p, 'doubles');
+  });
+  expect(legacy.getState().session.queuedGames).toHaveLength(0);
+  expect(legacy.getState().preparationNotice).toMatch(/waiting/);
+  legacy.getState().createSession('Fresh auto day');
+  expect(legacy.getState().gameDay.autoPrepare).toBe(true);
+  legacy.getState().switchSession(id);
+  expect(legacy.getState().gameDay.autoPrepare).toBe(true);
+});
+
+it('explains partner-limit failures and preserves every announced team during automatic changes', () => {
+  const store = seeded();
+  for (let i = 0; i < 10; i++)
+    store.getState().act((e) => e.addPlayer(`Limited ${i}`, 'intermediate'));
+  store.getState().setGameDaySettings({ courts: 1, limit: '1', draftCount: 3 });
+  store.getState().act((e) => {
+    const plan = e.createRoundPlan({ matchType: 'doubles', courtCount: 1, teammateLimit: 1 });
+    if (!plan.ok) throw Error(plan.message);
+    e.applyRoundPlan(plan, 'doubles');
+    return e.draftNextGames(1, { matchType: 'doubles', courtCount: 1, teammateLimit: 1 });
+  });
+  const fixed = structuredClone(store.getState().session.queuedGames[0]);
+  const snapshot = structuredClone(store.getState().session);
+  for (const a of snapshot.players)
+    for (const b of snapshot.players) {
+      if (a.id !== b.id) snapshot.teammateHistory.set([a.id, b.id].sort().join('|'), 1);
+    }
+  store.getState().restoreSession(snapshot);
+  store.getState().setGameDaySettings({ autoPrepare: true });
+  expect(store.getState().session.queuedGames).toEqual([fixed]);
+  expect(store.getState().preparationNotice).toMatch(/limit/);
+  store.getState().act((e) => e.swapPlayers('missing', 'other'));
+  expect(store.getState().session.queuedGames).toEqual([fixed]);
+  expect(store.getState().preparationNotice).toMatch(/limit/);
+  store.getState().setGameDaySettings({ draftCount: 1 });
+  expect(store.getState().session.queuedGames).toEqual([fixed]);
+});
+
+it('retains a useful partner-limit explanation after partial automatic preparation and reload', () => {
+  const store = seeded();
+  for (let i = 0; i < 10; i++)
+    store.getState().act((e) => e.addPlayer(`Partial ${i}`, 'intermediate'));
+  store.getState().setGameDaySettings({ courts: 1, limit: '1', draftCount: 3 });
+  store.getState().act((e) => {
+    const plan = e.createRoundPlan({ matchType: 'doubles', courtCount: 1, teammateLimit: 1 });
+    if (!plan.ok) throw Error(plan.message);
+    e.applyRoundPlan(plan, 'doubles');
+  });
+  const snapshot = structuredClone(store.getState().session);
+  const blocked = snapshot.waitingPlayerIds.slice(4, 8);
+  for (const a of blocked)
+    for (const b of blocked) if (a !== b) snapshot.teammateHistory.set([a, b].sort().join('|'), 1);
+  store.getState().restoreSession(snapshot);
+  store.getState().setGameDaySettings({ autoPrepare: true });
+  expect(store.getState().session.queuedGames).toHaveLength(1);
+  expect(store.getState().preparationNotice).toMatch(/limit/);
+  const fixed = structuredClone(store.getState().session.queuedGames);
+  const reload = createSessionStore(localStorage);
+  expect(reload.getState().preparationNotice).toMatch(/limit/);
+  expect(reload.getState().session.queuedGames).toEqual(fixed);
 });

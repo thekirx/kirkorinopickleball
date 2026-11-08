@@ -63,9 +63,6 @@ it('refuses swaps with a plain reason and changes nothing', () => {
   expect(e.swapBlockReason(c1.sideA[0].id, c1.sideA[0].id, now)).toMatch(/someone else/);
   e.setPlayerActive(sitting[0].id, false);
   expect(e.swapBlockReason(sitting[0].id, c1.sideA[0].id, now)).toMatch(/on a break/);
-  const late = 1_000 + PLAYER_CHANGE_WINDOW_MS + 1;
-  expect(e.swapBlockReason(c1.sideA[0].id, c2.sideA[0].id, late)).toMatch(/over 2 minutes/);
-  expect(e.swapPlayers(c1.sideA[0].id, c2.sideA[0].id, late).ok).toBe(false);
   expect(JSON.stringify(state.activeMatches.map((m) => [ids(m.sideA), ids(m.sideB)]))).toBe(before);
 });
 
@@ -133,4 +130,35 @@ it('never double-books across 200 seeded sessions of generation, swaps and injur
   }
   expect(successfulSwaps).toBeGreaterThan(200);
   expect(successfulInjuries).toBeGreaterThan(200);
+});
+
+// Regression: time alone must never prevent the organizer fixing a lineup.
+it('swaps across courts and with waiting players long after the game starts without restarting it', () => {
+  const { state, e, c1, c2, sitting } = twoCourts();
+  const late = 1_000 + 60 * PLAYER_CHANGE_WINDOW_MS;
+  const a = c1.sideA[0].id,
+    b = c2.sideB[0].id;
+  expect(e.swapPlayers(a, b, late).ok).toBe(true);
+  const other = JSON.stringify(c2);
+  expect(e.replaceMatchPlayer(c1.id, b, sitting[0].id, late).ok).toBe(true);
+  expect(c1.generatedAt).toBe(1000);
+  expect(JSON.stringify(c2)).toBe(other);
+  expect(state.matchLog).toEqual([]);
+  e.declareWinner(c1.id, 'A');
+  expect(e.replaceMatchPlayer(c1.id, c1.sideA[0].id, sitting[1].id, late).ok).toBe(false);
+});
+
+it('explicitly releases only the affected upcoming game for a swap and leaves failures atomic', () => {
+  const { state, e, c1 } = twoCourts();
+  for (let i = 0; i < 10; i++) e.addPlayer(`Extra ${i}`, 'intermediate');
+  e.draftNextGames(2, { matchType: 'doubles', courtCount: 2, teammateLimit: Infinity });
+  const [first, second] = structuredClone(state.queuedGames);
+  const target = first.sideA[0];
+  expect(e.swapPlayers(c1.sideA[0].id, target).ok).toBe(false);
+  const before = JSON.stringify(state.queuedGames);
+  expect(e.swapPlayersReleasingDraft('missing', target).ok).toBe(false);
+  expect(JSON.stringify(state.queuedGames)).toBe(before);
+  expect(e.swapPlayersReleasingDraft(c1.sideA[0].id, target).ok).toBe(true);
+  expect(c1.sideA[0].id).toBe(target);
+  expect(state.queuedGames).toEqual([second]);
 });

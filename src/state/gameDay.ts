@@ -6,6 +6,7 @@ export interface GameDaySettings {
   type: MatchType;
   courts: number;
   draftCount: number;
+  autoPrepare: boolean;
   limit: string;
   lateArrivals: 'back' | 'next';
   nextPlayerIds: string[];
@@ -15,6 +16,7 @@ export const defaultGameDaySettings = (): GameDaySettings => ({
   type: 'doubles',
   courts: 2,
   draftCount: 1,
+  autoPrepare: true,
   limit: '2',
   lateArrivals: 'back',
   nextPlayerIds: [],
@@ -27,6 +29,7 @@ const ids = (value: unknown): string[] =>
 export function normalizeGameDaySettings(raw: unknown): GameDaySettings {
   const value = raw && typeof raw === 'object' ? (raw as Partial<GameDaySettings>) : {};
   return {
+    autoPrepare: value.autoPrepare === true,
     draftCount:
       typeof value.draftCount === 'number' && Number.isInteger(value.draftCount)
         ? Math.max(1, Math.min(3, value.draftCount))

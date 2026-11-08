@@ -1,6 +1,11 @@
 import { reconcileQueue } from '../domain/queue';
 import { SafeStorage } from './storage';
-import { normalizeGameDaySettings, pruneGameDay, type GameDaySettings } from './gameDay';
+import {
+  defaultGameDaySettings,
+  normalizeGameDaySettings,
+  pruneGameDay,
+  type GameDaySettings,
+} from './gameDay';
 import { migrate } from '../domain/migrate';
 import { serializeState } from '../domain/serialize';
 import type { SessionState, ShareCredentials } from '../domain/types';
@@ -65,7 +70,10 @@ export class SessionLibrary {
     const raw = this.storage.read(sessionKey(id)) as Record<string, unknown> | null;
     const share = raw?.share as ShareCredentials | null;
     const session = migrate(raw);
-    const gameDay = pruneGameDay(normalizeGameDaySettings(raw?.gameDay), session);
+    const gameDay = pruneGameDay(
+      raw ? normalizeGameDaySettings(raw.gameDay) : defaultGameDaySettings(),
+      session,
+    );
     reconcileQueue(session, gameDay.nextPlayerIds);
     return {
       session,

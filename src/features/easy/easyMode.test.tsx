@@ -11,6 +11,7 @@ afterEach(() => vi.useRealTimers());
 const NAMES = ['Ana', 'Ben', 'Cy', 'Dee', 'Eve', 'Fin'];
 function seeded(names = NAMES) {
   const store = createSessionStore(localStorage);
+  store.getState().setGameDaySettings({ autoPrepare: false });
   for (const n of names) store.getState().act((e) => e.addPlayer(n, 'intermediate'));
   return store;
 }
@@ -132,21 +133,22 @@ it('blocks removing someone on a court, and lets a removal be undone', async () 
   expect(store.getState().session.players.map((p) => p.name)).toContain(sitting);
 });
 
-it('allows swaps in the first two minutes, then only injury replacements', async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true });
+it('guides an anytime swap and can choose the next waiting player automatically', async () => {
   const { user, store } = await inPlay();
-  await user.click(within(court(1)).getByRole('button', { name: /Swap a player/ }));
-  const swaps = within(court(1)).getAllByRole('button', { name: 'Swap' });
-  expect(swaps).toHaveLength(4);
-  await user.click(swaps[0]);
-  const outgoing = store.getState().session.activeMatches[0].sideA[0].id;
-  // whoever the app offers: sitting-out players are chosen fairly, not by name
-  const picker = within(court(1)).getByText(/Who comes in for/).parentElement!;
-  await user.click(within(picker).getAllByRole('button')[0]);
-  expect(store.getState().session.activeMatches[0].sideA[0].id).not.toBe(outgoing);
-  act(() => vi.advanceTimersByTime(120000));
-  expect(within(court(1)).queryAllByRole('button', { name: 'Swap' })).toHaveLength(0);
-  expect(within(court(1)).getAllByRole('button', { name: 'Got hurt' })[0]).toBeEnabled();
+  const old = structuredClone(store.getState().session);
+  old.activeMatches[0].generatedAt = Date.now() - 60 * 60 * 1000;
+  act(() => store.getState().restoreSession(old));
+  const match = store.getState().session.activeMatches[0];
+  const outgoing = match.sideA[0];
+  const incoming = store.getState().session.waitingPlayerIds[0];
+  await user.click(within(court(1)).getByRole('button', { name: 'Swap players' }));
+  expect(within(court(1)).queryAllByRole('button', { name: /Tap if they won/ })).toHaveLength(0);
+  await user.click(within(court(1)).getByRole('button', { name: `Swap out ${outgoing.name}` }));
+  expect(within(court(1)).getByText(/Who replaces/)).toBeInTheDocument();
+  await user.click(within(court(1)).getByRole('button', { name: /Choose next waiting player/ }));
+  expect(store.getState().session.activeMatches[0].sideA[0].id).toBe(incoming);
+  expect(store.getState().session.activeMatches[0].generatedAt).toBe(match.generatedAt);
+  expect(store.getState().session.players.find((p) => p.id === outgoing.id)!.active).toBe(true);
 });
 
 it('changes courts mid-session without losing the round', async () => {
@@ -312,15 +314,13 @@ it('returns finished players to the movement bench and can bring one onto anothe
   expect(store.getState().session.matchLog).toHaveLength(1);
 });
 
-it('offers other-court players in the Swap panel too', async () => {
+it('offers clearly labelled other-court players in the guided swap picker', async () => {
   const { user, store } = await inPlayTwoCourts();
   const a = sideIds(store, 0)[0];
   const b = sideIds(store, 1)[1];
-  await user.click(within(court(1)).getByRole('button', { name: /Swap a player/ }));
-  const row = within(court(1)).getByText(a).closest('.ez-swap-row') as HTMLElement;
-  await user.click(within(row).getByRole('button', { name: 'Swap' }));
-  expect(within(row).getByText('Or swap with someone on another court')).toBeInTheDocument();
-  await user.click(within(row).getByRole('button', { name: b }));
+  await user.click(within(court(1)).getByRole('button', { name: 'Swap players' }));
+  await user.click(within(court(1)).getByRole('button', { name: `Swap out ${a}` }));
+  await user.click(within(court(1)).getByRole('button', { name: `Swap in ${b}` }));
   expect(sideIds(store, 0)).toContain(b);
   expect(sideIds(store, 1)).toContain(a);
 });
@@ -412,5 +412,36 @@ it('lets the queue master draft upcoming games and shows fixed teams after reloa
   const restored = createSessionStore(localStorage);
   expect(restored.getState().session.queuedGames).toEqual(store.getState().session.queuedGames);
   await user.click(screen.getByRole('button', { name: 'Clear upcoming games' }));
+  expect(store.getState().session.queuedGames).toEqual([]);
+});
+
+it('prepares upcoming teams automatically and keeps court actions before the queue', async () => {
+  const { user, store } = await inPlay(Array.from({ length: 16 }, (_, i) => `Auto ${i}`));
+  await user.click(screen.getByRole('checkbox', { name: 'Prepare upcoming games automatically' }));
+  expect(store.getState().session.queuedGames).toHaveLength(1);
+  const next = structuredClone(store.getState().session.queuedGames[0]);
+  expect(
+    court(1).compareDocumentPosition(screen.getByRole('region', { name: 'Next in queue' })) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  const outgoing = store.getState().session.activeMatches[0].sideA[0];
+  const reserved = store.getState().session.players.find((p) => p.id === next.sideA[0])!;
+  await user.click(within(court(1)).getByRole('button', { name: 'Swap players' }));
+  await user.click(within(court(1)).getByRole('button', { name: `Swap out ${outgoing.name}` }));
+  expect(within(court(1)).getByText(/Choosing an upcoming player/)).toBeInTheDocument();
+  await user.click(within(court(1)).getByRole('button', { name: `Swap in ${reserved.name}` }));
+  expect(store.getState().session.activeMatches[0].sideA[0].id).toBe(reserved.id);
+  expect(store.getState().session.queuedGames).toHaveLength(1);
+  expect(store.getState().session.queuedGames[0].id).not.toBe(next.id);
+  const all = [
+    ...store
+      .getState()
+      .session.activeMatches.filter((m) => m.status !== 'finished')
+      .flatMap((m) => [...m.sideA, ...m.sideB].map((p) => p.id)),
+    ...store.getState().session.queuedGames.flatMap((g) => [...g.sideA, ...g.sideB]),
+  ];
+  expect(new Set(all).size).toBe(all.length);
+  await user.click(screen.getByRole('button', { name: 'Clear upcoming games' }));
+  expect(store.getState().gameDay.autoPrepare).toBe(false);
   expect(store.getState().session.queuedGames).toEqual([]);
 });

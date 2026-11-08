@@ -2,62 +2,86 @@ import { useApplication } from '../common';
 export function DraftGames() {
   const { data, store, viewer, run, notify } = useApplication();
   const capacity = 3 - data.queuedGames.length;
-  const count = Math.min(store.gameDay.draftCount, Math.max(1, capacity));
+  const automatic = store.gameDay.autoPrepare;
+  const count = automatic
+    ? store.gameDay.draftCount
+    : Math.min(store.gameDay.draftCount, Math.max(1, capacity));
   const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? 'Unavailable player';
   return (
     <section className="ez-pad ez-draft-section" aria-label="Next in queue">
       <h2>Next in queue</h2>
       <p className="ez-hint">
-        Fixed teams for the next available court. Players in these games are reserved.
+        {automatic && !viewer
+          ? 'KirQ prepares the next teams for you. Start them when a court is ready.'
+          : 'These teams play on the next available court.'}
       </p>
       {!viewer ? (
         <div className="ez-draft-controls">
-          <label htmlFor="draft-count">Games to draft</label>
+          <label className="ez-auto-prepare">
+            <input
+              type="checkbox"
+              checked={automatic}
+              onChange={(event) => store.setGameDaySettings({ autoPrepare: event.target.checked })}
+            />
+            <span>Prepare upcoming games automatically</span>
+          </label>
+          <label htmlFor="draft-count">
+            {automatic ? 'Games to keep ready' : 'Games to draft'}
+          </label>
           <select
             id="draft-count"
             className="ez-select"
             value={count}
-            disabled={!capacity}
+            disabled={!automatic && !capacity}
             onChange={(event) =>
               store.setGameDaySettings({ draftCount: Number(event.target.value) })
             }
           >
             {[1, 2, 3].map((n) => (
-              <option key={n} value={n} disabled={n > capacity}>
+              <option key={n} value={n} disabled={!automatic && n > capacity}>
                 {n}
               </option>
             ))}
           </select>
-          <button
-            className="ez-btn primary"
-            disabled={!capacity}
-            onClick={() => {
-              const result = run((e) =>
-                e.draftNextGames(count, {
-                  matchType: store.gameDay.type,
-                  courtCount: store.gameDay.courts,
-                  teammateLimit:
-                    store.gameDay.limit === 'unlimited' ? Infinity : Number(store.gameDay.limit),
-                  priorityPlayerIds: store.gameDay.nextPlayerIds,
-                }),
-              );
-              if (result) notify(result.message);
-            }}
-          >
-            Draft next games
-          </button>
+          {!automatic ? (
+            <button
+              className="ez-btn primary"
+              disabled={!automatic && !capacity}
+              onClick={() => {
+                const result = run((e) =>
+                  e.draftNextGames(count, {
+                    matchType: store.gameDay.type,
+                    courtCount: store.gameDay.courts,
+                    teammateLimit:
+                      store.gameDay.limit === 'unlimited' ? Infinity : Number(store.gameDay.limit),
+                    priorityPlayerIds: store.gameDay.nextPlayerIds,
+                  }),
+                );
+                if (result) notify(result.message);
+              }}
+            >
+              Draft next games
+            </button>
+          ) : null}
           {data.queuedGames.length ? (
             <button
               className="ez-btn"
               onClick={() => {
-                run((e) => e.clearQueuedGames());
-                notify('Upcoming games cleared. Players return to the waiting queue.');
+                store.clearUpcomingGames();
+                notify(
+                  'Upcoming games cleared. Automatic preparation is off. Players return to the waiting queue.',
+                );
               }}
             >
               Clear upcoming games
             </button>
           ) : null}
         </div>
+      ) : null}
+      {!viewer && automatic && store.preparationNotice ? (
+        <p className="ez-hint" role="status">
+          {store.preparationNotice}
+        </p>
       ) : null}
       {!viewer && store.queueNotice ? (
         <p className="ez-warn" role="status">
@@ -77,7 +101,15 @@ export function DraftGames() {
           </article>
         ))}
       </div>
-      {!data.queuedGames.length ? <p className="ez-hint">No upcoming games drafted yet.</p> : null}
+      {!data.queuedGames.length && !(automatic && !viewer && store.preparationNotice) ? (
+        <p className="ez-hint">
+          {viewer
+            ? 'No upcoming games yet.'
+            : automatic
+              ? 'Waiting for enough available players to prepare the next teams.'
+              : 'Turn on automatic preparation, or draft the next games yourself.'}
+        </p>
+      ) : null}
     </section>
   );
 }

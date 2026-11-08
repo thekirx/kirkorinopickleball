@@ -139,7 +139,7 @@ function WhoIsHere({ onNext }: { onNext: () => void }) {
 }
 
 export function CourtSettings() {
-  const { data } = useApplication();
+  const { data, store } = useApplication();
   const { type, setType, courts, setCourts, limit, setLimit, lateArrivals, setLateArrivals } =
     useRoundControls();
   const [more, setMore] = useState(false);
@@ -186,6 +186,19 @@ export function CourtSettings() {
           </>
         )}
       </div>
+      <label className="ez-card ez-auto-prepare">
+        <input
+          type="checkbox"
+          checked={store.gameDay.autoPrepare}
+          onChange={(e) => store.setGameDaySettings({ autoPrepare: e.target.checked })}
+        />
+        <span>
+          <strong>Prepare upcoming games automatically</strong>
+          <span className="ez-hint">
+            KirQ keeps the next teams ready. You just record the winner and start the next game.
+          </span>
+        </span>
+      </label>
       <button className="ez-link" aria-expanded={more} onClick={() => setMore(!more)}>
         {more ? 'Hide more options' : 'More options'}
       </button>

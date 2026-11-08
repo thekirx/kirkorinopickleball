@@ -81,12 +81,7 @@ function CourtBox({
 }) {
   const { data } = useApplication();
   const engine = createEngine(data);
-  const locked =
-    match.status === 'finished'
-      ? 'Finished'
-      : !engine.canChangeMatchPlayer(match)
-        ? 'Started over 2 minutes ago'
-        : null;
+  const locked = match.status === 'finished' ? 'Finished' : null;
   const team = (players: Player[]) => (
     <div className="ez-drop-team">
       {players.map((p) => (
@@ -148,16 +143,6 @@ export function ArrangeBoard({ onDone }: { onDone: () => void }) {
   function onTap(id: string) {
     if (justDragged.current) return;
     if (!selectedId) {
-      const onLockedCourt = data.activeMatches.some(
-        (m) =>
-          [...m.sideA, ...m.sideB].some((p) => p.id === id) &&
-          m.status !== 'finished' &&
-          !createEngine(data).canChangeMatchPlayer(m),
-      );
-      if (onLockedCourt) {
-        notify(`${byId(id)?.name}'s court is locked. Pick someone on an open court.`);
-        return;
-      }
       setSelectedId(id);
       notify(`${byId(id)?.name} picked. Now tap who to swap with.`);
       return;
@@ -216,8 +201,8 @@ export function ArrangeBoard({ onDone }: { onDone: () => void }) {
       <div className="ez-arrange-help" role="note">
         <strong>Move players</strong>
         <span>
-          Drag a name onto another name to swap them. Or tap one name, then another. Courts that
-          started over 2 minutes ago are locked.
+          Drag a name onto another name to swap them. Or tap one name, then another. Swaps are
+          available throughout the game.
         </span>
       </div>
       <div className="ez-pad ez-courts-body">

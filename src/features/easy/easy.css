@@ -1285,3 +1285,81 @@ div.ez-team {
 .ez-draft-grid .ez-names {
   margin: 10px 0;
 }
+
+/* Keep the organizer's immediate task ahead of planning controls. */
+.ez-play-guide {
+  display: grid;
+  gap: 4px;
+  margin: 0 20px 16px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--ez-blue);
+  background: var(--ez-blue-soft);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ez-team-label {
+  display: block;
+  margin: 12px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #546053;
+}
+.ez-swap h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.ez-swap-options {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.easy .ez-swap-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  white-space: normal;
+}
+.ez-swap-option strong {
+  overflow-wrap: anywhere;
+}
+.ez-swap-option .ez-hint {
+  flex-shrink: 0;
+  margin: 0;
+  font-size: 12px;
+}
+.ez-swap-search {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.ez-injury-options {
+  margin: 16px 0;
+}
+.ez-injury-options summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+  font-size: 14px;
+}
+.ez-auto-prepare {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.ez-auto-prepare input {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  accent-color: #275d38;
+}
+.ez-auto-prepare .ez-hint {
+  display: block;
+  margin-top: 4px;
+}
+.ez-draft-controls .ez-auto-prepare {
+  flex-basis: 100%;
+}

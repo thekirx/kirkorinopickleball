@@ -19,6 +19,8 @@ export interface SessionStore {
   session: SessionState;
   gameDay: GameDaySettings;
   queueNotice: string;
+  preparationNotice: string;
+  clearUpcomingGames(): void;
   setGameDaySettings(patch: Partial<Omit<GameDaySettings, 'nextPlayerIds'>>): void;
   queuePlayer(id: string): { ok: boolean; message: string };
   cancelQueuedPlayer(id: string): void;
@@ -38,6 +40,23 @@ export interface SessionStore {
   restoreSession(snapshot: SessionState): void;
   clearHistory(): void;
 }
+function prepare(session: SessionState, settings: GameDaySettings) {
+  if (!settings.autoPrepare || session.currentRound === 0) return '';
+  const missing = settings.draftCount - session.queuedGames.length;
+  if (missing <= 0) return '';
+  const needed = settings.type === 'doubles' ? 4 : 2;
+  if (session.waitingPlayerIds.length < needed)
+    return `Next teams will be prepared when ${needed} players are waiting. ${session.waitingPlayerIds.length} available now.`;
+  const result = createEngine(session).draftNextGames(missing, {
+    matchType: settings.type,
+    courtCount: settings.courts,
+    teammateLimit: settings.limit === 'unlimited' ? Infinity : Number(settings.limit),
+    priorityPlayerIds: settings.nextPlayerIds,
+  });
+  if (session.queuedGames.length >= settings.draftCount) return '';
+  return result.message;
+}
+
 export function createSessionStore(storage: StorageLike) {
   const safe = new SafeStorage(storage);
   const library = new SessionLibrary(safe);
@@ -53,6 +72,16 @@ export function createSessionStore(storage: StorageLike) {
     loadError = (error as Error).message;
     initial = { session: migrate(null), share: null, gameDay: defaultGameDaySettings() };
   }
+  const initialQueue = initial.session.queuedGames.length;
+  const initialPreparationNotice = loadError ? '' : prepare(initial.session, initial.gameDay);
+  if (initial.session.queuedGames.length !== initialQueue)
+    library.save(
+      library.index.activeId,
+      initial.session,
+      initial.share,
+      pruneGameDay(initial.gameDay, initial.session),
+    );
+  initial.gameDay = pruneGameDay(initial.gameDay, initial.session);
   return createStore<SessionStore>()(
     persist(
       (set, get) => {
@@ -63,12 +92,15 @@ export function createSessionStore(storage: StorageLike) {
           try {
             const restored = library.load(id);
             library.switch(id);
+            const preparationNotice = prepare(restored.session, restored.gameDay);
+            restored.gameDay = pruneGameDay(restored.gameDay, restored.session);
             set({
               ...restored,
               sessionId: id,
               entries: [...library.index.sessions],
               loadError: '',
               queueNotice: '',
+              preparationNotice,
             });
           } catch (error) {
             set({ loadError: (error as Error).message });
@@ -78,6 +110,7 @@ export function createSessionStore(storage: StorageLike) {
         return {
           ...initial,
           queueNotice: '',
+          preparationNotice: initialPreparationNotice,
           sessionId: library.index.activeId,
           entries: [...library.index.sessions],
           persistenceWarning: safe.failed ? WARNING : '',
@@ -91,10 +124,25 @@ export function createSessionStore(storage: StorageLike) {
             const cleared = changed && session.queuedGames.length > 0;
             if (changed) session.queuedGames = [];
             reconcileQueue(session, gameDay.nextPlayerIds);
+            const preparationNotice = prepare(session, gameDay);
             set({
               session,
+              preparationNotice,
               gameDay: pruneGameDay(gameDay, session),
               queueNotice: cleared ? 'Upcoming games cleared because game settings changed.' : '',
+            });
+            warning();
+          },
+          clearUpcomingGames() {
+            if (get().loadError) return;
+            const session = migrate(serializeState(get().session));
+            createEngine(session).clearQueuedGames();
+            reconcileQueue(session, get().gameDay.nextPlayerIds);
+            set({
+              session,
+              gameDay: { ...get().gameDay, autoPrepare: false },
+              queueNotice: '',
+              preparationNotice: '',
             });
             warning();
           },
@@ -123,7 +171,13 @@ export function createSessionStore(storage: StorageLike) {
             };
             const session = migrate(serializeState(get().session));
             reconcileQueue(session, gameDay.nextPlayerIds);
-            set({ session, gameDay, queueNotice: '' });
+            const preparationNotice = prepare(session, gameDay);
+            set({
+              session,
+              gameDay: pruneGameDay(gameDay, session),
+              queueNotice: '',
+              preparationNotice,
+            });
             warning();
             return { ok: true, message: `${player.name} has the next available queue spot.` };
           },
@@ -135,7 +189,13 @@ export function createSessionStore(storage: StorageLike) {
             };
             const session = migrate(serializeState(get().session));
             reconcileQueue(session, gameDay.nextPlayerIds);
-            set({ session, gameDay, queueNotice: '' });
+            const preparationNotice = prepare(session, gameDay);
+            set({
+              session,
+              gameDay: pruneGameDay(gameDay, session),
+              queueNotice: '',
+              preparationNotice,
+            });
             warning();
           },
           act(action) {
@@ -154,8 +214,14 @@ export function createSessionStore(storage: StorageLike) {
             const explicit = Boolean(
               result && typeof result === 'object' && 'clearedQueue' in result,
             );
+            const failed =
+              result && typeof result === 'object' && 'ok' in result && result.ok === false;
+            const preparationNotice = failed
+              ? get().preparationNotice
+              : prepare(draft, get().gameDay);
             set({
               session: draft,
+              preparationNotice,
               gameDay: pruneGameDay(get().gameDay, draft),
               queueNotice:
                 lost.length && !explicit
@@ -175,6 +241,7 @@ export function createSessionStore(storage: StorageLike) {
               entries: [...library.index.sessions],
               loadError: '',
               queueNotice: '',
+              preparationNotice: '',
             });
             warning();
           },

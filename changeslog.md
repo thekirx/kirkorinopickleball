@@ -1,10 +1,24 @@
 # KirQ changes log and AI handoff
 
-Last updated: 2026-11-07 (Asia/Manila).
+Last updated: 2026-11-08 (Asia/Manila).
 
 This is the shared, repository-tracked handoff for switching between AI assistants. Read `AGENTS.md` before making changes. Update this handoff and add a history entry in the same task as every change; this is an instruction to contributors, not an automatic watcher.
 
 ## Current handoff
+
+### GIT PUSH AUTHORIZED — easier open play (2026-11-08)
+
+Owner delegated judgment after asking for anytime swaps, easier UI/UX and more automation. Implemented in `../kirkorinopickleball-prototype` on `prototype/play-mode`, baseline `d25fb98`. Canonical `codex/react-phase-1` has documentation only; its pre-existing dirty log and November 7 specs/plans were preserved. **Owner authorized “push to git” on 2026-11-08.** Preparing a commit and push of the verified changes to `origin/prototype/play-mode`; remote inspected at `d25fb98`, matching local HEAD. Commit/push outcome pending. No merge, manual deploy, backend/hosting settings or dependency changes. November 7 release entries below are historical.
+
+- Active design/plan: `docs/superpowers/specs/2026-11-08-easier-open-play-design.md`, `docs/superpowers/plans/2026-11-08-easier-open-play.md`. This supersedes the old two-minute restriction in the tournament spec §R2; no other tournament-phase completion is claimed.
+- Unlimited swaps during ongoing games; game timestamps, records and unrelated courts stay intact. Finished-game replacement stays refused; finished participants can still return to the waiting pool under existing reuse rules. Ordinary `swapPlayers` retains draft reservation protection. Explicit `swapPlayersReleasingDraft` releases only affected upcoming games, rolls back drafts on refusal, and is exposed through a picker that explains the consequence before selection.
+- Current courts now precede upcoming games. Team A/B labels and a prominent **Swap players** open a two-step picker with waiting/upcoming/court labels, search, **Choose next waiting player**, and optional injury/break substitution. Scoring controls are hidden in that court while swapping. Keyboard focus moves to each step heading. Secondary drag/tap movement remains and has no time lock.
+- Organizer-only `gameDay.autoPrepare`: true for new days, false when absent in existing saved days. Toggle in setup/Courts; target 1–3 games, default one. Store prepares after successful actions, settings/priority edits and reload/switch; fixed drafts stay fixed, court starts remain explicit, partner/queue rules unchanged. Clearing upcoming games disables automation; turning it off preserves announced drafts; lowering target does not discard them. Shared schema stays v3; organizer preference stays private.
+- `preparationNotice` explains waiting shortages and pairing failures, including partial preparation and reload. Fresh review caught partial failures incorrectly described as player shortages; added a failing regression and fixed it. Follow-up review independently ran **42 focused tests** and found no remaining actionable issues.
+- Verification in prototype: `npm test -- --run --maxWorkers=2` → **180 tests passed in 17 files**; `npm run build`, `npm run test:deployment`, changed-source `npx prettier --check ...` and `git diff --check` passed. Domain/state/UI changes were exercised RED→GREEN. Built output: `index-CG9eJ4kR.js`, `index-DHMnbkId.css`.
+- Browser plugin not available; used cached Playwright/Chromium, isolated synthetic session only. Built app at `http://localhost:5178/`: setup 20 players/2 courts → auto draft → reload with 1-hour-old games → guided reserved-player swap → score/start/refill → fixed-team reload → clear/reload stays manual. Court 2 unchanged. Widths **375×812, 768×1024, 1024×768, 1440×900**: no horizontal overflow/framework overlay/page or console errors. Synthetic intercepted read response verified spectator court/upcoming rendering, no swap/start/draft/roster/checkbox controls, no localStorage writes. Initial QA script mistook serialized player IDs for objects; corrected harness and reran successfully. Screenshots inspected; evidence is supplementary, not required to resume.
+- Remaining limitations: real-phone touch/keyboard/camera and actual external sharing propagation were not rechecked in this task (viewer browser check used synthetic read response; existing sharing regression tests pass). Earlier first-publish stale viewer observation remains unresolved. No new live shared rows created. Live production does not include November 8 changes. Vercel Production Branch tracking remains unconfirmed; do not push/deploy or change it without current authorization.
+- Next: finish the authorized Git push, verify the remote commit, and record the outcome. Production promotion remains a separate authorization. Existing dev server `http://localhost:5177/` and built preview `http://localhost:5178/` were started here; if stopped, run `npm run dev -- --port 5177 --strictPort` or `npx vite preview --host localhost --port 5178 --strictPort` after building. Loopback is Mac-only; use `npm run dev:lan` separately for same-Wi-Fi phone review. Latest five-hour usage check: **86% remaining**, above prior stop threshold.
 
 ## COMMITTED AND PUSHED (2026-11-07, later)
 
@@ -84,6 +98,24 @@ npm run dev:lan
 Code: `src/domain/queue.ts`, `queue.test.ts`, `types.ts`, `migrate.ts`, `serialize.ts`, `engine.ts`; `src/state/sessionStore.ts`, `sessionLibrary.ts`, `gameDay.ts`/tests; `src/features/easy/DraftGames.tsx`, CourtsTab/NextGame/PlayersTab/players/Arrange/ShareTab; existing `src/services/useSharing.ts` reacts to changed session reference. Older type imports were mechanically renamed throughout source. No edit tokens/private payloads/player data in logs.
 
 ## Change history
+
+### 2026-11-08 — Git push authorized
+
+- Owner requested “push to git”. Inspected the actual prototype branch, full changed/untracked file list and GitHub remote; remote `prototype/play-mode` equals local `d25fb98`. Preparing only the November 8 implementation/docs in that worktree; canonical pre-existing changes remain uncommitted.
+- Reverified before commit: `npm test -- --run --maxWorkers=2` →180 passed/17 files; `npm run build`, `npm run test:deployment` and `git diff --check` passed. Commit/push outcome pending; no merge or manual deployment requested.
+
+### 2026-11-08 — Anytime swaps and easier automatic open play implemented locally
+
+- Changed: `src/domain/engine.ts` and domain regressions remove ongoing-game time locks and add explicit atomic affected-draft release for swaps. `src/state/gameDay.ts`, `sessionLibrary.ts`, `sessionStore.ts` and state tests add private automatic-preparation settings, target refill, reload/switch handling, clear-and-disable, and accurate partial/failure status. `src/features/easy/SwapPlayers.tsx` is new; CourtsTab/Arrange/DraftGames/SetupFlow/CSS/UI tests guide swaps, show courts first and expose automatic controls. Prototype README and both worktrees' spec/plan/handoff updated.
+- Checks actually run: `npm test -- --run --maxWorkers=2` →180/180 in17 files; `npm run build`, `npm run test:deployment`, changed-source Prettier check and `git diff --check` pass. Fresh review independently ran42 focused tests; status finding fixed with RED→GREEN regression, follow-up clean.
+- Browser: cached Playwright on built local preview,20 synthetic players/2 courts; automatic target/refill, late reserved-player swap, score/start, independent Court2, reload/manual clear, four widths/no overflow/no errors, synthetic read-only viewer/no writes verified. Screenshots visually inspected. QA harness ID/object mistake corrected and check rerun. No actual backend writes, real-phone or external sharing propagation checks this task.
+- Delivery: local/uncommitted in prototype; canonical docs only. No commit/push/deploy/dependency/backend/hosting changes. Existing personal sessions untouched. Remaining real-phone/live propagation/release approval and existing first-publish stale-viewer limitation described in Current handoff.
+
+### 2026-11-08 — Easier open-play scope and plan
+
+- Recorded owner-delegated implementation choices and plan for unlimited ongoing-game swaps, guided controls and automatic upcoming preparation. Existing days retain manual mode.
+- Inspected both actual branches/worktrees, README, handoff, tournament revision and relevant queue/court designs. Runtime verification pending.
+- Local documentation only at this point; prior changes preserved, no release actions.
 
 ### 2026-11-07 — Upcoming draft games and shared queue implemented locally
 

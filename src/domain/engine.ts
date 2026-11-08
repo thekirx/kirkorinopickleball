@@ -562,7 +562,7 @@ export function createEngine(state: SessionState, random = Math.random) {
   }
 
   function canChangeMatchPlayer(match: ActiveMatch, now = Date.now()) {
-    return match.status !== 'finished' && matchChangeTimeRemaining(match, now) > 0;
+    return match.status !== 'finished';
   }
 
   function getReplacementCandidates(excludedPlayerId: string | null = null) {
@@ -602,15 +602,6 @@ export function createEngine(state: SessionState, random = Math.random) {
         ok: false,
         reason: 'match-unavailable',
         message: 'This match can no longer be changed.',
-      };
-    }
-
-    if (reason !== 'injury' && !canChangeMatchPlayer(match, now)) {
-      return {
-        ok: false,
-        reason: 'change-window-expired',
-        message:
-          'The two-minute player-change window has closed. Use injury substitution if needed.',
       };
     }
 
@@ -765,8 +756,6 @@ export function createEngine(state: SessionState, random = Math.random) {
     for (const loc of [la, lb]) {
       if (!loc) continue;
       if (loc.match.status === 'finished') return `Court ${loc.court} has finished.`;
-      if (!canChangeMatchPlayer(loc.match, now))
-        return `Court ${loc.court} started over 2 minutes ago. Use "Got hurt" for injuries.`;
     }
     if (la && lb && la.side === lb.side) return 'They are already on the same team.';
     for (const [loc, player] of [
@@ -806,6 +795,25 @@ export function createEngine(state: SessionState, random = Math.random) {
       return { ok: true, message: `${incoming.name} is in for ${outgoing.name}.` };
     }
     return { ok: true, message: `${a.name} and ${b.name} swapped places.` };
+  }
+
+  /** Explicit organizer choice: release affected drafts, but preserve them on refusal. */
+  function swapPlayersReleasingDraft(aId: string, bId: string, now = Date.now()) {
+    const previous = state.queuedGames;
+    state.queuedGames = previous.filter(
+      (game) => !draftPlayerIds(game).some((id) => id === aId || id === bId),
+    );
+    const result = swapPlayers(aId, bId, now);
+    if (!result.ok) {
+      state.queuedGames = previous;
+      return result;
+    }
+    const released = previous.length - state.queuedGames.length;
+    reconcileQueue(state);
+    return {
+      ...result,
+      message: result.message + (released ? ' The affected upcoming game was released.' : ''),
+    };
   }
 
   // PROTOTYPE (easy mode): organizer option for family-and-friends play. A late
@@ -903,6 +911,7 @@ export function createEngine(state: SessionState, random = Math.random) {
     prioritizeForNextRound,
     swapBlockReason,
     swapPlayers,
+    swapPlayersReleasingDraft,
     clearResult,
     getRankedPlayers,
   };
