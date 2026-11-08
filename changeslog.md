@@ -6,9 +6,9 @@ This is the shared, repository-tracked handoff for switching between AI assistan
 
 ## Current handoff
 
-### GIT PUSH AUTHORIZED — easier open play (2026-11-08)
+### COMMITTED AND PUSHED — easier open play (2026-11-08)
 
-Owner delegated judgment after asking for anytime swaps, easier UI/UX and more automation. Implemented in `../kirkorinopickleball-prototype` on `prototype/play-mode`, baseline `d25fb98`. Canonical `codex/react-phase-1` has documentation only; its pre-existing dirty log and November 7 specs/plans were preserved. **Owner authorized “push to git” on 2026-11-08.** Preparing a commit and push of the verified changes to `origin/prototype/play-mode`; remote inspected at `d25fb98`, matching local HEAD. Commit/push outcome pending. No merge, manual deploy, backend/hosting settings or dependency changes. November 7 release entries below are historical.
+Owner delegated judgment after asking for anytime swaps, easier UI/UX and more automation. Implemented in `../kirkorinopickleball-prototype` on `prototype/play-mode`, baseline `d25fb98`. Canonical `codex/react-phase-1` has documentation only; its pre-existing dirty log and November 7 specs/plans were preserved. **Owner authorized “push to git” on 2026-11-08.** Implementation/docs committed as `ea2bafa` and pushed to `origin/prototype/play-mode` (`d25fb98..ea2bafa`); push succeeded. Follow-up handoff documentation records this result. No merge, manual deploy, backend/hosting settings or dependency changes. Hosting may build a preview automatically from Git; its outcome and production were not checked in this Git-only task. November 7 release entries below are historical.
 
 - Active design/plan: `docs/superpowers/specs/2026-11-08-easier-open-play-design.md`, `docs/superpowers/plans/2026-11-08-easier-open-play.md`. This supersedes the old two-minute restriction in the tournament spec §R2; no other tournament-phase completion is claimed.
 - Unlimited swaps during ongoing games; game timestamps, records and unrelated courts stay intact. Finished-game replacement stays refused; finished participants can still return to the waiting pool under existing reuse rules. Ordinary `swapPlayers` retains draft reservation protection. Explicit `swapPlayersReleasingDraft` releases only affected upcoming games, rolls back drafts on refusal, and is exposed through a picker that explains the consequence before selection.
@@ -18,7 +18,7 @@ Owner delegated judgment after asking for anytime swaps, easier UI/UX and more a
 - Verification in prototype: `npm test -- --run --maxWorkers=2` → **180 tests passed in 17 files**; `npm run build`, `npm run test:deployment`, changed-source `npx prettier --check ...` and `git diff --check` passed. Domain/state/UI changes were exercised RED→GREEN. Built output: `index-CG9eJ4kR.js`, `index-DHMnbkId.css`.
 - Browser plugin not available; used cached Playwright/Chromium, isolated synthetic session only. Built app at `http://localhost:5178/`: setup 20 players/2 courts → auto draft → reload with 1-hour-old games → guided reserved-player swap → score/start/refill → fixed-team reload → clear/reload stays manual. Court 2 unchanged. Widths **375×812, 768×1024, 1024×768, 1440×900**: no horizontal overflow/framework overlay/page or console errors. Synthetic intercepted read response verified spectator court/upcoming rendering, no swap/start/draft/roster/checkbox controls, no localStorage writes. Initial QA script mistook serialized player IDs for objects; corrected harness and reran successfully. Screenshots inspected; evidence is supplementary, not required to resume.
 - Remaining limitations: real-phone touch/keyboard/camera and actual external sharing propagation were not rechecked in this task (viewer browser check used synthetic read response; existing sharing regression tests pass). Earlier first-publish stale viewer observation remains unresolved. No new live shared rows created. Live production does not include November 8 changes. Vercel Production Branch tracking remains unconfirmed; do not push/deploy or change it without current authorization.
-- Next: finish the authorized Git push, verify the remote commit, and record the outcome. Production promotion remains a separate authorization. Existing dev server `http://localhost:5177/` and built preview `http://localhost:5178/` were started here; if stopped, run `npm run dev -- --port 5177 --strictPort` or `npx vite preview --host localhost --port 5178 --strictPort` after building. Loopback is Mac-only; use `npm run dev:lan` separately for same-Wi-Fi phone review. Latest five-hour usage check: **86% remaining**, above prior stop threshold.
+- Next: the authorized implementation push is complete. Review any hosting preview separately; production promotion remains a separate authorization. Existing dev server `http://localhost:5177/` and built preview `http://localhost:5178/` were started here; if stopped, run `npm run dev -- --port 5177 --strictPort` or `npx vite preview --host localhost --port 5178 --strictPort` after building. Loopback is Mac-only; use `npm run dev:lan` separately for same-Wi-Fi phone review. Latest five-hour usage check: **86% remaining**, above prior stop threshold.
 
 ## COMMITTED AND PUSHED (2026-11-07, later)
 
@@ -98,6 +98,12 @@ npm run dev:lan
 Code: `src/domain/queue.ts`, `queue.test.ts`, `types.ts`, `migrate.ts`, `serialize.ts`, `engine.ts`; `src/state/sessionStore.ts`, `sessionLibrary.ts`, `gameDay.ts`/tests; `src/features/easy/DraftGames.tsx`, CourtsTab/NextGame/PlayersTab/players/Arrange/ShareTab; existing `src/services/useSharing.ts` reacts to changed session reference. Older type imports were mechanically renamed throughout source. No edit tokens/private payloads/player data in logs.
 
 ## Change history
+
+### 2026-11-08 — Easier open-play implementation committed and pushed
+
+- Owner authorized Git delivery. Committed the18 intended implementation/test/docs paths as `ea2bafa` on `prototype/play-mode` and successfully pushed `d25fb98..ea2bafa` to the GitHub origin. No unrelated canonical-worktree files were staged; pre-existing canonical documentation remains uncommitted.
+- Reverified `npm test -- --run --maxWorkers=2` →180 tests/17 files, `npm run build`, `npm run test:deployment`, `git diff --check` and staged diff check. Staged excluded-file/credential-pattern checks passed; no environment/build/hosting/private handoff files staged.
+- This follow-up documentation records the successful implementation push. No merge, manual deployment or backend/hosting settings changed. Automatic hosting build and production status not checked; existing physical-phone/live-sharing limitations remain.
 
 ### 2026-11-08 — Git push authorized
 
